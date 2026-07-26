@@ -386,14 +386,9 @@ export function ExperimentPage({
             className="sticky top-0 z-10 border-b border-neutral-100 bg-neutral-50 px-4 py-2.5"
           >
             {ownPost != null ? (
-              <div className="flex items-center gap-2">
-                <span className="rounded bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700">
-                  已发布
-                </span>
-                <p className="min-w-0 flex-1 truncate text-[13px] text-neutral-500">
-                  你的观点已经加入下方内容列表
-                </p>
-              </div>
+              <span className="inline-block rounded bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700">
+                已发布
+              </span>
             ) : (
               <div className="flex items-end gap-2">
                 <textarea
