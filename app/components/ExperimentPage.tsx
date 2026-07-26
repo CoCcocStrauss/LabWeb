@@ -10,6 +10,7 @@ import {
   type MouseEvent,
 } from "react";
 
+import { randomAlphanumericDisplayName } from "../data/avatarPool";
 import type { TopicKey } from "../data/topics";
 import { blockRandomize } from "../lib/blockRandomize";
 import type { ActionLog, EndReason, PostExperimentAttrs } from "../lib/dataSubmit";
@@ -56,9 +57,10 @@ export function ExperimentPage({
   const endedRef = useRef(false);
   const [userPostDraft, setUserPostDraft] = useState("");
   const [userPostExpanded, setUserPostExpanded] = useState(false);
-  const [publishedUserPost, setPublishedUserPost] = useState<string | null>(
-    null
-  );
+  const [ownPost, setOwnPost] = useState<{
+    content: string;
+    displayName: string;
+  } | null>(null);
 
   const mainScrollRef = useRef<HTMLElement | null>(null);
   const composeBoxRef = useRef<HTMLDivElement | null>(null);
@@ -152,10 +154,10 @@ export function ExperimentPage({
   }, []);
 
   useEffect(() => {
-    if (publishedUserPost == null) return;
+    if (ownPost == null) return;
     const id = requestAnimationFrame(() => snapToFullPost());
     return () => cancelAnimationFrame(id);
-  }, [publishedUserPost, snapToFullPost]);
+  }, [ownPost, snapToFullPost]);
 
   const getPostAttrs = useCallback((postId: string): PostExperimentAttrs => {
     const post = postsRef.current.find((p) => p.id === postId);
@@ -329,7 +331,7 @@ export function ExperimentPage({
 
   const handleUserPostPublish = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    if (!isMounted || !isRunning || publishedUserPost != null) return;
+    if (!isMounted || !isRunning || ownPost != null) return;
     const content = userPostDraft.trim();
     if (!content) return;
     appendAction({
@@ -338,7 +340,7 @@ export function ExperimentPage({
       timestamp: Date.now(),
       charCount: content.length,
     });
-    setPublishedUserPost(content);
+    setOwnPost({ content, displayName: randomAlphanumericDisplayName() });
     setUserPostExpanded(false);
   };
 
@@ -383,14 +385,14 @@ export function ExperimentPage({
             ref={composeBoxRef}
             className="sticky top-0 z-10 border-b border-neutral-100 bg-neutral-50 px-4 py-2.5"
           >
-            {publishedUserPost != null ? (
-              <div className="flex items-start gap-2">
-                <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-neutral-700">
-                  {publishedUserPost}
-                </p>
-                <span className="shrink-0 rounded bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700">
+            {ownPost != null ? (
+              <div className="flex items-center gap-2">
+                <span className="rounded bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700">
                   已发布
                 </span>
+                <p className="min-w-0 flex-1 truncate text-[13px] text-neutral-500">
+                  你的观点已经加入下方内容列表
+                </p>
               </div>
             ) : (
               <div className="flex items-end gap-2">
@@ -449,6 +451,22 @@ export function ExperimentPage({
           </div>
         ) : (
           <div className="divide-y divide-neutral-100">
+            {ownPost != null ? (
+              <PostCard
+                post={{
+                  id: "own-post",
+                  content: ownPost.content,
+                  sourceLevel: "low",
+                  displayName: ownPost.displayName,
+                }}
+                isLiked={false}
+                hasShared={false}
+                shareDisabled
+                interactionsDisabled
+                onShareClick={() => {}}
+                onLikeClick={() => {}}
+              />
+            ) : null}
             {posts.map((post) => {
               const isLiked = !!liked[post.id];
               const hasSharedThisPost = actions.some(
