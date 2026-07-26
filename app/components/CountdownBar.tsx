@@ -33,7 +33,7 @@ export function CountdownBar({
 
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-30 border-t border-neutral-200 bg-white">
-      <div className="mx-auto flex max-w-[480px] items-center gap-2 px-3 py-2.5 text-[13px]">
+      <div className="mx-auto flex max-w-[480px] items-center gap-2 px-3 py-2.5 text-[13px] md:max-w-[640px]">
         <div className="min-w-0 flex-1 tabular-nums text-neutral-700">
           剩余时间 {countdownLabel}
         </div>

@@ -82,7 +82,7 @@ export function EndPage({ data, returnUrl }: EndPageProps) {
   }, [isDone, returnUrl]);
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col items-center justify-center bg-white px-6 text-center text-neutral-900">
+    <div className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col items-center justify-center bg-white px-6 text-center text-neutral-900 md:max-w-[640px]">
       <p className="text-xl font-semibold">实验结束，感谢参与！</p>
 
       {isSubmitting ? (

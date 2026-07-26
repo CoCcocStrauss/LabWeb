@@ -345,7 +345,7 @@ export function ExperimentPage({
   const shareLocked = shareCount >= 2;
 
   return (
-    <div className="fixed inset-0 mx-auto flex w-full max-w-[480px] flex-col overflow-hidden bg-white text-neutral-900">
+    <div className="fixed inset-0 mx-auto flex w-full max-w-[480px] flex-col overflow-hidden bg-white text-neutral-900 md:max-w-[640px]">
       <ShareModal
         open={isShareModalOpen && currentSharePostId != null}
         onCancel={handleShareModalCancel}

@@ -78,7 +78,7 @@ function parseParams(searchParams: URLSearchParams): {
 
 function LoadingScreen() {
   return (
-    <div className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] items-center justify-center bg-white text-[14px] text-neutral-500">
+    <div className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] items-center justify-center bg-white text-[14px] text-neutral-500 md:max-w-[640px]">
       加载中…
     </div>
   );

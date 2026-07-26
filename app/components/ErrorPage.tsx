@@ -1,6 +1,6 @@
 export function ErrorPage() {
   return (
-    <div className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col items-center justify-center bg-white px-6 text-center text-neutral-900">
+    <div className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col items-center justify-center bg-white px-6 text-center text-neutral-900 md:max-w-[640px]">
       <p className="text-xl font-semibold">无法开始实验</p>
       <p className="mt-3 text-[14px] leading-relaxed text-neutral-600">
         链接参数不完整或无效。请通过问卷平台提供的正确链接进入，至少需包含{" "}

@@ -79,7 +79,7 @@ export function TutorialPage({ onStart }: TutorialPageProps) {
   };
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-white text-neutral-900">
+    <div className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-white text-neutral-900 md:max-w-[640px]">
       <ShareModal
         open={isShareModalOpen}
         onCancel={handleShareCancel}
@@ -129,7 +129,7 @@ export function TutorialPage({ onStart }: TutorialPageProps) {
       </main>
 
       <footer className="fixed bottom-0 left-0 right-0 border-t border-neutral-200 bg-white">
-        <div className="mx-auto max-w-[480px] px-4 py-4">
+        <div className="mx-auto max-w-[480px] px-4 py-4 md:max-w-[640px]">
           <button
             type="button"
             disabled={!sharePracticed}
