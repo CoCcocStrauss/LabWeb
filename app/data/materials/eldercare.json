@@ -1,0 +1,411 @@
+{
+  "topic": "养老院年轻人入住计划",
+  "topicDescription": "养老院推出年轻人入住计划：30 岁以下年轻人可以以极低租金住在养老院里，但每周需要陪老人聊天、教老人用手机等至少 10 小时。这是个好方案吗？",
+  "tags": [
+    "养老",
+    "代际关系",
+    "居住"
+  ],
+  "materials": {
+    "support_high_high": [
+      {
+        "id": "shh_01",
+        "content": "从法律角度看,只要在协议里清楚界定这不构成雇佣关系,而是租赁加志愿服务的组合模式,双方权利义务写清楚,包括意外情况下的责任划分和保险覆盖范围,这类安排目前没有明确的法律障碍,操作空间是存在的。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "执业律师 · 老年人权益与劳动法律师"
+      },
+      {
+        "id": "shh_02",
+        "content": "算笔账,一线城市养老机构床位空置率普遍在20%到30%左右,这部分床位本身就是沉没成本,哪怕年轻人只交个水电费,对机构来说也是净收益,不存在倒贴的问题,反而是盘活闲置资源。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "养老产业研究员 · 某地产研究院分析师"
+      },
+      {
+        "id": "shh_03",
+        "content": "我在养老院住了三年,自从楼里搬来几个年轻人之后,晚饭后的时间明显不一样了,以前吃完饭就是各自回房间看电视,现在经常有人来找我们唠嗑,教我用手机视频通话之后,我现在天天能看见孙子,这个变化对我来说太大了。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "养老院住户 · 退休教师"
+      },
+      {
+        "id": "shh_04",
+        "content": "说实话现在一线城市养老机构床位空置率普遍在两三成左右,这部分本身就是闲置成本,年轻人低价入住既能盘活空间,又能缓解老人普遍存在的孤独问题。我们内部试点过,只要背景审查和心理测评做扎实,风险是完全可控的,不像外界想的那么随意。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "某民办养老机构运营负责人"
+      },
+      {
+        "id": "shh_05",
+        "content": "对年轻人来说这笔账更划算,一线城市合租一个单间月租至少两三千,一年下来省两三万,换算成每周10小时的陪伴时间,时薪算下来比很多兼职都高,这还没算上不用通勤的隐性时间收益。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "养老产业研究员 · 某地产研究院分析师"
+      },
+      {
+        "id": "shh_06",
+        "content": "一开始听说我妈住的养老院要引进年轻人计划,我第一反应是坚决反对,担心陌生人对老人不安全,后来机构给我看了详细的背景审查流程和监控安排,又实地去看了别的入住家庭的反馈,才慢慢放心,现在我妈跟那个小姑娘处得比跟我还亲。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "养老决策亲历者 · 子女互助交流版主"
+      }
+    ],
+    "support_high_low": [
+      {
+        "id": "shl_01",
+        "content": "支持,总比空着房子好。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "资深社会观察员 · 时评专栏作者"
+      },
+      {
+        "id": "shl_02",
+        "content": "支持,至少这个方案让陪伴劳动有了实实在在的回报,不像平时家里默认女生该做这些没人给钱。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "某社区养老服务中心负责人"
+      },
+      {
+        "id": "shl_03",
+        "content": "合理,双赢没毛病。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "国家二级心理咨询师 · 老年心理疏导方向"
+      },
+      {
+        "id": "shl_04",
+        "content": "这个方案挺好的,年轻人多接触接触老人,懂点人情世故,比天天宅家里强。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "知名养老话题博主 · 粉丝60万+"
+      },
+      {
+        "id": "shl_05",
+        "content": "以后是不是简历上得加一条精通哄老人开心,技能点满直接免租金住养老院,这波属于是曲线救国式省钱。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "某高校社会工作系讲师"
+      },
+      {
+        "id": "shl_06",
+        "content": "支持,说不合理的你倒是提个更好的养老互助方案出来啊。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "国家二级公共营养师 · 老年膳食方向"
+      }
+    ],
+    "support_low_high": [
+      {
+        "id": "slh_01",
+        "content": "我室友去年就是冲着便宜房租报名的这种项目,一开始纯粹是打算完成任务式地陪聊,结果住了三个月之后主动把每周时间从10小时延长到快20小时,她说有个奶奶每次跟她视频教孙子都特别开心,那种被需要的感觉比省下来的房租更让她上头。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "slh_02",
+        "content": "代际接触理论认为,不同年龄群体的规律互动能有效减少双方的刻板印象,老人对年轻人的偏见和年轻人对老年生活的恐惧,往往都是因为缺乏真实接触,这种朝夕相处的模式恰好能打破这层隔阂。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "slh_03",
+        "content": "有大量研究证实,长期孤独感是加速老年认知衰退的独立危险因素,效果甚至可以和吸烟、肥胖相提并论。规律的代际社交互动被证明能有效延缓认知功能下降,这类项目从预防医学角度看是有科学依据的干预手段。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "slh_04",
+        "content": "自己申请这种项目单纯是因为在市中心租不起房,去之前做好了硬着头皮陪聊的心理准备,结果住进去才发现老人们比我想象中有意思多了,有个爷爷年轻时候是记者,聊起过去的事比刷短视频有意思多了,现在反而是我主动想多待一会儿。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "slh_05",
+        "content": "很多人以为这是随便找个年轻人塞进来,其实我们招募流程比招正式员工还严格,要查无犯罪记录、做心理评估、还有至少一个月的试运行期。媒体报道容易只强调\"极低租金\"这个噱头,实际执行门槛没那么低。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "slh_06",
+        "content": "在荷兰读书那几年,当地一个养老院早就有类似的代际同住项目,学生免租金入住,条件是每月至少三十小时陪伴老人,已经运行了快十年,官方评估显示老人的抑郁指数和孤独感都有显著改善,说明这个模式长期跑下来是可行的。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      }
+    ],
+    "support_low_low": [
+      {
+        "id": "sll_01",
+        "content": "支持,这种活儿男生去反而更受欢迎,毕竟教手机修电器这种事男生上手更快,划算。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "sll_02",
+        "content": "绝了,这就是打工人的救星啊,教教老人用手机就能省下几千块房租,谁不心动啊,建议全国推广！",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "sll_03",
+        "content": "感觉挺不错的,双方都能得点好处吧。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "sll_04",
+        "content": "这也太划算了吧！！房租直接省一大半,陪聊天而已能有多累,我周末本来也没事干,双手双脚赞成这个方案！",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "sll_05",
+        "content": "合理啊,反对的人是不是没算过一线城市房租多贵,站着说话不腰疼。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "sll_06",
+        "content": "支持,挺好的方案。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      }
+    ],
+    "oppose_high_high": [
+      {
+        "id": "ohh_01",
+        "content": "住进来的那个年轻人明显是完成任务的心态,每次来了就看手机,教我用微信也是敷衍地说两句就走,还不如没有,反而让我觉得自己是个被安排的负担,这种感觉挺不好受的。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "养老院住户 · 退休教师"
+      },
+      {
+        "id": "ohh_02",
+        "content": "一开始觉得这个方案挺好,还主动帮我爸报了名,结果发现所谓陪伴经常因为年轻人自己工作忙被压缩甚至取消,我爸期待了一周结果被放鸽子,情绪反而比之前更失落,现在后悔当初的决定。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "养老决策亲历者 · 子女互助交流版主"
+      },
+      {
+        "id": "ohh_03",
+        "content": "有个概念叫表演式陪伴,当陪伴关系被明确标注为任务和义务时,老人其实是能感知到这种不对等的,这种被知道是被安排来的陪伴,长期反而可能加重孤独感,因为它提醒了老人自己需要被安排才有人陪。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "老年心理学研究者 · 某高校社会工作系副教授"
+      },
+      {
+        "id": "ohh_04",
+        "content": "最大的法律隐患在于劳动关系的实质认定,即便协议写的是志愿服务,一旦年轻人被要求固定时间打卡、完成指定任务量,司法实践中很可能被认定为事实劳动关系,机构面临补缴社保、支付报酬的风险远比想象中大。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "执业律师 · 老年人权益与劳动法律师"
+      },
+      {
+        "id": "ohh_05",
+        "content": "10小时这个指标听着简单,实际考核起来很难量化,陪聊算不算,教了一次手机算不算,执行层面很容易变成走过场,反而增加了我们管理层的协调成本,得不偿失。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "某民办养老机构运营负责人"
+      },
+      {
+        "id": "ohh_06",
+        "content": "隐性成本被严重低估了,责任险、背景调查、日常管理协调,这些都需要专人负责,真正算下来这笔管理成本很可能超过年轻人交的那点象征性租金,规模做大了反而不划算。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "养老产业研究员 · 某地产研究院分析师"
+      }
+    ],
+    "oppose_high_low": [
+      {
+        "id": "ohl_01",
+        "content": "开什么玩笑,一周10小时说得轻松,加上上班时间根本喘不过气,这哪是省房租,这是拿命换钱吧！",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "资深社会观察员 · 时评专栏作者"
+      },
+      {
+        "id": "ohl_02",
+        "content": "感觉不太靠谱,总觉得哪里怪怪的。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "某社区养老服务中心负责人"
+      },
+      {
+        "id": "ohl_03",
+        "content": "不合理,坚决反对。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "国家二级心理咨询师 · 老年心理疏导方向"
+      },
+      {
+        "id": "ohl_04",
+        "content": "反对,支持的人是不是没想过万一出事谁负责,站着说话不腰疼。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "知名养老话题博主 · 粉丝60万+"
+      },
+      {
+        "id": "ohl_05",
+        "content": "这也太离谱了吧,谁能保证陪聊内容不会变成端茶倒水干杂活,到时候义务被无限扩大怎么办,坚决不干。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "某高校社会工作系讲师"
+      },
+      {
+        "id": "ohl_06",
+        "content": "不合理,现实是男生申请这种项目大概率会被质疑动机,家属信任度天然更低,这对男生不公平。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "国家二级公共营养师 · 老年膳食方向"
+      }
+    ],
+    "oppose_low_high": [
+      {
+        "id": "olh_01",
+        "content": "荷兰那个项目其实也经历过不少调整,最早期也出现过学生中途退出、匹配不合适导致双方都不愉快的情况,后来是花了好几年时间不断优化筛选和培训流程才稳定下来,国内如果照搬初版方案,大概率会重复同样的试错成本。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "olh_02",
+        "content": "空置率高不代表可以随便利用,养老机构的空间设计本身是按护理流程规划的,硬塞进年轻人居住区,水电、安防、消防这些改造成本很多机构根本没算进最初的方案里。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "olh_03",
+        "content": "自己体验过一段时间,说实话陪伴这件事没有想象中简单,有的老人认知功能下降得厉害,反复问同样的问题,教手机这种事一遍遍教都学不会,时间久了确实挺消耗耐心的,最后没坚持满合同期。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "olh_04",
+        "content": "更值得警惕的是关系的不稳定性,年轻人流动性天然就高,很多人住几个月就搬走,对老人来说频繁地建立又失去情感连接,这种反复的依恋中断对认知和情绪脆弱的老年群体是一种隐性的心理伤害。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "olh_05",
+        "content": "我朋友申请过这种项目,一开始觉得挺有意义的,结果真住进去发现每周10小时远远不够应付实际需求,好几个老人都想找她说话,精力完全被占满,最后因为影响工作状态提前退出了。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "olh_06",
+        "content": "干这行的都清楚,最大的痛点是责任风险。年轻人和老人朝夕相处,万一发生磕碰、误会甚至意外,责任怎么划分说不清楚,很多机构内部讨论过很久,最后还是不敢大规模推广,只能小范围试点。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      }
+    ],
+    "oppose_low_low": [
+      {
+        "id": "oll_01",
+        "content": "反对,风险太大。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "oll_02",
+        "content": "这方案听着就像是,老板画饼说包吃包住,结果饼是房租老板不用出,活是我干,熟悉的配方熟悉的味道。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "oll_03",
+        "content": "不合理,说白了就是把社会默认该女性做的情感劳动包装成了创新方案,还想着让女生倒贴时间去做。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "oll_04",
+        "content": "不太看好,执行起来估计一堆问题。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "oll_05",
+        "content": "不合理,别老拿省房租说事,便宜就能不顾风险了？这逻辑说不通。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "oll_06",
+        "content": "这个不太靠谱,陌生人跟老人住一起,万一有个三长两短说不清楚,还是小心点好。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      }
+    ]
+  }
+}

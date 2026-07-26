@@ -1,0 +1,411 @@
+{
+  "topic": "AI简历筛选",
+  "topicDescription": "公司用 AI 面试筛选简历，直接淘汰不符合算法标准的候选人，这种做法合理吗？",
+  "tags": [
+    "人工智能",
+    "招聘",
+    "就业"
+  ],
+  "materials": {
+    "support_high_high": [
+      {
+        "id": "shh_01",
+        "content": "有研究发现,人在面对机器决策失误时的愤怒程度,如果配合清晰的申诉渠道,其实是可以被有效缓解的。问题不在于是不是机器做决定,而在于企业有没有配套的解释和申诉机制,这是可以通过制度设计解决的,不是AI筛选本身的原罪。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "组织行为学研究者 · 某高校劳动关系副教授"
+      },
+      {
+        "id": "shh_02",
+        "content": "我自己求职那几年没少被AI系统刷下来,当时恨得牙痒痒,后来自己创业当了甲方招人,才发现纯靠人工筛选的坑更大,团队里有人明显因为跟某个候选人是校友就多看几眼,这种偏袒比机器冷漠更让我难受,现在反而觉得有个统一标准挡在前面挺好。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "企业招聘负责人 · 前求职者"
+      },
+      {
+        "id": "shh_03",
+        "content": "说实话现在头部大厂一个初级岗位收到的简历量,随便一个坑都是四位数起步,光靠HR肉眼过一遍根本不可能。我们内部做过统计,机器初筛的误判率大概在8%到12%之间,确实会漏掉一些人,但如果全靠人工,主观误判率只会更高,而且慢十倍不止。工具是死的,关键看权重怎么调,不能一棍子打死。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "某互联网大厂HRBP · 招聘信息化产品负责人"
+      },
+      {
+        "id": "shh_04",
+        "content": "算笔账就清楚了,一个中大厂岗位平均收到1500份简历,按HR人均每份30秒的极限速度算,光看一遍就要12.5个小时,还不算复看和讨论,一个岗位招满往往要挂两三周,业务根本等不起。AI初筛哪怕只把这个量压缩到300份进入人工阶段,效率提升是数量级的。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "资深猎头顾问 · 某猎头公司合伙人"
+      },
+      {
+        "id": "shh_05",
+        "content": "很多人以为AI筛简历就是关键词随便匹配,其实现在稍微成熟点的系统会看经历的连贯性、项目描述的具体程度,不是傻乎乎数关键词。我们内部复盘过,机器初筛留下来的人,后面面试通过率其实比纯人工筛的还高一点,因为标准更统一,不会因为HR今天心情不好就多刷几个人。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "某互联网大厂HRBP · 招聘信息化产品负责人"
+      },
+      {
+        "id": "shh_06",
+        "content": "我之前也骂过AI筛简历不近人情,直到自己做了一次小实验,同一份经历,分别投了走AI初筛的岗位和纯人工看简历的岗位,人工那边石沉大海,AI这边反而给了面试。可能是因为算法不会因为你学校不是211就直接pass,至少在这一点上比人客观。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "秋招求职博主 · 知乎优秀答主"
+      }
+    ],
+    "support_high_low": [
+      {
+        "id": "shl_01",
+        "content": "支持,效率高。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "资深职场评论员 · 时评专栏作者"
+      },
+      {
+        "id": "shl_02",
+        "content": "说真的挺好的,起码不用等HR拖拖拉拉一个月才回你消息,AI直接告诉你行不行,虽然被拒了但至少利索,比石沉大海强多了！",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "注册人力资源管理师（一级）"
+      },
+      {
+        "id": "shl_03",
+        "content": "支持,反正人多岗位少,总得有个筛选办法。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "科技行业观察员 · 算法伦理研究者"
+      },
+      {
+        "id": "shl_04",
+        "content": "感觉挺正常的吧,效率高呗,现在啥都讲究效率。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "知名职场博主 · 粉丝80万+"
+      },
+      {
+        "id": "shl_05",
+        "content": "合理,没啥好说的。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "某高校就业指导中心讲师"
+      },
+      {
+        "id": "shl_06",
+        "content": "支持,女生简历里各种夸张形容词AI肯定分不清真假,活该被筛,反而更能筛出真材实料的人。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "support",
+        "identityDescription": "国家认证生涯规划师"
+      }
+    ],
+    "support_low_high": [
+      {
+        "id": "slh_01",
+        "content": "去年秋招我简历前后被三家大厂的AI系统刷下来,当时挺懊恼的,后来自己动手拆解了一下岗位JD和简历的匹配逻辑,把项目经历里的动词和岗位要求对齐了一下,同样的经历改完格式,居然过了两家。说白了这套系统确实有规律可循,只要你搞懂它要什么,反而比猜HR心思清楚多了。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "slh_02",
+        "content": "很多人纠结误伤率,但换算成绝对数字看看,假设误伤率10%,1500份简历里误伤150份,但如果不用系统,纯人工筛选在疲劳状态下的漏筛率行业内估计能到20%到30%,反而更糟。效率和公平从来不是非此即彼,得看基准线是什么。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "slh_03",
+        "content": "从法律角度看,目前国内外都还没有明确的法规禁止企业使用AI进行简历初筛,只要筛选标准跟岗位的实质要求相关,比如学历、工作年限、技能匹配度,不涉及性别、年龄、地域等受保护特征的直接歧视,现阶段是合法的,谈不上违规。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "slh_04",
+        "content": "在硅谷工作这几年发现,美国大厂用AI筛简历同样普遍,只是配套的合规要求严格很多,纽约的Local Law 144直接要求任何用于招聘决策的AI工具必须每年做独立偏见审计,并且把审计结果公开,企业不是不能用,是得为透明度买单,这个思路国内其实可以借鉴。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "slh_05",
+        "content": "我们团队做这套筛选系统之前调研过,一个爆款岗位挂出来两天能收到六千多份简历,业务方天天催进度,如果没有初筛,HR团队三个人根本转不动,系统上线后至少能保证每个进入面试的候选人都经过基本的经历核验,不是靠运气被HR翻到。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "slh_06",
+        "content": "组织行为学里有个概念叫程序公平,核心不是结果好坏,而是决策过程是否透明可解释。如果企业愿意公开AI筛选的具体标准,候选人反而更容易接受被拒的结果,因为至少知道自己差在哪,这比人工筛选那种\"感觉被针对但说不清楚为什么\"的模糊拒绝更容易消化。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      }
+    ],
+    "support_low_low": [
+      {
+        "id": "sll_01",
+        "content": "支持！现在简历海投成本这么低,不筛选HR不得累死,机器帮忙分担一下怎么了,总比连个回复都没有强吧。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "sll_02",
+        "content": "支持,至少机器不会因为你是女的就默认你结婚生子会离职,人工面试里这种隐性歧视太常见了,机器好歹按条件说话。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "sll_03",
+        "content": "机器筛选也挺好,起码不用求爷爷告奶奶托关系,现在的年轻人少了这个门道也是好事。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "sll_04",
+        "content": "那些骂AI的,你们倒是说说不用AI企业招人效率能提升？光靠嘴说没用。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "sll_05",
+        "content": "合理啊,不然你说说人工筛选就没偏见了？还不是看学校看关系,机器好歹不看脸。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      },
+      {
+        "id": "sll_06",
+        "content": "以后简历是不是得先过一遍SEO优化,关键词密度不够都对不起AI考官,建议大家简历里塞满精通擅长专家。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "support",
+        "identityDescription": null
+      }
+    ],
+    "oppose_high_high": [
+      {
+        "id": "ohh_01",
+        "content": "效率提升是真的,但边际收益在递减。当筛选门槛设得越来越严苛,企业收到的\"合格\"简历确实变少了,但同时也在系统性地漏掉那些经历不典型但能力更强的人,这部分隐性损失企业内部很少有人认真核算过。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "资深猎头顾问 · 某猎头公司合伙人"
+      },
+      {
+        "id": "ohh_02",
+        "content": "法律上最大的问题是算法造成的间接歧视很难举证,比如系统可能因为某些院校、专业背景在数据训练时的样本偏差,系统性地淘汰某类人群,但这种歧视往往隐藏在权重设计里,求职者根本没有渠道拿到原始数据去证明。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "执业律师 · 劳动与雇佣法律师"
+      },
+      {
+        "id": "ohh_03",
+        "content": "干HR这行的都清楚,现在的AI筛选系统权重设置很多时候是黑箱,连我们自己都说不清楚为什么某个候选人被打了低分。我见过一份履历相当亮眼的简历因为格式用了两栏排版,系统解析乱码直接判定关键词缺失,人给刷没了,面都没面上。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "某互联网大厂HRBP · 招聘信息化产品负责人"
+      },
+      {
+        "id": "ohh_04",
+        "content": "程序正义理论里有个经典发现,人们对\"人做出的错误决定\"的接受度,远高于\"机器做出的同样错误的决定\",哪怕结果完全一样。核心原因是机器决策剥夺了\"被倾听\"的感觉,你没法跟一个算法申诉、解释、争取,这种无力感造成的心理伤害比结果本身更大。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "组织行为学研究者 · 某高校劳动关系副教授"
+      },
+      {
+        "id": "ohh_05",
+        "content": "在国外也吃过AI筛选的亏,虽然那边监管更严,但审计通常是事后的、抽样的,真正落到具体某一份被误伤的简历上,该被刷还是被刷,那些漂亮的合规条款并不会实时救到每一个具体的人。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "海外人力资源政策观察者 · 硅谷HR"
+      },
+      {
+        "id": "ohh_06",
+        "content": "我曾经也是招聘方,一开始挺依赖AI筛选工具的,觉得省事又客观,直到自己因为格式问题被另一家公司的系统刷下来,才真正意识到这东西对普通求职者有多不友好,现在我们团队已经把纯AI一票否决改成了辅助参考,人工必须过一遍。",
+        "quality": "high",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "企业招聘负责人 · 前求职者"
+      }
+    ],
+    "oppose_high_low": [
+      {
+        "id": "ohl_01",
+        "content": "不合理,大厂招聘算法都是男的写的,训练数据大概率也是历史上男性偏多的行业数据,这种系统对女性简历里的经历天然理解不到位。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "资深职场评论员 · 时评专栏作者"
+      },
+      {
+        "id": "ohl_02",
+        "content": "投了三百多份简历全被秒拒,气死了！！这算法是不是有毛病啊,我明明条件都符合,连个面试机会都不给,心态崩了。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "注册人力资源管理师（一级）"
+      },
+      {
+        "id": "ohl_03",
+        "content": "感觉不太行,机器哪知道人怎么样啊。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "科技行业观察员 · 算法伦理研究者"
+      },
+      {
+        "id": "ohl_04",
+        "content": "机器哪懂人心啊,肯定不靠谱,我们那时候都是老板亲自面对面看人,看眼神看态度,比这靠谱多了。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "知名职场博主 · 粉丝80万+"
+      },
+      {
+        "id": "ohl_05",
+        "content": "机器筛简历这事吧,给我的感觉就是老板花钱雇了个不用发工资还特别爱找茬的电子HR。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "某高校就业指导中心讲师"
+      },
+      {
+        "id": "ohl_06",
+        "content": "不合理,坚决反对。",
+        "quality": "low",
+        "sourceLevel": "high",
+        "stance": "oppose",
+        "identityDescription": "国家认证生涯规划师"
+      }
+    ],
+    "oppose_low_high": [
+      {
+        "id": "olh_01",
+        "content": "我有一段在传统行业做过三年运营的经历,转行投互联网岗位,简历直接被AI标成不匹配,连人工复核的机会都没给。后来找猎头朋友帮忙内推同一份简历,面试官反而觉得跨行业经验是加分项。系统压根不懂什么叫可迁移能力,只会死板匹配关键词。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "olh_02",
+        "content": "内部数据不会公开说,但我可以说一句,误判率绝对不是官方口径里说的那么低。尤其是转行、履历不那么线性的候选人,基本上过不了机器这一关,这批人里其实藏着不少真正有能力的。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "olh_03",
+        "content": "换个角度算账,如果一个平台一年处理五百万份简历,哪怕误伤率只有5%,也是二十五万份被误伤的简历,这个绝对数字一点都不小,只是被平均到每家公司头上显得不起眼,但对被误伤的人来说是100%的伤害。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "olh_04",
+        "content": "被算法拒绝和被人拒绝,心理机制完全不同。人被拒绝时至少可以归因于\"面试官不喜欢我\"这种可以自我安慰的解释,但被算法拒绝时,那种\"连解释的资格都没有\"的感觉,长期积累会显著削弱求职者的自我效能感。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "olh_05",
+        "content": "干这行久了说句实话,我们内部也知道现在的系统对非标准履历的候选人不够友好,尤其是转行、间隔年这类经历,权重调整一直没做好,但业务方一直催上线新功能,这块的优化优先级总是被往后排。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "olh_06",
+        "content": "我的简历用了个稍微设计过的PDF模板,结果文字解析全乱了,系统直接判定我技能栏是空的,连教育经历都读串行了。投了大半个月才反应过来是格式问题,换成最土的模板重投才有回音,这中间浪费的时间根本没人给你补偿。",
+        "quality": "high",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      }
+    ],
+    "oppose_low_low": [
+      {
+        "id": "oll_01",
+        "content": "反对,说AI客观的人是不是没被误伤过,真被刷了就不会这么说了。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "oll_02",
+        "content": "反对,太冷血了。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "oll_03",
+        "content": "不合理,冷冰冰的一点人情味都没有。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "oll_04",
+        "content": "不合理,现在但凡涉及性别话题算法就有意无意偏向照顾女性,你看那些辅导简历写作的机构,教的都是怎么打感情牌,AI反而更容易被这套东西忽悠。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "oll_05",
+        "content": "不合理,别老拿效率说事,效率高就能不讲公平了？这逻辑说得通吗。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      },
+      {
+        "id": "oll_06",
+        "content": "太离谱了吧,简历刚投出去五分钟就收到拒信,机器看都没看完吧,这不就是走个流程糊弄人吗,真的很打击信心。",
+        "quality": "low",
+        "sourceLevel": "low",
+        "stance": "oppose",
+        "identityDescription": null
+      }
+    ]
+  }
+}
