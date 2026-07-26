@@ -61,6 +61,8 @@ export function ExperimentPage({
   );
 
   const mainScrollRef = useRef<HTMLElement | null>(null);
+  const composeBoxRef = useRef<HTMLDivElement | null>(null);
+  const postElementsRef = useRef<Map<string, HTMLElement>>(new Map());
 
   const {
     bindScrollContainer,
@@ -112,6 +114,48 @@ export function ExperimentPage({
   useLayoutEffect(() => {
     postsRef.current = posts;
   }, [posts]);
+
+  const registerPostRef = useCallback(
+    (postId: string) => (el: HTMLElement | null) => {
+      if (el) {
+        postElementsRef.current.set(postId, el);
+      } else {
+        postElementsRef.current.delete(postId);
+      }
+      registerPost(postId)(el);
+    },
+    [registerPost]
+  );
+
+  /**
+   * 发布评论输入框是 sticky 的，发布后它的高度可能变化（多行输入框 -> 单行已发布文案），
+   * 导致原本贴在顶部的帖子被"腰斩"。这里把滚动位置对齐到下一条完整可见的帖子，
+   * 避免出现半截帖子卡在顶部的观感。纯即时对齐，不加平滑滚动动效。
+   */
+  const snapToFullPost = useCallback(() => {
+    const container = mainScrollRef.current;
+    const composeEl = composeBoxRef.current;
+    if (!container || !composeEl) return;
+
+    const contentTop = composeEl.getBoundingClientRect().bottom;
+
+    for (const post of postsRef.current) {
+      const el = postElementsRef.current.get(post.id);
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      if (rect.bottom <= contentTop) continue;
+      if (rect.top < contentTop - 1) {
+        container.scrollTop += contentTop - rect.top;
+      }
+      break;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (publishedUserPost == null) return;
+    const id = requestAnimationFrame(() => snapToFullPost());
+    return () => cancelAnimationFrame(id);
+  }, [publishedUserPost, snapToFullPost]);
 
   const getPostAttrs = useCallback((postId: string): PostExperimentAttrs => {
     const post = postsRef.current.find((p) => p.id === postId);
@@ -335,7 +379,10 @@ export function ExperimentPage({
         aria-busy={!isMounted}
       >
         {isMounted ? (
-          <div className="border-b border-neutral-100 bg-neutral-50 px-4 py-2.5">
+          <div
+            ref={composeBoxRef}
+            className="sticky top-0 z-10 border-b border-neutral-100 bg-neutral-50 px-4 py-2.5"
+          >
             {publishedUserPost != null ? (
               <div className="flex items-start gap-2">
                 <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-neutral-700">
@@ -417,7 +464,7 @@ export function ExperimentPage({
                   hasShared={hasSharedThisPost}
                   shareDisabled={shareDisabled}
                   interactionsDisabled={!isRunning}
-                  rootRef={registerPost(post.id)}
+                  rootRef={registerPostRef(post.id)}
                   onShareClick={(e) => handleShareClick(e, post.id)}
                   onLikeClick={(e) => handleLike(e, post.id)}
                 />
