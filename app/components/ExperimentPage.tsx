@@ -10,7 +10,7 @@ import {
   type MouseEvent,
 } from "react";
 
-import { randomAlphanumericDisplayName } from "../data/avatarPool";
+import { randomLowSourceNickname } from "../data/avatarPool";
 import type { TopicKey } from "../data/topics";
 import { blockRandomize } from "../lib/blockRandomize";
 import type { ActionLog, EndReason, PostExperimentAttrs } from "../lib/dataSubmit";
@@ -340,7 +340,7 @@ export function ExperimentPage({
       timestamp: Date.now(),
       charCount: content.length,
     });
-    setOwnPost({ content, displayName: randomAlphanumericDisplayName() });
+    setOwnPost({ content, displayName: randomLowSourceNickname() });
     setUserPostExpanded(false);
   };
 

@@ -3,7 +3,7 @@ import {
   HIGH_SOURCE_AVATAR_MAP,
   HIGH_SOURCE_NAMES,
   HIGH_SOURCE_NAMES_BY_IDENTITY_BY_TOPIC,
-  randomAlphanumericDisplayName,
+  randomLowSourceNickname,
 } from "../data/avatarPool";
 import { shuffleArray, type PostItem } from "./blockRandomize";
 
@@ -30,7 +30,7 @@ export function enrichPostsForDisplay(
       shuffleArray([...names]),
     ])
   );
-  // 兜底池优先用本议题已配置的昵称（避免跨议题串味，比如AI议题落到"三孩爸爸老许"）；
+  // 兜底池优先用本议题已配置的昵称（避免跨议题串味）；
   // 若某议题尚未配置任何身份映射（如占位材料），退回全局昵称池，保证不崩溃。
   const topicNamePool = Object.values(namesByIdentity).flat();
   const fallbackHighNames = shuffleArray(
@@ -72,9 +72,9 @@ export function enrichPostsForDisplay(
       return { ...p, displayName, avatarFile };
     }
 
-    let displayName = randomAlphanumericDisplayName();
+    let displayName = randomLowSourceNickname();
     while (usedLowNames.has(displayName)) {
-      displayName = randomAlphanumericDisplayName();
+      displayName = randomLowSourceNickname();
     }
     usedLowNames.add(displayName);
     return { ...p, displayName };

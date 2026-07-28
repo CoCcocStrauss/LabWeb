@@ -12,7 +12,7 @@ import {
 import {
   HIGH_SOURCE_AVATAR_MAP,
   HIGH_SOURCE_NAMES,
-  randomAlphanumericDisplayName,
+  randomLowSourceNickname,
 } from "../data/avatarPool";
 import {
   EXPERIMENT_MATERIALS,
@@ -67,7 +67,7 @@ function enrichPostsForDisplay(posts: PostItem[]): PostItemWithAvatar[] {
     }
     return {
       ...p,
-      displayName: randomAlphanumericDisplayName(),
+      displayName: randomLowSourceNickname(),
     };
   });
 }
