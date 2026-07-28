@@ -14,7 +14,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "support",
-        "identityDescription": "组织行为学研究者 · 某高校劳动关系副教授"
+        "identityDescription": "中国人民大学劳动关系副教授"
       },
       {
         "id": "shh_02",
@@ -30,7 +30,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "support",
-        "identityDescription": "某互联网大厂HRBP · 招聘信息化产品负责人"
+        "identityDescription": "互联网大厂 · 招聘信息化负责人"
       },
       {
         "id": "shh_04",
@@ -38,7 +38,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "support",
-        "identityDescription": "资深猎头顾问 · 某猎头公司合伙人"
+        "identityDescription": "资深猎头顾问"
       },
       {
         "id": "shh_05",
@@ -46,7 +46,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "support",
-        "identityDescription": "某互联网大厂HRBP · 招聘信息化产品负责人"
+        "identityDescription": "互联网大厂 · 招聘信息化负责人"
       },
       {
         "id": "shh_06",
@@ -96,7 +96,7 @@
         "quality": "low",
         "sourceLevel": "high",
         "stance": "support",
-        "identityDescription": "某高校就业指导中心讲师"
+        "identityDescription": "同济大学就业指导中心讲师"
       },
       {
         "id": "shl_06",
@@ -214,7 +214,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "oppose",
-        "identityDescription": "资深猎头顾问 · 某猎头公司合伙人"
+        "identityDescription": "资深猎头顾问"
       },
       {
         "id": "ohh_02",
@@ -230,7 +230,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "oppose",
-        "identityDescription": "某互联网大厂HRBP · 招聘信息化产品负责人"
+        "identityDescription": "互联网大厂 · 招聘信息化负责人"
       },
       {
         "id": "ohh_04",
@@ -238,7 +238,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "oppose",
-        "identityDescription": "组织行为学研究者 · 某高校劳动关系副教授"
+        "identityDescription": "中国人民大学劳动关系副教授"
       },
       {
         "id": "ohh_05",
@@ -296,7 +296,7 @@
         "quality": "low",
         "sourceLevel": "high",
         "stance": "oppose",
-        "identityDescription": "某高校就业指导中心讲师"
+        "identityDescription": "同济大学就业指导中心讲师"
       },
       {
         "id": "ohl_06",

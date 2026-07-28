@@ -22,7 +22,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "support",
-        "identityDescription": "养老产业研究员 · 某地产研究院分析师"
+        "identityDescription": "养老产业研究员 · 中指研究院分析师"
       },
       {
         "id": "shh_03",
@@ -38,7 +38,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "support",
-        "identityDescription": "某民办养老机构运营负责人"
+        "identityDescription": "泰康之家运营负责人"
       },
       {
         "id": "shh_05",
@@ -46,7 +46,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "support",
-        "identityDescription": "养老产业研究员 · 某地产研究院分析师"
+        "identityDescription": "养老产业研究员 · 中指研究院分析师"
       },
       {
         "id": "shh_06",
@@ -72,7 +72,7 @@
         "quality": "low",
         "sourceLevel": "high",
         "stance": "support",
-        "identityDescription": "某社区养老服务中心负责人"
+        "identityDescription": "上海市徐汇区社区养老服务中心负责人"
       },
       {
         "id": "shl_03",
@@ -96,7 +96,7 @@
         "quality": "low",
         "sourceLevel": "high",
         "stance": "support",
-        "identityDescription": "某高校社会工作系讲师"
+        "identityDescription": "厦门大学社会工作系讲师"
       },
       {
         "id": "shl_06",
@@ -230,7 +230,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "oppose",
-        "identityDescription": "老年心理学研究者 · 某高校社会工作系副教授"
+        "identityDescription": "老年心理学研究者"
       },
       {
         "id": "ohh_04",
@@ -246,7 +246,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "oppose",
-        "identityDescription": "某民办养老机构运营负责人"
+        "identityDescription": "泰康之家运营负责人"
       },
       {
         "id": "ohh_06",
@@ -254,7 +254,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "oppose",
-        "identityDescription": "养老产业研究员 · 某地产研究院分析师"
+        "identityDescription": "养老产业研究员 · 中指研究院分析师"
       }
     ],
     "oppose_high_low": [
@@ -272,7 +272,7 @@
         "quality": "low",
         "sourceLevel": "high",
         "stance": "oppose",
-        "identityDescription": "某社区养老服务中心负责人"
+        "identityDescription": "上海市徐汇区社区养老服务中心负责人"
       },
       {
         "id": "ohl_03",
@@ -296,7 +296,7 @@
         "quality": "low",
         "sourceLevel": "high",
         "stance": "oppose",
-        "identityDescription": "某高校社会工作系讲师"
+        "identityDescription": "厦门大学社会工作系讲师"
       },
       {
         "id": "ohl_06",
