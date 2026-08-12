@@ -27,9 +27,15 @@ export function PostAvatar({
   const letter = displayName.charAt(0).toUpperCase();
   const bg = hashDisplayNameToAvatarBg(displayName);
 
+  // 认证用户加细金色描边，非认证无描边
+  const ringClass =
+    sourceLevel === "high"
+      ? "ring-[1.5px] ring-amber-400 ring-offset-[2px]"
+      : "";
+
   const fallbackCircle = (
     <div
-      className="flex h-11 w-11 shrink-0 select-none items-center justify-center rounded-full text-[15px] font-semibold leading-none text-white shadow-sm"
+      className={`flex h-11 w-11 shrink-0 select-none items-center justify-center rounded-full text-[15px] font-semibold leading-none text-white shadow-sm ${ringClass}`}
       style={{ backgroundColor: bg }}
       aria-hidden
     >
@@ -49,7 +55,7 @@ export function PostAvatar({
     <img
       src={`/avatars/${avatarFile}`}
       alt=""
-      className="h-11 w-11 shrink-0 rounded-full object-cover"
+      className={`h-11 w-11 shrink-0 rounded-full object-cover ${ringClass}`}
       loading="lazy"
       onError={() => setImgFailed(true)}
     />

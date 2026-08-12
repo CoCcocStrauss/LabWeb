@@ -47,10 +47,8 @@ export function PostCard({
   likePracticeSuccess = false,
 }: PostCardProps) {
   const highSource = post.sourceLevel === "high";
-  const showIdentity =
-    highSource &&
-    (Boolean(post.identityLabel?.trim()) ||
-      Boolean(post.platformLabel?.trim()));
+  const hasIdentityLabel = highSource && Boolean(post.identityLabel?.trim());
+  const hasPlatformLabel = highSource && Boolean(post.platformLabel?.trim());
 
   return (
     <article ref={rootRef} className="px-4 py-4">
@@ -62,25 +60,23 @@ export function PostCard({
           postId={post.id}
         />
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
+          {/* 第一行：昵称 · V标 · 平台类标签（三者同行） */}
+          <div className="flex flex-wrap items-center gap-1">
             <span className="text-[15px] font-medium text-neutral-900">
               {post.displayName}
             </span>
             {highSource ? <GoldVBadge /> : null}
+            {hasPlatformLabel ? (
+              <span className="text-[11px] leading-none text-neutral-400">
+                {post.platformLabel}
+              </span>
+            ) : null}
           </div>
-          {showIdentity ? (
-            <div className="mt-0.5 flex flex-wrap gap-1">
-              {post.identityLabel?.trim() ? (
-                <span className="inline-block rounded px-1.5 py-0.5 text-[11px] leading-none bg-neutral-100 text-neutral-500">
-                  {post.identityLabel}
-                </span>
-              ) : null}
-              {post.platformLabel?.trim() ? (
-                <span className="inline-block rounded px-1.5 py-0.5 text-[11px] leading-none bg-sky-50 text-sky-600">
-                  {post.platformLabel}
-                </span>
-              ) : null}
-            </div>
+          {/* 第二行：身份类标签（独占一行，昵称下方小字） */}
+          {hasIdentityLabel ? (
+            <p className="mt-0.5 text-[12px] leading-snug text-neutral-500">
+              {post.identityLabel}
+            </p>
           ) : null}
           <p className="mt-2 whitespace-pre-wrap break-words text-[15px] leading-[1.65] text-neutral-800">
             {post.content}
