@@ -88,22 +88,25 @@ export function TutorialPage({ onStart }: TutorialPageProps) {
       />
 
       <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-36 pt-6">
-        <h1 className="text-[20px] font-bold text-neutral-900">实验操作说明</h1>
-
-        <div className="mt-4 space-y-3 text-[14px] leading-relaxed text-neutral-700">
-          <p>我们正在研究社交媒体上的信息传播。</p>
+        <div className="space-y-3 text-[14px] leading-relaxed text-neutral-700">
           <p>
-            请想象这是你真实的社交账号。你将看到一组关于某个社会议题的帖子，来自不同用户。你转发的内容会代表你的观点，并展示给其他参与者看。
+            我们正在研究社交媒体上的信息传播。请想象这是你真实的社交账号，阅读帖子后
+            <strong className="text-neutral-900">选出 2 条最想转发的内容</strong>
+            （转发代表你的观点，会展示给他人）。
           </p>
           <div>
-            <p>请认真阅读每条帖子，形成自己的判断，然后：</p>
+            <p className="font-medium text-neutral-800">操作说明：</p>
             <ul className="mt-1.5 list-none space-y-1 pl-0">
-              <li>· 选择 2 条你最想转发的内容（点击「转发」按钮）</li>
-              <li>· 你也可以随时「点赞」，但不计入转发次数</li>
-              <li>· 实验时长 90 秒，转发满 2 条或倒计时结束后自动完成</li>
+              <li>
+                · 转发：选择<strong className="text-neutral-900"> 2 条</strong>你认同的内容
+              </li>
+              <li>· 点赞：可随时点，不计入转发</li>
+              <li>
+                · 限时<strong className="text-neutral-900"> 90 秒</strong>，转发满 2 条或倒计时结束自动完成
+              </li>
             </ul>
           </div>
-          <p>下方有练习帖子，请先尝试点击转发按钮熟悉操作：</p>
+          <p>👇 先用下方练习帖熟悉<strong className="text-neutral-900">转发</strong>操作</p>
         </div>
         <div className="mt-2 divide-y divide-neutral-100 overflow-hidden rounded-lg border border-neutral-200">
           <PostCard
