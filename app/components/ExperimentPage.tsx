@@ -61,10 +61,16 @@ export function ExperimentPage({
     content: string;
     displayName: string;
   } | null>(null);
+  /**
+   * 发布时捕获：应将自己的帖子插入到哪条帖子之前（null = 插到列表末尾）。
+   * 这样发布后帖子出现在当前可视区顶部，用户无需回滚。
+   */
+  const [insertBeforePostId, setInsertBeforePostId] = useState<string | null>(null);
 
   const mainScrollRef = useRef<HTMLElement | null>(null);
   const composeBoxRef = useRef<HTMLDivElement | null>(null);
   const postElementsRef = useRef<Map<string, HTMLElement>>(new Map());
+  const ownPostRef = useRef<HTMLElement | null>(null);
 
   const {
     bindScrollContainer,
@@ -130,34 +136,25 @@ export function ExperimentPage({
   );
 
   /**
-   * 发布评论输入框是 sticky 的，发布后它的高度可能变化（多行输入框 -> 单行已发布文案），
-   * 导致原本贴在顶部的帖子被"腰斩"。这里把滚动位置对齐到下一条完整可见的帖子，
-   * 避免出现半截帖子卡在顶部的观感。纯即时对齐，不加平滑滚动动效。
+   * 发布后将滚动位置对齐，使自己的帖子紧贴在 compose box 下方可见。
+   * ownPost 插入点（insertBeforePostId）由 handleUserPostPublish 在点击瞬间
+   * 根据当前视口捕获，因此 DOM 更新后直接把 scrollTop 对齐到 ownPost 顶部即可。
    */
-  const snapToFullPost = useCallback(() => {
-    const container = mainScrollRef.current;
-    const composeEl = composeBoxRef.current;
-    if (!container || !composeEl) return;
-
-    const contentTop = composeEl.getBoundingClientRect().bottom;
-
-    for (const post of postsRef.current) {
-      const el = postElementsRef.current.get(post.id);
-      if (!el) continue;
-      const rect = el.getBoundingClientRect();
-      if (rect.bottom <= contentTop) continue;
-      if (rect.top < contentTop - 1) {
-        container.scrollTop += contentTop - rect.top;
-      }
-      break;
-    }
-  }, []);
-
   useEffect(() => {
     if (ownPost == null) return;
-    const id = requestAnimationFrame(() => snapToFullPost());
+    const id = requestAnimationFrame(() => {
+      const ownPostEl = ownPostRef.current;
+      const container = mainScrollRef.current;
+      const composeEl = composeBoxRef.current;
+      if (!ownPostEl || !container || !composeEl) return;
+      const containerRect = container.getBoundingClientRect();
+      const ownPostRect = ownPostEl.getBoundingClientRect();
+      const ownPostTopInContainer =
+        ownPostRect.top - containerRect.top + container.scrollTop;
+      container.scrollTop = ownPostTopInContainer - composeEl.offsetHeight;
+    });
     return () => cancelAnimationFrame(id);
-  }, [ownPost, snapToFullPost]);
+  }, [ownPost]);
 
   const getPostAttrs = useCallback((postId: string): PostExperimentAttrs => {
     const post = postsRef.current.find((p) => p.id === postId);
@@ -334,12 +331,29 @@ export function ExperimentPage({
     if (!isMounted || !isRunning || ownPost != null) return;
     const content = userPostDraft.trim();
     if (!content) return;
+
+    // 发布前捕获当前可视区第一条帖子，用于确定插入位置
+    let insertBefore: string | null = null;
+    const composeEl = composeBoxRef.current;
+    if (composeEl) {
+      const composeBottom = composeEl.getBoundingClientRect().bottom;
+      for (const post of postsRef.current) {
+        const el = postElementsRef.current.get(post.id);
+        if (!el) continue;
+        if (el.getBoundingClientRect().bottom > composeBottom) {
+          insertBefore = post.id;
+          break;
+        }
+      }
+    }
+
     appendAction({
       type: "user_post",
       content,
       timestamp: Date.now(),
       charCount: content.length,
     });
+    setInsertBeforePostId(insertBefore);
     setOwnPost({ content, displayName: randomLowSourceNickname() });
     setUserPostExpanded(false);
   };
@@ -446,30 +460,14 @@ export function ExperimentPage({
           </div>
         ) : (
           <div className="divide-y divide-neutral-100">
-            {ownPost != null ? (
-              <PostCard
-                post={{
-                  id: "own-post",
-                  content: ownPost.content,
-                  sourceLevel: "low",
-                  displayName: ownPost.displayName,
-                }}
-                isLiked={false}
-                hasShared={false}
-                shareDisabled
-                interactionsDisabled
-                onShareClick={() => {}}
-                onLikeClick={() => {}}
-              />
-            ) : null}
-            {posts.map((post) => {
+            {posts.flatMap((post) => {
               const isLiked = !!liked[post.id];
               const hasSharedThisPost = actions.some(
                 (a) => a.type === "share" && a.postId === post.id
               );
               const shareDisabled =
                 !isRunning || shareLocked || hasSharedThisPost;
-              return (
+              const regularCard = (
                 <PostCard
                   key={post.id}
                   post={post}
@@ -482,7 +480,52 @@ export function ExperimentPage({
                   onLikeClick={(e) => handleLike(e, post.id)}
                 />
               );
+              // 若此帖子是发布后的插入点，在它前面渲染自己的帖子
+              if (ownPost != null && post.id === insertBeforePostId) {
+                return [
+                  <PostCard
+                    key="own-post"
+                    post={{
+                      id: "own-post",
+                      content: ownPost.content,
+                      sourceLevel: "low",
+                      displayName: ownPost.displayName,
+                    }}
+                    isLiked={false}
+                    hasShared={false}
+                    shareDisabled
+                    interactionsDisabled
+                    rootRef={(el) => {
+                      ownPostRef.current = el;
+                    }}
+                    onShareClick={() => {}}
+                    onLikeClick={() => {}}
+                  />,
+                  regularCard,
+                ];
+              }
+              return [regularCard];
             })}
+            {/* 用户在列表末尾发布（insertBeforePostId === null）时追加到最后 */}
+            {ownPost != null && insertBeforePostId === null ? (
+              <PostCard
+                post={{
+                  id: "own-post",
+                  content: ownPost.content,
+                  sourceLevel: "low",
+                  displayName: ownPost.displayName,
+                }}
+                isLiked={false}
+                hasShared={false}
+                shareDisabled
+                interactionsDisabled
+                rootRef={(el) => {
+                  ownPostRef.current = el;
+                }}
+                onShareClick={() => {}}
+                onLikeClick={() => {}}
+              />
+            ) : null}
           </div>
         )}
       </main>
