@@ -10,24 +10,25 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 
+// identityLabel = 现实职业身份（身份类）；platformLabel = 平台身份/影响力（平台类）
 const A_IDENTITY_MAP = {
-  A1: "泰康之家运营负责人",
-  A2: "养老义工博主 · 知乎优秀答主",
-  A3: "养老产业研究员 · 中指研究院分析师",
-  A4: "老年心理学研究者",
-  A5: "养老院住户 · 退休教师",
-  A6: "养老决策亲历者 · 子女互助交流版主",
-  A7: "海外养老模式观察者 · 荷兰生活多年",
-  A8: "执业律师 · 老年人权益与劳动法律师",
+  A1: { identityLabel: "泰康之家养老院运营负责人",     platformLabel: null },
+  A2: { identityLabel: null,                           platformLabel: "知乎养老话题优质答主" },
+  A3: { identityLabel: "中指研究院养老产业分析师",     platformLabel: "养老产业话题答主" },
+  A4: { identityLabel: "老年心理学研究者",             platformLabel: null },
+  A5: { identityLabel: "退休教师",                    platformLabel: "养老院生活话题分享者" },
+  A6: { identityLabel: null,                           platformLabel: "子女互助养老交流圈管理员" },
+  A7: { identityLabel: "旅居荷兰华人",                platformLabel: "海外养老话题活跃用户" },
+  A8: { identityLabel: "老年权益执业律师",             platformLabel: null },
 };
 
 const B_HIGH_SOURCE_IDENTITIES = [
-  "资深社会观察员 · 时评专栏作者",
-  "上海市徐汇区社区养老服务中心负责人",
-  "国家二级心理咨询师 · 老年心理疏导方向",
-  "知名养老话题博主 · 粉丝60万+",
-  "厦门大学社会工作系讲师",
-  "国家二级公共营养师 · 老年膳食方向",
+  { identityLabel: null,                               platformLabel: "养老话题优质创作者" },
+  { identityLabel: "社区养老服务中心负责人",          platformLabel: null },
+  { identityLabel: "国家二级心理咨询师（老年方向）", platformLabel: "老年心理话题答主" },
+  { identityLabel: null,                               platformLabel: "养老话题博主 · 60万粉丝" },
+  { identityLabel: "厦门大学社会工作系讲师",          platformLabel: "养老政策话题答主" },
+  { identityLabel: "国家二级公共营养师（老年膳食）", platformLabel: null },
 ];
 
 function parseCsv(text) {
@@ -102,15 +103,11 @@ function cellKey(stance, sourceLevel, quality) {
   return `${stance}_${sourceLevel}_${quality}`;
 }
 
-function resolveIdentityDescription(item, bHighSourceIndex) {
-  if (item.sourceLevel === "low") {
-    return null;
-  }
-  if (item.quality === "high") {
-    return A_IDENTITY_MAP[item.persona_id] ?? null;
-  }
-  const identity = B_HIGH_SOURCE_IDENTITIES[bHighSourceIndex % B_HIGH_SOURCE_IDENTITIES.length];
-  return identity;
+function resolveIdentityLabels(item, bHighSourceIndex) {
+  const empty = { identityLabel: null, platformLabel: null };
+  if (item.sourceLevel === "low") return empty;
+  if (item.quality === "high") return A_IDENTITY_MAP[item.persona_id] ?? empty;
+  return B_HIGH_SOURCE_IDENTITIES[bHighSourceIndex % B_HIGH_SOURCE_IDENTITIES.length] ?? empty;
 }
 
 const CELL_ORDER = [
@@ -164,14 +161,18 @@ for (const cell of CELL_ORDER) {
   }
   const prefix = CELL_PREFIX[cell];
   materials[cell] = materials[cell].map((item, i) => {
-    let identityDescription = null;
+    let identityLabel = null;
+    let platformLabel = null;
     if (item.sourceLevel === "high") {
+      let labels;
       if (item.quality === "low") {
-        identityDescription = resolveIdentityDescription(item, bHighSourceCounter);
+        labels = resolveIdentityLabels(item, bHighSourceCounter);
         bHighSourceCounter += 1;
       } else {
-        identityDescription = resolveIdentityDescription(item, 0);
+        labels = resolveIdentityLabels(item, 0);
       }
+      identityLabel = labels.identityLabel;
+      platformLabel = labels.platformLabel;
     }
     return {
       id: `${prefix}_${String(i + 1).padStart(2, "0")}`,
@@ -179,7 +180,8 @@ for (const cell of CELL_ORDER) {
       quality: item.quality,
       sourceLevel: item.sourceLevel,
       stance: item.stance,
-      identityDescription,
+      identityLabel,
+      platformLabel,
     };
   });
 }

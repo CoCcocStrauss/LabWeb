@@ -10,6 +10,9 @@ import { shuffleArray, type PostItem } from "./blockRandomize";
 export type PostItemWithDisplay = PostItem & {
   displayName: string;
   avatarFile?: string;
+  /** enrichPosts 写入；与材料里的 identityLabel/platformLabel 相同 */
+  identityLabel?: string | null;
+  platformLabel?: string | null;
 };
 
 /** 为每条帖子分配展示名与头像（会话内固定）；身份描述来自材料 JSON，按当前议题查找专属身份池。 */
@@ -39,11 +42,14 @@ export function enrichPostsForDisplay(
   const usedHighNames = new Set<keyof typeof HIGH_SOURCE_AVATAR_MAP>();
   const usedLowNames = new Set<string>();
 
+  // identityLabel 优先；仅有 platformLabel 时用 platformLabel 作 lookup key
   const takeHighSourceName = (
-    identityDescription?: string | null
+    identityLabel?: string | null,
+    platformLabel?: string | null
   ): keyof typeof HIGH_SOURCE_AVATAR_MAP => {
-    const identityQueue = identityDescription
-      ? identityQueues.get(identityDescription)
+    const lookupKey = identityLabel ?? platformLabel ?? undefined;
+    const identityQueue = lookupKey
+      ? identityQueues.get(lookupKey)
       : undefined;
     const matchedName = identityQueue?.find((name) => !usedHighNames.has(name));
     if (matchedName) {
@@ -67,7 +73,7 @@ export function enrichPostsForDisplay(
 
   return posts.map((p) => {
     if (p.sourceLevel === "high") {
-      const displayName = takeHighSourceName(p.identityDescription);
+      const displayName = takeHighSourceName(p.identityLabel, p.platformLabel);
       const avatarFile = HIGH_SOURCE_AVATAR_MAP[displayName];
       return { ...p, displayName, avatarFile };
     }

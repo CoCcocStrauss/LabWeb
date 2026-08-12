@@ -18,7 +18,7 @@ import {
   EXPERIMENT_MATERIALS,
   type PostItem,
 } from "../data/experimentMaterials";
-import { IDENTITY_DESCRIPTIONS } from "../data/identityPool";
+import { IDENTITY_LABEL_PAIRS } from "../data/identityPool";
 import { CountdownBar, EXPERIMENT_DURATION_MS } from "./CountdownBar";
 import { PostCard } from "./PostCard";
 import { ShareModal } from "./ShareModal";
@@ -28,7 +28,8 @@ export type { PostItem };
 type PostItemWithAvatar = PostItem & {
   displayName: string;
   avatarFile?: string;
-  identityDescription?: string;
+  identityLabel?: string | null;
+  platformLabel?: string | null;
 };
 
 type LikeLog = { action: "like"; postId: number; timestamp: number };
@@ -59,11 +60,17 @@ function enrichPostsForDisplay(posts: PostItem[]): PostItemWithAvatar[] {
           Math.floor(Math.random() * HIGH_SOURCE_NAMES.length)
         ]!;
       const avatarFile = HIGH_SOURCE_AVATAR_MAP[displayName];
-      const identityDescription =
-        IDENTITY_DESCRIPTIONS[
-          Math.floor(Math.random() * IDENTITY_DESCRIPTIONS.length)
+      const labelPair =
+        IDENTITY_LABEL_PAIRS[
+          Math.floor(Math.random() * IDENTITY_LABEL_PAIRS.length)
         ]!;
-      return { ...p, displayName, avatarFile, identityDescription };
+      return {
+        ...p,
+        displayName,
+        avatarFile,
+        identityLabel: labelPair.identityLabel,
+        platformLabel: labelPair.platformLabel,
+      };
     }
     return {
       ...p,

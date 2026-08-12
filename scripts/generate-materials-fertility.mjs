@@ -10,24 +10,26 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 
+// identityLabel = 现实职业身份（身份类）；platformLabel = 平台身份/影响力（平台类）
+// 1/3 只有身份类 | 1/3 只有平台类 | 1/3 两个都有
 const A_IDENTITY_MAP = {
-  A1: "上海市第一妇婴保健院妇产科副主任医师",
-  A2: "三胎家庭 · 知乎优秀答主",
-  A3: "注册金融分析师 · 房地产研究员",
-  A4: "应用心理学副教授",
-  A5: "育儿博主 · 三孩妈妈",
-  A6: "婚姻关系咨询师 · 二级心理咨询师",
-  A7: "中国人民大学公共政策研究中心副研究员",
-  A8: "执业律师 · 事务所合伙人",
+  A1: { identityLabel: "妇产科副主任医师",            platformLabel: null },
+  A2: { identityLabel: null,                          platformLabel: "知乎三孩话题优质答主" },
+  A3: { identityLabel: "注册金融分析师",              platformLabel: "房产投资话题答主" },
+  A4: { identityLabel: "应用心理学副教授",            platformLabel: null },
+  A5: { identityLabel: "三孩家庭成员",               platformLabel: "育儿话题优质创作者" },
+  A6: { identityLabel: "二级心理咨询师",             platformLabel: "婚姻情感话题答主" },
+  A7: { identityLabel: "中国人民大学公共政策副研究员", platformLabel: null },
+  A8: { identityLabel: "执业律师",                   platformLabel: null },
 };
 
 const B_HIGH_SOURCE_IDENTITIES = [
-  "资深社会评论员 · 时评专栏作者",
-  "苏州市政协委员",
-  "市场研究总监",
-  "知名家庭教育博主 · 粉丝50万+",
-  "华东理工大学社会工作系讲师",
-  "注册营养师 · 孕产营养方向",
+  { identityLabel: null,                         platformLabel: "时评话题优质创作者" },
+  { identityLabel: "苏州市政协委员",             platformLabel: "生育政策话题答主" },
+  { identityLabel: "市场研究总监",               platformLabel: null },
+  { identityLabel: null,                         platformLabel: "家庭教育话题博主 · 50万粉丝" },
+  { identityLabel: "华东理工大学社会工作系讲师", platformLabel: "家庭社会学话题答主" },
+  { identityLabel: null,                         platformLabel: "孕产健康话题活跃用户" },
 ];
 
 function parseCsv(text) {
@@ -102,15 +104,11 @@ function cellKey(stance, sourceLevel, quality) {
   return `${stance}_${sourceLevel}_${quality}`;
 }
 
-function resolveIdentityDescription(item, bHighSourceIndex) {
-  if (item.sourceLevel === "low") {
-    return null;
-  }
-  if (item.quality === "high") {
-    return A_IDENTITY_MAP[item.persona_id] ?? null;
-  }
-  const identity = B_HIGH_SOURCE_IDENTITIES[bHighSourceIndex % B_HIGH_SOURCE_IDENTITIES.length];
-  return identity;
+function resolveIdentityLabels(item, bHighSourceIndex) {
+  const empty = { identityLabel: null, platformLabel: null };
+  if (item.sourceLevel === "low") return empty;
+  if (item.quality === "high") return A_IDENTITY_MAP[item.persona_id] ?? empty;
+  return B_HIGH_SOURCE_IDENTITIES[bHighSourceIndex % B_HIGH_SOURCE_IDENTITIES.length] ?? empty;
 }
 
 const CELL_ORDER = [
@@ -164,14 +162,18 @@ for (const cell of CELL_ORDER) {
   }
   const prefix = CELL_PREFIX[cell];
   materials[cell] = materials[cell].map((item, i) => {
-    let identityDescription = null;
+    let identityLabel = null;
+    let platformLabel = null;
     if (item.sourceLevel === "high") {
+      let labels;
       if (item.quality === "low") {
-        identityDescription = resolveIdentityDescription(item, bHighSourceCounter);
+        labels = resolveIdentityLabels(item, bHighSourceCounter);
         bHighSourceCounter += 1;
       } else {
-        identityDescription = resolveIdentityDescription(item, 0);
+        labels = resolveIdentityLabels(item, 0);
       }
+      identityLabel = labels.identityLabel;
+      platformLabel = labels.platformLabel;
     }
     return {
       id: `${prefix}_${String(i + 1).padStart(2, "0")}`,
@@ -179,7 +181,8 @@ for (const cell of CELL_ORDER) {
       quality: item.quality,
       sourceLevel: item.sourceLevel,
       stance: item.stance,
-      identityDescription,
+      identityLabel,
+      platformLabel,
     };
   });
 }

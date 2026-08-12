@@ -2,7 +2,7 @@
 
 ## 说明
 
-每条帖子有一个固定的 identityDescription。只有 sourceLevel="high" 的帖子会显示这个字段。
+每条帖子有一个固定的 identityLabel / platformLabel。只有 sourceLevel="high" 的帖子会显示这个字段。
 
 sourceLevel 是在 materials_fertility.json 中已经分配好的（24 条 high + 24 条 low）。
 只需要给 24 条 high-source 帖子配上身份描述。
@@ -54,9 +54,9 @@ B 类帖子中哪些被分配了 high source，就按顺序从这个池中轮流
   "quality": "high",
   "sourceLevel": "high",
   "stance": "support",
-  "identityDescription": "上海市第一妇婴保健院妇产科副主任医师"
+  "identityLabel / platformLabel": "上海市第一妇婴保健院妇产科副主任医师"
 }
 ```
 
 sourceLevel="low" 的帖子不需要这个字段（或设为 null）。
-PostCard 组件已经支持 identityDescription 显示，只需要在数据层加上。
+PostCard 组件已经支持 identityLabel / platformLabel 显示，只需要在数据层加上。

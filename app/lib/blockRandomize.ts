@@ -8,8 +8,10 @@ export type PostItem = {
   quality: Quality;
   sourceLevel: SourceLevel;
   stance: Stance;
-  /** 高信源专用；低信源为 null */
-  identityDescription?: string | null;
+  /** 高信源专用：现实职业身份；低信源为 null */
+  identityLabel?: string | null;
+  /** 高信源专用：平台身份/影响力；低信源为 null */
+  platformLabel?: string | null;
 };
 
 export type MaterialsByCell = Record<string, PostItem[]>;

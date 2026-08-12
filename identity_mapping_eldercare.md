@@ -43,7 +43,7 @@
 
 C类人设（故事型/传统观念/犹豫型/共情型）结构同前两个议题，本次同样未生成对应语料（生成脚本只用 A/B 两类，原因见 `identity_mapping_ai.md`）。
 
-## Step 4：高信源身份映射（identityDescription）
+## Step 4：高信源身份映射（identityLabel / platformLabel）
 
 ### A类：专业身份 1:1 匹配（`A_IDENTITY_MAP`）
 

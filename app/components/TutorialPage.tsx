@@ -15,7 +15,8 @@ const DEMO_POST_HIGH: PostCardData = {
   sourceLevel: "high",
   displayName: "知秋观察",
   avatarFile: "v7.jpg",
-  identityDescription: "复旦大学社会学系副教授",
+  identityLabel: "复旦大学社会学系副教授",
+  platformLabel: "社会议题话题答主",
 };
 
 const DEMO_POST_LOW: PostCardData = {

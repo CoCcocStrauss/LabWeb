@@ -124,7 +124,11 @@ type PostItem = {
 ```
 
 - cell 命名规则：`{stance}_{source}_{quality}`
-- 每条 `sourceLevel="high"` 的帖子可以带一个 `identityDescription` 字段（专业身份文案），显示时会按 `topic` 去 `app/data/avatarPool.ts` 里对应议题的身份池匹配昵称+头像，未匹配到时落到通用兜底池
+- 每条 `sourceLevel="high"` 的帖子有两个可选标签字段：
+  - `identityLabel`：现实职业身份（身份类标签，灰色小 pill），如"妇产科副主任医师"
+  - `platformLabel`：平台身份/影响力（平台类标签，蓝色小 pill），如"知乎三孩话题优质答主"
+  - 每位认证用户最多展示 2 个标签（1 身份类 + 1 平台类），约 1/3 只有身份类、1/3 只有平台类、1/3 两类都有
+  - lookup key = `identityLabel ?? platformLabel`，按 `topic` 去 `app/data/avatarPool.ts` 里对应议题的身份池匹配昵称+头像
 
 ### 帖子加载逻辑（分块随机化）
 

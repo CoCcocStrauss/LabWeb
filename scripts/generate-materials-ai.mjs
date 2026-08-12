@@ -10,24 +10,25 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 
+// identityLabel = 现实职业身份（身份类）；platformLabel = 平台身份/影响力（平台类）
 const A_IDENTITY_MAP = {
-  A1: "互联网大厂 · 招聘信息化负责人",
-  A2: "秋招求职博主 · 知乎优秀答主",
-  A3: "资深猎头顾问",
-  A4: "中国人民大学劳动关系副教授",
-  A5: "大厂招聘算法产品经理",
-  A6: "企业招聘负责人 · 前求职者",
-  A7: "海外人力资源政策观察者 · 硅谷HR",
-  A8: "执业律师 · 劳动与雇佣法律师",
+  A1: { identityLabel: "大型互联网公司招聘负责人",       platformLabel: null },
+  A2: { identityLabel: null,                             platformLabel: "知乎秋招话题优质答主" },
+  A3: { identityLabel: "资深猎头顾问",                  platformLabel: "职场招聘话题答主" },
+  A4: { identityLabel: "中国人民大学劳动关系副教授",     platformLabel: null },
+  A5: { identityLabel: "大厂招聘算法产品经理",          platformLabel: "AI招聘话题答主" },
+  A6: { identityLabel: "企业招聘负责人",                platformLabel: "职场招聘话题创作者" },
+  A7: { identityLabel: "硅谷科技公司HR",                platformLabel: null },
+  A8: { identityLabel: "劳动法执业律师",                platformLabel: null },
 };
 
 const B_HIGH_SOURCE_IDENTITIES = [
-  "资深职场评论员 · 时评专栏作者",
-  "注册人力资源管理师（一级）",
-  "科技行业观察员 · 算法伦理研究者",
-  "知名职场博主 · 粉丝80万+",
-  "同济大学就业指导中心讲师",
-  "国家认证生涯规划师",
+  { identityLabel: null,                          platformLabel: "职场话题优质创作者" },
+  { identityLabel: "注册人力资源管理师（一级）", platformLabel: "HR话题答主" },
+  { identityLabel: null,                          platformLabel: "算法伦理话题活跃用户" },
+  { identityLabel: null,                          platformLabel: "职场话题博主 · 80万粉丝" },
+  { identityLabel: "同济大学就业指导中心讲师",   platformLabel: "大学生职业规划话题答主" },
+  { identityLabel: "国家认证生涯规划师",         platformLabel: null },
 ];
 
 function parseCsv(text) {
@@ -102,15 +103,11 @@ function cellKey(stance, sourceLevel, quality) {
   return `${stance}_${sourceLevel}_${quality}`;
 }
 
-function resolveIdentityDescription(item, bHighSourceIndex) {
-  if (item.sourceLevel === "low") {
-    return null;
-  }
-  if (item.quality === "high") {
-    return A_IDENTITY_MAP[item.persona_id] ?? null;
-  }
-  const identity = B_HIGH_SOURCE_IDENTITIES[bHighSourceIndex % B_HIGH_SOURCE_IDENTITIES.length];
-  return identity;
+function resolveIdentityLabels(item, bHighSourceIndex) {
+  const empty = { identityLabel: null, platformLabel: null };
+  if (item.sourceLevel === "low") return empty;
+  if (item.quality === "high") return A_IDENTITY_MAP[item.persona_id] ?? empty;
+  return B_HIGH_SOURCE_IDENTITIES[bHighSourceIndex % B_HIGH_SOURCE_IDENTITIES.length] ?? empty;
 }
 
 const CELL_ORDER = [
@@ -164,14 +161,18 @@ for (const cell of CELL_ORDER) {
   }
   const prefix = CELL_PREFIX[cell];
   materials[cell] = materials[cell].map((item, i) => {
-    let identityDescription = null;
+    let identityLabel = null;
+    let platformLabel = null;
     if (item.sourceLevel === "high") {
+      let labels;
       if (item.quality === "low") {
-        identityDescription = resolveIdentityDescription(item, bHighSourceCounter);
+        labels = resolveIdentityLabels(item, bHighSourceCounter);
         bHighSourceCounter += 1;
       } else {
-        identityDescription = resolveIdentityDescription(item, 0);
+        labels = resolveIdentityLabels(item, 0);
       }
+      identityLabel = labels.identityLabel;
+      platformLabel = labels.platformLabel;
     }
     return {
       id: `${prefix}_${String(i + 1).padStart(2, "0")}`,
@@ -179,7 +180,8 @@ for (const cell of CELL_ORDER) {
       quality: item.quality,
       sourceLevel: item.sourceLevel,
       stance: item.stance,
-      identityDescription,
+      identityLabel,
+      platformLabel,
     };
   });
 }

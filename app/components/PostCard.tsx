@@ -13,8 +13,10 @@ export type PostCardData = {
   sourceLevel: SourceLevel;
   displayName: string;
   avatarFile?: string;
-  /** 高信源专用：用户名下方灰色身份描述；低信源为 null */
-  identityDescription?: string | null;
+  /** 高信源专用：现实职业身份标签（灰色）；null 则不显示 */
+  identityLabel?: string | null;
+  /** 高信源专用：平台身份/影响力标签（蓝色）；null 则不显示 */
+  platformLabel?: string | null;
 };
 
 export type PostCardProps = {
@@ -46,7 +48,9 @@ export function PostCard({
 }: PostCardProps) {
   const highSource = post.sourceLevel === "high";
   const showIdentity =
-    highSource && Boolean(post.identityDescription?.trim());
+    highSource &&
+    (Boolean(post.identityLabel?.trim()) ||
+      Boolean(post.platformLabel?.trim()));
 
   return (
     <article ref={rootRef} className="px-4 py-4">
@@ -65,9 +69,18 @@ export function PostCard({
             {highSource ? <GoldVBadge /> : null}
           </div>
           {showIdentity ? (
-            <p className="mt-0.5 text-[12px] leading-snug text-neutral-500">
-              {post.identityDescription}
-            </p>
+            <div className="mt-0.5 flex flex-wrap gap-1">
+              {post.identityLabel?.trim() ? (
+                <span className="inline-block rounded px-1.5 py-0.5 text-[11px] leading-none bg-neutral-100 text-neutral-500">
+                  {post.identityLabel}
+                </span>
+              ) : null}
+              {post.platformLabel?.trim() ? (
+                <span className="inline-block rounded px-1.5 py-0.5 text-[11px] leading-none bg-sky-50 text-sky-600">
+                  {post.platformLabel}
+                </span>
+              ) : null}
+            </div>
           ) : null}
           <p className="mt-2 whitespace-pre-wrap break-words text-[15px] leading-[1.65] text-neutral-800">
             {post.content}

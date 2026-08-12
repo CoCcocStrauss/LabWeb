@@ -44,7 +44,7 @@
 
 C类（故事型/传统观念/犹豫型/共情型）人设结构与生育议题一致，但**本次未生成对应语料**——生成脚本（`generate-materials-fertility.mjs` 及本议题对应版本）本来就只从 A/B 两类中抽取素材，C类内容在生育议题里生成后也从未进入最终 `materials.json`，因此这次为节省成本直接跳过，只生成 A1-A8、B1-B8 共16个人设、每人设2种立场×5条=160条语料。
 
-## Step 4：高信源身份映射（identityDescription）
+## Step 4：高信源身份映射（identityLabel / platformLabel）
 
 ### A类：专业身份 1:1 匹配（`A_IDENTITY_MAP`）
 
