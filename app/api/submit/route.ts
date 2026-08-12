@@ -56,7 +56,7 @@ function isValidBody(body: unknown): body is SubmitBody {
     !VALID_END_REASONS.includes(b.endReason as EndReason)
   )
     return false;
-  if (typeof b.maxScrollY !== "number" || b.maxScrollY < 0) return false;
+  if (typeof b.maxScrollY !== "number" || b.maxScrollY < 0 || !isFinite(b.maxScrollY)) return false;
   if (
     !Array.isArray(b.postOrder) ||
     !b.postOrder.every((p) => typeof p === "string")
@@ -116,10 +116,21 @@ export async function POST(request: Request) {
       p_total_duration_ms: totalDurationMs,
       p_completion_code: completionCode,
       p_end_reason: body.endReason,
-      p_max_scroll_y: body.maxScrollY,
+      p_max_scroll_y: Math.round(body.maxScrollY),
       p_post_order: body.postOrder,
-      p_actions: body.actions,
-      p_scroll_events: body.scrollEvents,
+      p_actions: body.actions.map((a) => ({
+        ...a,
+        ...(typeof (a as Record<string, unknown>).order === "number"
+          ? { order: Math.round((a as Record<string, unknown>).order as number) }
+          : {}),
+        ...(typeof (a as Record<string, unknown>).charCount === "number"
+          ? { charCount: Math.round((a as Record<string, unknown>).charCount as number) }
+          : {}),
+      })),
+      p_scroll_events: body.scrollEvents.map((e) => ({
+        ...e,
+        scrollY: Math.round(e.scrollY),
+      })),
       p_post_visibility: body.postVisibilitySummary,
     });
 
