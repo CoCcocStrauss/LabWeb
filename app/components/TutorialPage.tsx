@@ -88,7 +88,9 @@ export function TutorialPage({ onStart }: TutorialPageProps) {
       />
 
       <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-36 pt-6">
-        <div className="space-y-3 text-[14px] leading-relaxed text-neutral-700">
+        <h1 className="text-[20px] font-bold text-neutral-900">实验操作说明</h1>
+
+        <div className="mt-4 space-y-3 text-[14px] leading-relaxed text-neutral-700">
           <p>
             我们正在研究社交媒体上的信息传播。请想象这是你真实的社交账号，阅读帖子后
             <strong className="text-neutral-900">选出 2 条最想转发的内容</strong>
@@ -106,9 +108,10 @@ export function TutorialPage({ onStart }: TutorialPageProps) {
               </li>
             </ul>
           </div>
-          <p>👇 先用下方练习帖熟悉<strong className="text-neutral-900">转发</strong>操作</p>
+          <p className="pt-1">👇 先用下方练习帖熟悉<strong className="text-neutral-900">转发</strong>操作</p>
         </div>
-        <div className="mt-2 divide-y divide-neutral-100 overflow-hidden rounded-lg border border-neutral-200">
+
+        <div className="mt-4 divide-y divide-neutral-100 overflow-hidden rounded-lg border border-neutral-200">
           <PostCard
             post={DEMO_POST_HIGH}
             isLiked={highLiked}
