@@ -33,3 +33,4 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+语料信息表.xlsx
