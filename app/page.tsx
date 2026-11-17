@@ -64,7 +64,7 @@ function parseParams(searchParams: URLSearchParams): {
     conditionN = n as ConditionN;
     topic = topicRaw;
   } else {
-    // 生成端只需传 uid：按 uid 哈希稳定分配到 3(N) × 3(topic) = 9 个条件之一，
+    // 生成端只需传 uid：按 uid 哈希稳定分配到 3(N) × 2(topic) = 6 个条件之一，
     // 同一 uid 刷新/重开链接始终分到同一组。
     const assigned = assignCondition(uid);
     conditionN = assigned.conditionN;

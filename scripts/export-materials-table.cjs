@@ -1,4 +1,4 @@
-// 一次性脚本：将三个议题的全部语料 + 身份/头像候选信息导出为一个多 sheet 的 Excel 表格，
+// 将两个正式议题的全部语料 + 身份/头像候选信息导出为多 sheet 的 Excel 表格，
 // 用于人工核对"语料内容 是否匹配 身份描述"、"语料内容 是否匹配 高/低质量标签"。
 // 用法：node scripts/export-materials-table.cjs
 const fs = require("fs");
@@ -30,7 +30,6 @@ const HIGH_SOURCE_NAMES_BY_IDENTITY_BY_TOPIC = extractObject(
 const TOPICS = [
   { key: "fertility", label: "生育", file: "app/data/materials/fertility.json" },
   { key: "ai", label: "AI", file: "app/data/materials/ai.json" },
-  { key: "eldercare", label: "养老", file: "app/data/materials/eldercare.json" },
 ];
 
 const CELL_LABELS = {
@@ -71,11 +70,9 @@ for (const topic of TOPICS) {
       let nicknames = "";
       let avatarFiles = "";
       if (isHighSource && (post.identityLabel || post.platformLabel)) {
-        const { names, avatars: avs } = nicknamesAndAvatarsForIdentity(
-          topic.key,
-          post.identityLabel,
-          post.platformLabel
-        );
+        const { names, avatars: avs } = post.sourceCandidates?.length
+          ? { names: post.sourceCandidates.map(c => c.displayName), avatars: post.sourceCandidates.map(c => c.avatarFile) }
+          : nicknamesAndAvatarsForIdentity(topic.key, post.identityLabel, post.platformLabel);
         nicknames = names.join(" / ");
         avatarFiles = avs.join(" / ");
       } else if (isHighSource) {

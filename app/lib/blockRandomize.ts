@@ -12,6 +12,8 @@ export type PostItem = {
   identityLabel?: string | null;
   /** 高信源专用：平台身份/影响力；低信源为 null */
   platformLabel?: string | null;
+  /** Reviewed workbook's paired nickname/avatar candidates for this source. */
+  sourceCandidates?: Array<{ displayName: string; avatarFile: string }>;
 };
 
 export type MaterialsByCell = Record<string, PostItem[]>;

@@ -41,6 +41,7 @@ export function enrichPostsForDisplay(
   );
   const usedHighNames = new Set<keyof typeof HIGH_SOURCE_AVATAR_MAP>();
   const usedLowNames = new Set<string>();
+  const usedCandidateNames = new Set<string>();
 
   // identityLabel 优先；仅有 platformLabel 时用 platformLabel 作 lookup key
   const takeHighSourceName = (
@@ -73,6 +74,15 @@ export function enrichPostsForDisplay(
 
   return posts.map((p) => {
     if (p.sourceLevel === "high") {
+      if (p.sourceCandidates?.length) {
+        // Keep the workbook's name/avatar pairs. If an author appears again,
+        // reuse a candidate for that source instead of borrowing another identity.
+        const candidate =
+          p.sourceCandidates.find((c) => !usedCandidateNames.has(c.displayName)) ??
+          p.sourceCandidates[Math.floor(Math.random() * p.sourceCandidates.length)]!;
+        usedCandidateNames.add(candidate.displayName);
+        return { ...p, ...candidate };
+      }
       const displayName = takeHighSourceName(p.identityLabel, p.platformLabel);
       const avatarFile = HIGH_SOURCE_AVATAR_MAP[displayName];
       return { ...p, displayName, avatarFile };

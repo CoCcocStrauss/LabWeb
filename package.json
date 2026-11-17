@@ -6,7 +6,9 @@
     "dev": "rm -rf .next && next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "materials:import": "node scripts/import-materials-table.cjs",
+    "materials:check": "node scripts/verify-experiment-materials.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.8",
