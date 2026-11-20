@@ -8,7 +8,13 @@
     "start": "next start",
     "lint": "next lint",
     "materials:import": "node scripts/import-materials-table.cjs",
-    "materials:check": "node scripts/verify-experiment-materials.cjs"
+    "materials:check": "node scripts/verify-experiment-materials.cjs",
+    "database:check": "node scripts/check-database.cjs",
+    "netlify:login": "npx --yes netlify-cli@23 login",
+    "netlify:link": "npx --yes netlify-cli@23 link",
+    "netlify:init": "npx --yes netlify-cli@23 init --manual",
+    "deploy:preview": "npm run materials:check && npx --yes netlify-cli@23 deploy --build",
+    "deploy": "npm run materials:check && npx --yes netlify-cli@23 deploy --build --prod"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.8",

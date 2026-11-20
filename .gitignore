@@ -28,6 +28,14 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Netlify local site association and generated functions
+.netlify/
+
+# local server credentials
+.env
+.env.*
+!.env.example
+
 # cursor local settings
 .cursor/
 

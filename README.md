@@ -27,4 +27,42 @@ npm run dev
 
 ## 部署
 
-推荐部署到 Vercel，需在项目环境变量中配置 `.env.example` 中列出的变量，并在 Supabase 项目中执行 `supabase/schema.sql`。
+当前采用 GitHub 托管源码、Netlify 自动构建发布的方式，不需要在本机安装或登录 Netlify CLI。
+使用 Node.js 24；`.nvmrc` 和 `netlify.toml` 已指定版本。Next.js 的页面和 `/api/submit`
+由 Netlify 的 Next.js 适配器部署，不能把源码目录当成普通静态网页上传。
+
+修改本地源码后提交并推送到原仓库：
+
+```bash
+cd /Users/jiayi/Desktop/Project/LabWeb
+git add .
+git commit -m "Update LabWeb"
+git push origin main
+```
+
+原仓库为 `https://github.com/jiayicheng0611/LabWeb`。
+在 Netlify 网页选择 Add new project → Import an existing project → GitHub，授权后选择 `LabWeb` 仓库。
+生产分支为 `main`，仓库根目录就是项目目录，Base directory 留空；
+构建命令为 `npm run build`，发布目录为 `.next`，均已写入 `netlify.toml`。
+关联完成后，每次推送到 `main` 都会触发 Netlify 构建，无需在本机执行发布命令。
+
+发布前，在该 Netlify 项目的 Environment variables 中配置以下两个变量，
+使用当前实验 Supabase 项目的真实值，并确保对 Functions 生效：
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+不要给 service role key 加 `NEXT_PUBLIC_` 前缀，也不要写进 `netlify.toml`。
+如果复用原 Supabase 项目，保留已有数据表；仅当数据库尚未初始化时执行 `supabase/schema.sql`。
+缺少这两个变量时页面可能可以打开，但实验数据无法提交。
+
+原项目的本地连接配置已恢复到 `.env.local`，该文件不提交到 Git。
+以点开头的文件在 macOS Finder 中默认隐藏，在本文件夹按 Command+Shift+. 可显示。
+如果改用新建的 Supabase 项目，用新项目的 URL 和服务端 Secret key 替换本地两个变量，
+变量名继续使用 `SUPABASE_URL`、`SUPABASE_SERVICE_ROLE_KEY`。
+在本机运行 `npm run database:check` 可检查四张实验表的连接；检查不会返回已有记录，
+不会写入数据或调用提交 RPC，也不会输出密钥。添加 `-- --config-only` 可仅检查本地配置。
+本地 `.env.local` 不会自动成为 Netlify 的线上配置，发布时仍需在该项目设置中配置这两个变量。
+
+Netlify 发布状态变为 Published 后，再测试阅读、转发、完成码和数据提交。
+`package.json` 中的 Netlify CLI 命令仅为本地手动部署的备用方式，GitHub 自动部署不使用它们。
