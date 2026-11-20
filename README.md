@@ -40,7 +40,7 @@ git commit -m "Update LabWeb"
 git push origin main
 ```
 
-原仓库为 `https://github.com/jiayicheng0611/LabWeb`。
+GitHub 仓库为 `https://github.com/CoCcocStrauss/LabWeb`，所属账号为 `CoCcocStrauss`。
 在 Netlify 网页选择 Add new project → Import an existing project → GitHub，授权后选择 `LabWeb` 仓库。
 生产分支为 `main`，仓库根目录就是项目目录，Base directory 留空；
 构建命令为 `npm run build`，发布目录为 `.next`，均已写入 `netlify.toml`。
