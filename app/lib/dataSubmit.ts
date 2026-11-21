@@ -1,5 +1,7 @@
 import type { TopicKey } from "../data/topics";
 import type { Quality, SourceLevel, Stance } from "./blockRandomize";
+import type { ComprehensionAttempt, QuestionnaireResponse } from "../data/questionnaire";
+import type { ExplanationResponse, Interruption, PresentedPost, RecognitionResponse, ReasonsResponse } from "./posttest";
 
 export type EndReason = "manual" | "timeout";
 
@@ -51,6 +53,17 @@ export function generateCompletionCode(length = 6): string {
 }
 
 export type SubmitExperimentDataInput = {
+  sessionId: string;
+  sessionSecret: string;
+  questionnaireVersion: string;
+  pretest: QuestionnaireResponse;
+  posttest: QuestionnaireResponse;
+  comprehension: ComprehensionAttempt[];
+  recognition: RecognitionResponse;
+  explanation: ExplanationResponse;
+  reasons: ReasonsResponse;
+  presentedPosts: PresentedPost[];
+  interruptions: Interruption[];
   uid: string;
   conditionN: number;
   topic: string;
@@ -65,8 +78,24 @@ export type SubmitExperimentDataInput = {
   postVisibilitySummary: PostVisibilitySummary;
 };
 
-type SubmitResponse = { completionCode: string };
-type SubmitErrorResponse = { error: string };
+export type PretestInput = Pick<SubmitExperimentDataInput, "uid" | "conditionN" | "topicKey" | "sessionId" | "sessionSecret" | "questionnaireVersion" | "pretest">;
+
+export async function postJson<T>(url: string, input: unknown, timeoutMs = 15_000): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input), signal: controller.signal });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(data?.error ?? `保存失败（${res.status}）`);
+    return data as T;
+  } finally { clearTimeout(timeout); }
+}
+
+export async function savePretest(input: PretestInput): Promise<void> {
+  const result = await postJson<{ saved: boolean }>("/api/progress", input);
+  if (result.saved !== true) throw new Error("保存结果不完整，请重试。");
+}
 
 /**
  * 提交实验数据：POST 到服务端 /api/submit，由服务端用 service role key
@@ -76,19 +105,7 @@ type SubmitErrorResponse = { error: string };
 export async function submitExperimentData(
   input: SubmitExperimentDataInput
 ): Promise<string> {
-  const res = await fetch("/api/submit", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
-
-  if (!res.ok) {
-    const errorBody = (await res.json().catch(() => null)) as
-      | SubmitErrorResponse
-      | null;
-    throw new Error(errorBody?.error ?? `提交失败（状态码 ${res.status}）`);
-  }
-
-  const data = (await res.json()) as SubmitResponse;
+  const data = await postJson<{ completionCode: string }>("/api/submit", input);
+  if (typeof data.completionCode !== "string" || !data.completionCode) throw new Error("保存结果不完整，请重试。");
   return data.completionCode;
 }

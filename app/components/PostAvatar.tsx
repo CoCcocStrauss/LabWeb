@@ -35,7 +35,7 @@ export function PostAvatar({
 
   const fallbackCircle = (
     <div
-      className={`flex h-11 w-11 shrink-0 select-none items-center justify-center rounded-full text-[15px] font-semibold leading-none text-white shadow-sm ${ringClass}`}
+      className={`flex h-12 w-12 shrink-0 select-none items-center justify-center rounded-full text-lg font-semibold leading-none text-white shadow-sm ${ringClass}`}
       style={{ backgroundColor: bg }}
       aria-hidden
     >
@@ -55,7 +55,7 @@ export function PostAvatar({
     <img
       src={`/avatars/${avatarFile}`}
       alt=""
-      className={`h-11 w-11 shrink-0 rounded-full object-cover ${ringClass}`}
+      className={`h-12 w-12 shrink-0 rounded-full object-cover ${ringClass}`}
       loading="lazy"
       onError={() => setImgFailed(true)}
     />

@@ -1,429 +1,264 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type MouseEvent,
-} from "react";
-
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { randomLowSourceNickname } from "../data/avatarPool";
 import type { TopicKey } from "../data/topics";
-import { blockRandomize } from "../lib/blockRandomize";
 import type { ActionLog, EndReason, PostExperimentAttrs } from "../lib/dataSubmit";
-import { enrichPostsForDisplay, type PostItemWithDisplay } from "../lib/enrichPosts";
+import type { PostItemWithDisplay } from "../lib/enrichPosts";
+import { readingEndData, remainingReadingMs, type ReadingSnapshot, type ReadingEndData } from "../lib/experimentSession";
 import { getMaterialsForTopic } from "../lib/materialsRegistry";
 import { useScrollTracker } from "../lib/scrollTracker";
-import { CountdownBar, EXPERIMENT_DURATION_MS } from "./CountdownBar";
-import type { ExperimentEndData } from "./EndPage";
+import { CountdownBar } from "./CountdownBar";
 import { PostCard } from "./PostCard";
 import { ShareModal } from "./ShareModal";
 
 const USER_POST_MAX_CHARS = 100;
-
 export type ExperimentPageProps = {
-  uid: string;
-  conditionN: 8 | 16 | 48;
-  topic: TopicKey;
-  onEnd: (data: ExperimentEndData) => void;
+  uid: string; conditionN: 8 | 16 | 48; topic: TopicKey;
+  initialReading: ReadingSnapshot;
+  onSnapshot: (reading: ReadingSnapshot) => void;
+  onEnd: (data: ReadingEndData) => boolean;
 };
 
-export function ExperimentPage({
-  uid,
-  conditionN,
-  topic,
-  onEnd,
-}: ExperimentPageProps) {
+export function ExperimentPage({ uid, conditionN, topic, initialReading, onSnapshot, onEnd }: ExperimentPageProps) {
+  const initial = useRef(initialReading).current;
   const materialsFile = useMemo(() => getMaterialsForTopic(topic), [topic]);
   const { topic: topicTitle, topicDescription, tags } = materialsFile;
-
-  const [isMounted, setIsMounted] = useState(false);
-  const [posts, setPosts] = useState<PostItemWithDisplay[]>([]);
-  const [liked, setLiked] = useState<Record<string, boolean>>({});
-  const [shareCount, setShareCount] = useState(0);
-  const [actions, setActions] = useState<ActionLog[]>([]);
-  const actionsRef = useRef<ActionLog[]>([]);
-  const postsRef = useRef<PostItemWithDisplay[]>([]);
-  const [remainingMs, setRemainingMs] = useState(EXPERIMENT_DURATION_MS);
+  const posts: PostItemWithDisplay[] = initial.posts;
+  const isMounted = true;
+  const [actions, setActions] = useState<ActionLog[]>(initial.actions);
+  const actionsRef = useRef(initial.actions);
+  const liked = Object.fromEntries(actions.filter(a => a.type === "like" || a.type === "unlike").map(a => [a.postId, a.type === "like"]));
+  const shareCount = actions.filter(a => a.type === "share").length;
+  const [remainingMs, setRemainingMs] = useState(() => remainingReadingMs(initial));
   const [isRunning, setIsRunning] = useState(true);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [currentSharePostId, setCurrentSharePostId] = useState<string | null>(
-    null
-  );
-  const startTimeRef = useRef<number | null>(null);
+  const [currentSharePostId, setCurrentSharePostId] = useState<string | null>(null);
   const endedRef = useRef(false);
-  const [userPostDraft, setUserPostDraft] = useState("");
-  const [userPostExpanded, setUserPostExpanded] = useState(false);
-  const [ownPost, setOwnPost] = useState<{
-    content: string;
-    displayName: string;
-  } | null>(null);
-  /**
-   * 发布时捕获：应将自己的帖子插入到哪条帖子之前（null = 插到列表末尾）。
-   * 这样发布后帖子出现在当前可视区顶部，用户无需回滚。
-   */
-  const [insertBeforePostId, setInsertBeforePostId] = useState<string | null>(null);
-
+  const [userPostDraft, setUserPostDraft] = useState(initial.userPostDraft);
+  const [ownPost, setOwnPost] = useState(initial.ownPost);
+  const [insertBeforePostId, setInsertBeforePostId] = useState(initial.insertBeforePostId);
+  const composeState = useRef({ userPostDraft: initial.userPostDraft, ownPost: initial.ownPost, insertBeforePostId: initial.insertBeforePostId });
   const mainScrollRef = useRef<HTMLElement | null>(null);
   const composeBoxRef = useRef<HTMLDivElement | null>(null);
+  const composeInputRef = useRef<HTMLTextAreaElement | null>(null);
   const postElementsRef = useRef<Map<string, HTMLElement>>(new Map());
   const ownPostRef = useRef<HTMLElement | null>(null);
-
-  const {
-    bindScrollContainer,
-    refreshObservers,
-    registerPost,
-    getScrollEvents,
-    finalizeVisibility,
-    getMaxScrollY,
-    trackScroll,
-    disconnect,
-  } = useScrollTracker();
+  const { bindScrollContainer, refreshObservers, registerPost, getScrollEvents, finalizeVisibility, getMaxScrollY, trackScroll, disconnect } = useScrollTracker(initial, initial.deadline);
 
   useEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
-    const prevHtmlOverflow = html.style.overflow;
-    const prevBodyOverflow = body.style.overflow;
-    html.style.overflow = "hidden";
-    body.style.overflow = "hidden";
-    return () => {
-      html.style.overflow = prevHtmlOverflow;
-      body.style.overflow = prevBodyOverflow;
-    };
+    const html = document.documentElement; const body = document.body;
+    const previous = [html.style.overflow, body.style.overflow];
+    html.style.overflow = "hidden"; body.style.overflow = "hidden";
+    return () => { html.style.overflow = previous[0]; body.style.overflow = previous[1]; };
   }, []);
-
   useLayoutEffect(() => {
     const el = mainScrollRef.current;
-    if (!el) return;
     bindScrollContainer(el);
-    return () => bindScrollContainer(null);
-  }, [bindScrollContainer]);
-
-  useLayoutEffect(() => {
-    if (!isMounted || posts.length === 0) return;
+    if (el) el.scrollTop = initial.scrollY;
     refreshObservers();
-  }, [isMounted, posts.length, refreshObservers]);
-
-  useEffect(() => {
-    const ordered = blockRandomize(materialsFile.materials, conditionN);
-    setPosts(enrichPostsForDisplay(ordered, topic));
-    startTimeRef.current = Date.now();
-    setIsMounted(true);
-  }, [conditionN, materialsFile, topic]);
+    return () => bindScrollContainer(null);
+  }, [bindScrollContainer, initial.scrollY, refreshObservers]);
 
   useLayoutEffect(() => {
-    actionsRef.current = actions;
-  }, [actions]);
+    const input = composeInputRef.current;
+    if (!input) return;
+    const resize = () => {
+      input.style.height = "auto";
+      input.style.height = `${Math.max(48, input.scrollHeight + 2)}px`;
+    };
+    resize();
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", resize);
+      return () => window.removeEventListener("resize", resize);
+    }
+    let previousWidth = input.clientWidth;
+    const observer = new ResizeObserver(() => {
+      if (input.clientWidth === previousWidth) return;
+      previousWidth = input.clientWidth;
+      resize();
+    });
+    observer.observe(input);
+    return () => observer.disconnect();
+  }, [userPostDraft, ownPost]);
 
-  useLayoutEffect(() => {
-    postsRef.current = posts;
-  }, [posts]);
+  const registeredRefs = useRef(new Map<string, (el: HTMLElement | null) => void>());
+  const registerPostRef = useCallback((postId: string) => {
+    let ref = registeredRefs.current.get(postId);
+    if (!ref) {
+      const track = registerPost(postId);
+      ref = el => { if (el) postElementsRef.current.set(postId, el); else postElementsRef.current.delete(postId); track(el); };
+      registeredRefs.current.set(postId, ref);
+    }
+    return ref;
+  }, [registerPost]);
 
-  const registerPostRef = useCallback(
-    (postId: string) => (el: HTMLElement | null) => {
-      if (el) {
-        postElementsRef.current.set(postId, el);
-      } else {
-        postElementsRef.current.delete(postId);
-      }
-      registerPost(postId)(el);
-    },
-    [registerPost]
-  );
+  const capture = useCallback((time = Math.min(Date.now(), initial.deadline)): ReadingSnapshot => {
+    trackScroll();
+    return { ...initial, ...composeState.current, savedAt: time, actions: actionsRef.current,
+      scrollY: mainScrollRef.current?.scrollTop ?? initial.scrollY, maxScrollY: getMaxScrollY(),
+      scrollEvents: getScrollEvents(), postVisibilitySummary: finalizeVisibility(posts.map(p => p.id), time) };
+  }, [finalizeVisibility, getMaxScrollY, getScrollEvents, initial, posts, trackScroll]);
+  const checkpoint = useCallback(() => { if (!endedRef.current) onSnapshot(capture()); }, [capture, onSnapshot]);
+  const finalize = useCallback((endTime: number, endReason: EndReason) => {
+    if (endedRef.current) return;
+    const reading = capture(Math.min(endTime, initial.deadline));
+    onSnapshot(reading);
+    const saved = onEnd(readingEndData({ uid, conditionN, topicKey: topic }, reading, endTime, endReason, topicTitle));
+    if (saved) { endedRef.current = true; setIsRunning(false); disconnect(); }
+  }, [capture, conditionN, disconnect, initial, onEnd, onSnapshot, topic, topicTitle, uid]);
 
-  /**
-   * 发布后将滚动位置对齐，使自己的帖子紧贴在 compose box 下方可见。
-   * ownPost 插入点（insertBeforePostId）由 handleUserPostPublish 在点击瞬间
-   * 根据当前视口捕获，因此 DOM 更新后直接把 scrollTop 对齐到 ownPost 顶部即可。
-   */
   useEffect(() => {
-    if (ownPost == null) return;
+    const tick = () => {
+      if (endedRef.current) return;
+      const remaining = remainingReadingMs(initial);
+      setRemainingMs(remaining);
+      if (remaining <= 0) finalize(initial.deadline, "timeout");
+      else checkpoint();
+    };
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    const onVisible = () => { if (document.visibilityState === "visible") tick(); else checkpoint(); };
+    const onPageShow = () => tick();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("pagehide", checkpoint);
+    window.addEventListener("pageshow", onPageShow);
+    return () => { clearInterval(timer); document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("pagehide", checkpoint); window.removeEventListener("pageshow", onPageShow); };
+  }, [checkpoint, finalize, initial]);
+
+  const ownPostJustPublished = useRef(false);
+  useEffect(() => {
+    if (!ownPost || !ownPostJustPublished.current) return;
+    ownPostJustPublished.current = false;
     const id = requestAnimationFrame(() => {
-      const ownPostEl = ownPostRef.current;
-      const container = mainScrollRef.current;
-      const composeEl = composeBoxRef.current;
-      if (!ownPostEl || !container || !composeEl) return;
-      const containerRect = container.getBoundingClientRect();
-      const ownPostRect = ownPostEl.getBoundingClientRect();
-      const ownPostTopInContainer =
-        ownPostRect.top - containerRect.top + container.scrollTop;
-      container.scrollTop = ownPostTopInContainer - composeEl.offsetHeight;
+      const el = ownPostRef.current; const container = mainScrollRef.current; const compose = composeBoxRef.current;
+      if (!el || !container || !compose) return;
+      container.scrollTop += el.getBoundingClientRect().top - container.getBoundingClientRect().top - compose.offsetHeight;
+      checkpoint();
     });
     return () => cancelAnimationFrame(id);
-  }, [ownPost]);
+  }, [checkpoint, ownPost]);
 
-  const getPostAttrs = useCallback((postId: string): PostExperimentAttrs => {
-    const post = postsRef.current.find((p) => p.id === postId);
-    if (!post) {
-      throw new Error(`Post not found for action: ${postId}`);
-    }
-    return {
-      stance: post.stance,
-      sourceLevel: post.sourceLevel,
-      quality: post.quality,
-    };
-  }, []);
-
-  const finalize = useCallback(
-    (endTime: number, endReason: EndReason) => {
-      if (endedRef.current) return;
-      endedRef.current = true;
-      setIsRunning(false);
-
-      const postOrder = posts.map((p) => p.id);
-      trackScroll();
-      const scrollEvents = getScrollEvents();
-      const postVisibilitySummary = finalizeVisibility(postOrder, endTime);
-      disconnect();
-
-      onEnd({
-        uid,
-        conditionN,
-        topic: topicTitle,
-        topicKey: topic,
-        startTime: startTimeRef.current ?? endTime,
-        endTime,
-        endReason,
-        maxScrollY: getMaxScrollY(),
-        postOrder,
-        actions: actionsRef.current,
-        scrollEvents,
-        postVisibilitySummary,
-      });
-    },
-    [
-      conditionN,
-      disconnect,
-      finalizeVisibility,
-      getMaxScrollY,
-      getScrollEvents,
-      onEnd,
-      posts,
-      topic,
-      topicTitle,
-      trackScroll,
-      uid,
-    ]
-  );
-
-  useEffect(() => {
-    if (!isMounted || !isRunning) return;
-    const id = window.setInterval(() => {
-      setRemainingMs((prev) => {
-        if (prev <= 1000) {
-          window.clearInterval(id);
-          return 0;
-        }
-        return prev - 1000;
-      });
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [isMounted, isRunning]);
-
-  useEffect(() => {
-    if (!isMounted || !isRunning) return;
-    if (remainingMs > 0) return;
-    finalize(Date.now(), "timeout");
-  }, [isMounted, remainingMs, isRunning, finalize]);
-
-  useEffect(() => {
-    if (!isRunning) {
-      setIsShareModalOpen(false);
-      setCurrentSharePostId(null);
-    }
-  }, [isRunning]);
-
-  useEffect(() => () => disconnect(), [disconnect]);
-
-  const closeShareModal = useCallback(() => {
-    setIsShareModalOpen(false);
-    setCurrentSharePostId(null);
-  }, []);
-
-  const appendAction = useCallback((log: ActionLog) => {
-    const next = [...actionsRef.current, log];
-    actionsRef.current = next;
-    setActions(next);
-  }, []);
-
+  const canAct = () => {
+    if (!isRunning || endedRef.current) return false;
+    if (Date.now() >= initial.deadline) { finalize(initial.deadline, "timeout"); return false; }
+    return true;
+  };
+  const getPostAttrs = (postId: string): PostExperimentAttrs => {
+    const post = posts.find(p => p.id === postId)!;
+    return { stance: post.stance, sourceLevel: post.sourceLevel, quality: post.quality };
+  };
+  const appendAction = (log: ActionLog) => {
+    const next = [...actionsRef.current, log]; actionsRef.current = next; setActions(next); checkpoint();
+  };
   const handleLike = (e: MouseEvent<HTMLButtonElement>, postId: string) => {
-    e.stopPropagation();
-    if (!isMounted || !isRunning) return;
-    const wasLiked = !!liked[postId];
-    const ts = Date.now();
-    setLiked((prev) => ({ ...prev, [postId]: !wasLiked }));
-    appendAction({
-      type: wasLiked ? "unlike" : "like",
-      postId,
-      timestamp: ts,
-      ...getPostAttrs(postId),
-    });
+    e.stopPropagation(); if (!canAct()) return;
+    const last = actionsRef.current.filter(a => (a.type === "like" || a.type === "unlike") && a.postId === postId).at(-1);
+    appendAction({ type: last?.type === "like" ? "unlike" : "like", postId, timestamp: Date.now(), ...getPostAttrs(postId) });
   };
-
+  const closeShareModal = () => { setIsShareModalOpen(false); setCurrentSharePostId(null); };
   const handleShareClick = (e: MouseEvent<HTMLButtonElement>, postId: string) => {
-    e.stopPropagation();
-    if (!isMounted || !isRunning) return;
-    if (shareCount >= 2) return;
-
-    const prevActions = actionsRef.current;
-    if (prevActions.some((a) => a.type === "share" && a.postId === postId)) {
-      return;
-    }
-    const shareSoFar = prevActions.filter((a) => a.type === "share").length;
-    if (shareSoFar >= 2) return;
-
-    setCurrentSharePostId(postId);
-    setIsShareModalOpen(true);
+    e.stopPropagation(); if (!canAct()) return;
+    const shares = actionsRef.current.filter(a => a.type === "share");
+    if (shares.length >= 2 || shares.some(a => a.postId === postId)) return;
+    setCurrentSharePostId(postId); setIsShareModalOpen(true);
   };
-
-  const handleShareModalCancel = (e: MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    closeShareModal();
-  };
-
+  const handleShareModalCancel = (e: MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); closeShareModal(); };
   const handleShareModalConfirm = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     const postId = currentSharePostId;
-    if (postId == null || !isMounted || !isRunning) {
-      closeShareModal();
-      return;
+    if (!postId || !canAct()) { closeShareModal(); return; }
+    const shares = actionsRef.current.filter(a => a.type === "share");
+    if (shares.length < 2 && !shares.some(a => a.postId === postId)) {
+      appendAction({ type: "share", postId, timestamp: Date.now(), order: shares.length + 1, ...getPostAttrs(postId) });
     }
-    if (shareCount >= 2) {
-      closeShareModal();
-      return;
-    }
-
-    const prevActions = actionsRef.current;
-    if (prevActions.some((a) => a.type === "share" && a.postId === postId)) {
-      closeShareModal();
-      return;
-    }
-    const shareSoFar = prevActions.filter((a) => a.type === "share").length;
-    if (shareSoFar >= 2) {
-      closeShareModal();
-      return;
-    }
-
-    const ts = Date.now();
-    appendAction({
-      type: "share",
-      postId,
-      timestamp: ts,
-      order: shareSoFar + 1,
-      ...getPostAttrs(postId),
-    });
-    setShareCount((c) => (c >= 2 ? c : c + 1));
     closeShareModal();
   };
-
   const onEndClick = (e: MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    if (!isMounted || shareCount < 2 || !isRunning) return;
-    finalize(Date.now(), "manual");
+    e.stopPropagation(); if (canAct() && actionsRef.current.filter(a => a.type === "share").length >= 2) finalize(Date.now(), "manual");
   };
-
   const handleUserPostPublish = (e: MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    if (!isMounted || !isRunning || ownPost != null) return;
-    const content = userPostDraft.trim();
-    if (!content) return;
-
-    // 发布前捕获当前可视区第一条帖子，用于确定插入位置
+    e.stopPropagation(); if (!canAct() || composeState.current.ownPost) return;
+    const content = composeState.current.userPostDraft.trim(); if (!content) return;
     let insertBefore: string | null = null;
-    const composeEl = composeBoxRef.current;
-    if (composeEl) {
-      const composeBottom = composeEl.getBoundingClientRect().bottom;
-      for (const post of postsRef.current) {
-        const el = postElementsRef.current.get(post.id);
-        if (!el) continue;
-        if (el.getBoundingClientRect().bottom > composeBottom) {
-          insertBefore = post.id;
-          break;
-        }
-      }
+    const bottom = composeBoxRef.current?.getBoundingClientRect().bottom ?? 0;
+    for (const post of posts) {
+      const el = postElementsRef.current.get(post.id);
+      if (el && el.getBoundingClientRect().bottom > bottom) { insertBefore = post.id; break; }
     }
-
-    appendAction({
-      type: "user_post",
-      content,
-      timestamp: Date.now(),
-      charCount: content.length,
-    });
-    setInsertBeforePostId(insertBefore);
-    setOwnPost({ content, displayName: randomLowSourceNickname() });
-    setUserPostExpanded(false);
+    const own = { content, displayName: randomLowSourceNickname() };
+    composeState.current = { userPostDraft: "", ownPost: own, insertBeforePostId: insertBefore };
+    ownPostJustPublished.current = true;
+    setInsertBeforePostId(insertBefore); setOwnPost(own); setUserPostDraft("");
+    appendAction({ type: "user_post", content, timestamp: Date.now(), charCount: content.length });
   };
-
   const shareLocked = shareCount >= 2;
 
   return (
-    <div className="fixed inset-0 mx-auto flex w-full max-w-[480px] flex-col overflow-hidden bg-white text-neutral-900 md:max-w-[640px]">
+    <div className="study-shell study-screen">
       <ShareModal
         open={isShareModalOpen && currentSharePostId != null}
         onCancel={handleShareModalCancel}
         onConfirm={handleShareModalConfirm}
       />
 
-      <header className="sticky top-0 z-20 shrink-0 border-b border-neutral-200 bg-white/95 shadow-[0_1px_0_rgba(0,0,0,0.06)] backdrop-blur-sm">
-        <div className="px-4 pb-3 pt-3">
-          <h1 className="text-[18px] font-bold leading-snug text-neutral-900">
-            {topicTitle}
-          </h1>
-          <p className="mt-2 text-[14px] leading-relaxed text-neutral-600">
+      <header className="reading-header study-header study-pad z-20 border-b border-neutral-200 bg-white">
+        <h1 className="study-title">{topicTitle}</h1>
+      </header>
+
+      <main
+        ref={mainScrollRef}
+        className="study-scroll pb-6"
+        aria-busy={!isMounted}
+      >
+        <div className="study-pad py-4">
+          <p className="study-copy text-neutral-600">
             {topicDescription}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded bg-neutral-100 px-2 py-0.5 text-[12px] text-neutral-600"
+                className="study-meta rounded bg-neutral-100 px-2 py-1 text-neutral-600"
               >
                 {tag}
               </span>
             ))}
           </div>
         </div>
-      </header>
-
-      <main
-        ref={mainScrollRef}
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-24"
-        aria-busy={!isMounted}
-      >
         {isMounted ? (
           <div
             ref={composeBoxRef}
-            className="sticky top-0 z-10 border-b border-neutral-100 bg-neutral-50 px-4 py-2.5"
+            className="study-pad sticky top-0 z-10 border-b border-neutral-100 bg-neutral-50 py-3"
           >
             {ownPost != null ? (
-              <span className="inline-block rounded bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700">
+              <span className="study-meta inline-block rounded bg-green-100 px-2 py-1 font-medium text-green-700">
                 已发布
               </span>
             ) : (
               <div className="flex items-end gap-2">
                 <textarea
+                  ref={composeInputRef}
                   value={userPostDraft}
-                  onChange={(e) =>
-                    setUserPostDraft(e.target.value.slice(0, USER_POST_MAX_CHARS))
-                  }
-                  onFocus={() => setUserPostExpanded(true)}
-                  onBlur={() => {
-                    if (!userPostDraft.trim()) setUserPostExpanded(false);
+                  onChange={(e) => {
+                    const value = e.target.value.slice(0, USER_POST_MAX_CHARS);
+                    composeState.current.userPostDraft = value;
+                    setUserPostDraft(value);
+                    checkpoint();
                   }}
-                  placeholder="你对这个议题有什么看法？欢迎分享你的观点..."
-                  rows={userPostExpanded ? 3 : 1}
+                  placeholder="分享你的看法…"
+                  aria-label="分享你的看法"
+                  maxLength={USER_POST_MAX_CHARS}
+                  rows={1}
                   disabled={!isRunning}
-                  className="min-w-0 flex-1 resize-none rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-[13px] leading-snug text-neutral-800 placeholder:text-neutral-400 focus:border-neutral-300 focus:outline-none disabled:opacity-60"
+                  className="study-composer-input study-control min-w-0 flex-1 resize-none rounded-lg border border-neutral-200 bg-white px-3 py-3 text-neutral-800 placeholder:text-neutral-500 focus:border-blue-400 disabled:opacity-60"
                 />
                 <button
                   type="button"
                   onClick={handleUserPostPublish}
-                  disabled={!isRunning}
-                  className="shrink-0 rounded-md bg-neutral-200 px-2.5 py-1.5 text-[12px] text-neutral-600 active:bg-neutral-300 disabled:opacity-50"
+                  disabled={!isRunning || !userPostDraft.trim()}
+                  className="study-control shrink-0 whitespace-nowrap rounded-lg bg-neutral-200 px-3 py-3 text-neutral-700 active:bg-neutral-300 disabled:opacity-50"
                 >
                   发布
                 </button>
@@ -432,14 +267,14 @@ export function ExperimentPage({
           </div>
         ) : null}
 
-        <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5 text-[13px] text-neutral-600">
+        <div className="study-pad study-meta flex items-center justify-between gap-3 border-b border-neutral-100 py-3 text-neutral-600">
           <span>默认</span>
           <span>全部内容 {isMounted ? posts.length : conditionN}</span>
         </div>
 
         {!isMounted ? (
-          <div className="px-4 py-8">
-            <p className="mb-6 text-center text-[14px] text-neutral-500">
+          <div className="study-pad py-8">
+            <p className="study-copy mb-6 text-center text-neutral-500">
               加载中…
             </p>
             <div className="space-y-6">

@@ -1,8 +1,14 @@
 # LabWeb
 
+2026-11-21 数据库增量迁移与真实保存验收已通过；本轮按 GitHub main → Netlify 自动部署，详情见 [发布与验收记录](docs/release-2026-11-21.md)。
+最新本地版本 `2026-11-21-v2` 已按新方案加入即时再认、录音／文字解释、原因及博物馆题；实现与验收边界见 [新后测与录音记录](docs/new-protocol-2026-11-21.md)。旧版会话继续使用原版本，不映射新题。
+
+上一版本的实现与验证见 [本地修改与验证记录](docs/local-update-2026-11-21.md)。当前数据库增量迁移已完成。下述旧部署信息保留供历史参考。
+
 线上行为实验平台：模拟社交媒体信息流，用于研究被试在不同认知负荷（帖子数量 N）与不同议题下的浏览、点赞、转发行为。
 
 - 技术栈：Next.js 14（App Router）+ TypeScript + Tailwind CSS，数据存储于 Supabase（Postgres）
+- 当前问题与本次发布详情见 [研究进度与部署记录](docs/project-status-2026-11-20.md)
 - 完整需求与实现细节见 [`Spec.md`](./Spec.md)
 - 议题材料的人设/身份设计说明见 `identity_mapping_*.md`
 
@@ -26,6 +32,11 @@ npm run dev
 ```
 
 ## 部署
+
+2026-11-20 已从 `CoCcocStrauss/LabWeb` 的 `main` 分支提交 `85905d9` 发布到
+[opinionpolarization.netlify.app](https://opinionpolarization.netlify.app)，
+[Netlify 管理入口](https://app.netlify.com/projects/opinionpolarization)。当前部署状态为 `ready`。
+站点目前要求团队 SSO 登录；普通被试访问、线上数据库配置和完整问卷回跳仍待验证，尚不能视为已可正式投放。
 
 当前采用 GitHub 托管源码、Netlify 自动构建发布的方式，不需要在本机安装或登录 Netlify CLI。
 使用 Node.js 24；`.nvmrc` 和 `netlify.toml` 已指定版本。Next.js 的页面和 `/api/submit`
@@ -63,6 +74,7 @@ GitHub 仓库为 `https://github.com/CoCcocStrauss/LabWeb`，所属账号为 `Co
 在本机运行 `npm run database:check` 可检查四张实验表的连接；检查不会返回已有记录，
 不会写入数据或调用提交 RPC，也不会输出密钥。添加 `-- --config-only` 可仅检查本地配置。
 本地 `.env.local` 不会自动成为 Netlify 的线上配置，发布时仍需在该项目设置中配置这两个变量。
+当前本地配置指向 `https://biobenawbymzsktnkmmx.supabase.co`；此记录不表示已核验线上配置或远程建表。
 
-Netlify 发布状态变为 Published 后，再测试阅读、转发、完成码和数据提交。
+Netlify 发布状态变为 Published 后，再测试阅读、转发、数据提交，并核对后台完成码。
 `package.json` 中的 Netlify CLI 命令仅为本地手动部署的备用方式，GitHub 自动部署不使用它们。

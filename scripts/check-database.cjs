@@ -43,6 +43,7 @@ async function main() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const tables = ["experiments", "actions", "scroll_events", "post_visibility"];
+  if (process.argv.includes("--include-questionnaires")) tables.push("experiment_sessions");
   try {
     const results = await Promise.all(tables.map(async (table) => {
       // limit=0 仅检查认证、表和读取权限，不返回已有记录，也不写入数据。
@@ -59,7 +60,7 @@ async function main() {
       }
     }
     if (results.every(r => !r.error)) {
-      console.log("四张实验表均可读取。此检查未写入数据，未调用提交 RPC。");
+      console.log(`${tables.length} 张实验表均可读取。此检查未写入数据，未调用提交 RPC。`);
     } else if (results.some(r => !r.status)) {
       console.error("请求超时或未收到数据库响应，请检查网络、代理及项目运行状态。");
     } else if (results.some(r => [401, 403].includes(r.status))) {

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { ViewportSizing } from "./components/ViewportSizing";
 
 export const metadata: Metadata = {
   title: "行为科学实验",
@@ -9,8 +10,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({
@@ -20,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN">
-      <body className="min-h-[100dvh]">{children}</body>
+      <body className="min-h-[100dvh]"><ViewportSizing />{children}</body>
     </html>
   );
 }

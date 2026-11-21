@@ -1,19 +1,22 @@
-# LabWeb × Credamo 对接进度汇报
+# LabWeb 简单汇报
 
-## 1. Credamo对接问题
+更新日期：2026年11月20日。详细部署与待修改项见 [项目进度记录](docs/project-status-2026-11-20.md)。
 
-**A. 保持现状对接**：前后测在Credamo，行为数据在Supabase，靠uid合并；被试间分组在Credamo进行，url将分组参数（N条件*议题）传达给LabWeb。
+## 1. 当前实验与部署
 
-**B. 前后测搬进LabWeb**：全部实验都用网页完成，被试间分组也需要在网页中进行；服务端生成签名令牌，随returnUrl带回Credamo填入隐藏题，用于监管被试是否完成实验。
+正式议题为AI就业、育儿补贴；8／16／48条共六种条件，最长90秒。阅读过程中转发两条后可手动结束，时间到自动结束。每议题48条已审阅材料已与Excel同步。
 
-## 2. 需要跟Credamo确认的内容
+GitHub仓库为 `CoCcocStrauss/LabWeb`，`main` 分支提交 `85905d9` 已发布到 https://opinionpolarization.netlify.app。当前Netlify访问配置要求团队SSO登录；普通被试访问及数据库、问卷联调尚未验证通过。
 
-1. 外链跳转题能否插入答题者唯一ID到目标URL里？
-2. 外链跳转题是否支持自定义变量从URL读取（用来接收returnUrl里带的verifyToken验证令牌，填进后测问卷的隐藏题里）？
+## 2. Credamo接入
 
-## 3. N是否可以做成连续型变量？
+根据对接人反馈，采用HTML题和自定义变量保存研究UID，再将同一UID附到内嵌实验链接，双方据此存储和合并数据。默认六条件分组在LabWeb按UID计算；前后测保留在Credamo，具体题目及议题分支衔接待设计。
 
-如果被试间分组也用网页实现，那么可以将N设计成连续型变量。
+内嵌方案拟以现有 `/api/status` 查询完成状态后继续问卷；平台变量读写和下一页控制尚未核验。现有 `returnUrl` 在iframe内只导航当前frame，不等于已实现外层问卷回跳；签名验证令牌和 `postMessage` 均未实现。详见 [Credamo接入方案](Credamo对接进度汇报.md)。
+
+## 3. 待修改与待设计
+
+教程的自动结束表述、提交失败后的数据保留与恢复已由用户确认放入待修改；错误页旧 `eldercare` 提示也已记录。前后测、指导语、分析计划及ABM规则仍需讨论。本次只更新文档，未修改网页逻辑；8／16／48保持不变。
 
 ## 4. 数据库具体上报
 
@@ -26,7 +29,7 @@
 | uid | text（主键） | 被试唯一标识 |
 | condition_n | int4 | 帖子数量条件（8 / 16 / 48） |
 | topic | text | 议题标题（展示用） |
-| topic_key | text | 议题标识（fertility / ai / eldercare） |
+| topic_key | text | 正式议题为 fertility / ai；SQL保留 eldercare 历史兼容值 |
 | start_time_ms | int8 | 实验开始时间戳 |
 | end_time_ms | int8 | 实验结束时间戳 |
 | total_duration_ms | int4 | 实验总时长 |
@@ -75,17 +78,7 @@
 
 ## 5. 测试实验网站
 
-- 网站：https://illustrious-starburst-8f7b4f.netlify.app/
-- 测试方法：以下链接均为完整的9种被试间条件（N × 议题）组合，可逐一打开测试；每条链接的 `uid` 各不相同，避免同一uid重复提交数据报错
-
-| N | 议题 | 链接 |
-|---|---|---|
-| 8 | 生育 | https://illustrious-starburst-8f7b4f.netlify.app/?uid=qa01&n=8&topic=fertility |
-| 8 | AI | https://illustrious-starburst-8f7b4f.netlify.app/?uid=qa02&n=8&topic=ai |
-| 8 | 养老 | https://illustrious-starburst-8f7b4f.netlify.app/?uid=qa03&n=8&topic=eldercare |
-| 16 | 生育 | https://illustrious-starburst-8f7b4f.netlify.app/?uid=qa04&n=16&topic=fertility |
-| 16 | AI | https://illustrious-starburst-8f7b4f.netlify.app/?uid=qa05&n=16&topic=ai |
-| 16 | 养老 | https://illustrious-starburst-8f7b4f.netlify.app/?uid=qa06&n=16&topic=eldercare |
-| 48 | 生育 | https://illustrious-starburst-8f7b4f.netlify.app/?uid=qa07&n=48&topic=fertility |
-| 48 | AI | https://illustrious-starburst-8f7b4f.netlify.app/?uid=qa08&n=48&topic=ai |
-| 48 | 养老 | https://illustrious-starburst-8f7b4f.netlify.app/?uid=qa09&n=48&topic=eldercare |
+- 网站：https://opinionpolarization.netlify.app/
+- 六种QA条件及测试流程见 [部署记录](docs/project-status-2026-11-20.md)。每次重做使用新的 `qa_` 测试UID。
+- 默认入口至少包含 `uid`；定向QA时同时提供合法的 `n` 与 `topic`。空参数根网址目前显示“无法开始实验”，属于预期行为。
+- 完成码留在后台，不要求被试抄录。内嵌后继续问卷的方式需要与Credamo完成状态查询一起联调。

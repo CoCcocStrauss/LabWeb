@@ -1,10 +1,17 @@
-# 实验网站需求文档（给 Claude Code）
+# 实验网站需求与实现记录
+
+2026-11-21 数据库增量迁移与真实保存验收已通过；本轮按 GitHub main → Netlify 自动部署，详情见 [发布与验收记录](docs/release-2026-11-21.md)。
+最新本地版本 `2026-11-21-v2` 已按新方案加入即时再认、录音／文字解释、原因及博物馆题；实现与验收边界见 [新后测与录音记录](docs/new-protocol-2026-11-21.md)。旧版会话继续使用原版本，不映射新题。
+
+上一版本的规则与验证见 [本地修改与验证记录](docs/local-update-2026-11-21.md)。以下2026-11-20记录中的三页流程和“前后测在外部平台完成”等内容保留为旧版设计，不代表当前本地实现。该历史记录不包含本轮发布验收。
+
+更新日期：2026年11月20日。正式范围为两个议题、六种条件；最新部署与待修改项见 [项目进度记录](docs/project-status-2026-11-20.md)，Credamo 接入方案见 [对接文档](Credamo对接进度汇报.md)。本文描述已确认规则，具体文案与实现差异另行列为待修改，不表示本轮已改代码。
 
 ## 项目概述
 
 这是一个行为实验网站，模拟社交媒体信息流（类似知乎），研究认知负荷对信息选择的影响。被试在 90 秒内浏览帖子，选择 2 条转发。
 
-已有一个 Next.js + TypeScript + Tailwind 项目（LabWeb），需要在此基础上重构。
+已实现 Next.js + TypeScript + Tailwind 项目（LabWeb），后续在现有项目上迭代。
 
 ---
 
@@ -12,7 +19,7 @@
 
 - **前端**：Next.js + TypeScript + Tailwind CSS（已有）
 - **后端/数据库**：Supabase（Postgres），通过 Next.js 服务端 API 路由 `/api/submit` 写入（已从 Firebase Realtime Database 迁移）
-- **部署**：Vercel（推荐）或其他静态托管
+- **部署**：GitHub `CoCcocStrauss/LabWeb` → Netlify `opinionpolarization`，同时部署页面及服务端 API
 
 ---
 
@@ -26,16 +33,16 @@ https://yoursite.com/?uid=credamo_12345
 
 | 参数 | 值 | 说明 |
 |------|-----|------|
-| `uid` | 字符串 | Credamo 被试唯一 ID（**必填，唯一必传参数**） |
+| `uid` | 字符串 | 双方共同保存的研究 UID（**必填，唯一必传参数**）；不要求一定是 Credamo 原生账号ID |
 | `n` | `8` / `16` / `48`（可选） | 帖子数量（认知负荷条件）。仅用于 QA 时强制指定某个条件，正式投放不需要传 |
-| `topic` | `fertility` / `ai` / `eldercare`（可选） | 议题条件。仅用于 QA 时强制指定，正式投放不需要传 |
+| `topic` | `fertility` / `ai`（可选） | 议题条件。仅用于 QA 时强制指定，正式默认流程不需要传 |
 | `returnUrl` | 字符串（可选，需 URL 编码） | 实验数据提交成功后自动跳转回的地址（通常是 Credamo 的续答/后测链接）。只接受 `http`/`https` 绝对地址，非法值会被忽略。不提供则实验结束后停留在感谢页 |
 
-`n × topic` 共构成 3×3=9 个被试间条件组合。**LabWeb 内置了基于 `uid` 的确定性哈希分组**（`app/lib/conditionAssignment.ts`，FNV-1a 哈希 mod 9）：
+`n × topic` 共构成 3×2=6 个被试间条件组合。**LabWeb 内置了基于 `uid` 的确定性哈希分组**（`app/lib/conditionAssignment.ts`，FNV-1a 哈希 mod 6）：
 
 - 问卷平台（Credamo）**只需要传 `uid`**，不需要自己实现随机分组逻辑；
 - 同一个 `uid` 无论刷新页面还是重新打开链接，永远分到同一组，避免中途换组打断实验或污染数据；
-- 不同 `uid` 之间近似均匀散列到 9 个桶（用 9 万个模拟 uid 验证过，各桶占比误差 <1%），在 5000～10000 样本量下等价于随机分配；
+- 不同 `uid` 散列到6个条件，当前校验确认1万个测试UID分配稳定且六种条件均可到达；这不保证实际样本配额相等，正式投放需核对组间人数及分组平衡；
 - 如需 QA 时定向测试某一具体组合，可以同时手动附加 `n` 与 `topic`（两者必须同时提供且合法，否则视为无效链接），例如 `?uid=test001&n=16&topic=ai`；正式投放链接不要带这两个参数。
 
 如果 `uid` 缺失，或手动指定了 `n`/`topic` 但取值不合法，显示错误提示页。
@@ -57,10 +64,12 @@ https://yoursite.com/?uid=credamo_12345
    - "你也可以点击「点赞」按钮，但这不计入转发次数。"
    - "转发满 2 条后，点击底部的「结束实验」按钮即可完成。"
    - "如果 90 秒倒计时结束时你尚未转发满 2 条，实验将自动结束。"
-3. 一个模拟的帖子卡片示例（静态展示，不可交互，只是让被试看到界面长什么样）
+3. 高、低信源各一个练习卡片，可点赞及练习转发；完成一次转发练习后才可进入正式任务
 4. 底部按钮："我已了解，开始实验" → 跳转到实验页
 
 **注意**：教程页不计时。
+
+**待修改 R01**：现有教程组件仍写“转发满2条或倒计时结束自动完成”，与上述手动结束规则不一致；用户已要求列入待修改，本轮未改组件。
 
 ### 第 2 页：正式实验页
 
@@ -87,7 +96,7 @@ https://yoursite.com/?uid=credamo_12345
 ```typescript
 type PostItem = {
   id: string;                    // 唯一标识，如 "support_high_high_01"
-  content: string;               // 帖子正文（80-400字）
+  content: string;               // 帖子正文，长度以已审阅材料及字数阶梯为准
   quality: "high" | "low";       // 文本质量
   sourceLevel: "high" | "low";   // 信源可信度
   stance: "support" | "oppose";  // 立场
@@ -96,8 +105,8 @@ type PostItem = {
 
 ### 材料库
 
-- 材料按议题分文件存储在 `app/data/materials/{topic}.json`（`fertility.json` / `ai.json` / `eldercare.json`），由 `app/lib/materialsRegistry.ts` 统一按 `topic` 参数查找加载，不硬编码
-- 目前状态：`fertility.json`（三胎购房补贴）、`ai.json`（AI简历筛选）、`eldercare.json`（养老院年轻人入住计划）均已是正式材料，均按 `chatbot_generation_prompt.md` 的人设设计框架生成（先定人设列表，再按人设批量生成语料，最后随机分配 sourceLevel 并配对身份），具体人设与身份映射分别见 `identity_mapping_fertility.md` / `identity_mapping_ai.md` / `identity_mapping_eldercare.md`。**三个议题的内容均由AI按框架直接生成，正式投放前建议人工做一遍内容效度审阅**
+- 正式材料存储在 `app/data/materials/fertility.json` 和 `ai.json`，由 `app/lib/materialsRegistry.ts` 注册；`eldercare.json` 仅为历史保留文件，不参与正式分配
+- 当前议题为每名儿童每月2000元、直至18岁的育儿补贴是否明显提高生育率，以及AI对就业的影响。材料以项目上一级的两份已审阅Excel为准，通过 `npm run materials:import` 导入；原人设映射文档和旧生成脚本仅供历史参考
 - 按 2×2×2 = 8 个 cell 分组，每个 cell 至少 6 条帖子（支撑 N=48 时每 cell 6 条）
 - JSON 结构：
 
@@ -127,8 +136,8 @@ type PostItem = {
 - 每条 `sourceLevel="high"` 的帖子有两个可选标签字段：
   - `identityLabel`：现实职业身份（身份类标签，灰色小 pill），如"妇产科副主任医师"
   - `platformLabel`：平台身份/影响力（平台类标签，蓝色小 pill），如"知乎三孩话题优质答主"
-  - 每位认证用户最多展示 2 个标签（1 身份类 + 1 平台类），约 1/3 只有身份类、1/3 只有平台类、1/3 两类都有
-  - lookup key = `identityLabel ?? platformLabel`，按 `topic` 去 `app/data/avatarPool.ts` 里对应议题的身份池匹配昵称+头像
+  - 每位认证用户最多展示2个标签，具体标签沿用已审阅Excel；高低质量材料均可有高信源标签
+  - 优先使用每条材料的 `sourceCandidates` 昵称—头像配对；旧身份池仅作缺少候选配对时的兼容回退
 
 ### 帖子加载逻辑（分块随机化）
 
@@ -147,7 +156,7 @@ N=48: 6 个 block × 8 条（每 cell 6 条）
 2. Block 内部 8 条顺序随机
 3. 不做任何"优先呈现"
 
-这确保被试无论读到哪里，已读部分在 8 个 cell 上都是均衡的。
+每个完整读到的8条区组在8个cell上均衡；尚未读完的区组、实际可见集合和转发前接触集合不保证均衡。随机顺序降低系统性的位置关联，不保证每人接触范围相同。
 
 ### 信源线索设计
 
@@ -165,19 +174,7 @@ N=48: 6 个 block × 8 条（每 cell 6 条）
 - 无身份描述
 - 整体感觉：匿名用户，不知道背景
 
-**身份描述池**（高信源专用，随机分配）：
-```
-[
-  "清华大学计算机系副教授",
-  "华为高级算法工程师",
-  "中科院自动化所研究员",
-  "知名科技自媒体主编",
-  "复旦大学社会学系副教授",
-  "上海市第一妇婴保健院妇产科主治医师",
-  "资深人力资源管理顾问",
-  "京东人工智能事业部总监"
-]
-```
+身份描述沿用每条已审阅材料的标签，不独立随机抽取不相干职业。低信源不展示认证、身份标签或真实人像，研究用的立场、质量、信源编码仍保留在元数据中。
 
 ### 帖子卡片 UI
 
@@ -247,7 +244,7 @@ type ScrollEvent = {
 
 ### 表结构
 
-- **experiments**（主表，每个被试一行）：`uid`(主键) / `condition_n` / `topic` / `topic_key`(`fertility`/`ai`/`eldercare`，用于分析时按议题筛选) / `start_time_ms` / `end_time_ms` / `total_duration_ms` / `completion_code` / `end_reason` / `max_scroll_y` / `post_order`(数组)
+- **experiments**（主表，每个被试一行）：`uid`(主键) / `condition_n` / `topic` / `topic_key`(正式取值 `fertility`/`ai`；SQL仍兼容历史 `eldercare`) / `start_time_ms` / `end_time_ms` / `total_duration_ms` / `completion_code` / `end_reason` / `max_scroll_y` / `post_order`(数组)
 - **actions**：`uid`(外键) / `type` / `post_id` / `timestamp_ms` / `order_num` / `stance` / `source_level` / `quality` / `content` / `char_count`
 - **scroll_events**：`uid`(外键) / `post_id` / `action` / `timestamp_ms` / `scroll_y`
 - **post_visibility**：`uid`(外键) / `post_id` / `total_visible_ms` / `first_seen_at_ms`
@@ -271,8 +268,8 @@ type ScrollEvent = {
 - 人口学统计信息收集
 
 Credamo 与网页的对接方式：
-1. Credamo 问卷中嵌入一个外链跳转（或 iframe），URL 携带 `uid` 参数
-2. 被试完成实验后，由网页自动跳转回 Credamo（或通过接口对接通知完成状态），无需被试手动操作
+1. 根据对接人的说明，通过HTML题和自定义变量保存研究UID，再给HTML题内的实验链接附上同一个 `uid`；普通直接内嵌无法直接取得所需ID
+2. HTML题内嵌方案拟用 `/api/status?uid=...` 核验完成后继续同一问卷；平台变量读写语法及下一页控制仍待确认。独立跳转方案才按需要使用 `returnUrl`。现有代码在iframe内只会导航当前frame，不能据此声称已实现顶层问卷回跳
 3. 数据分析时通过 `uid` 将 Credamo 问卷数据和 Supabase 行为数据合并
 
 ---
@@ -294,11 +291,11 @@ app/
 │   ├── CountdownBar.tsx        # 底部状态栏
 │   └── ShareModal.tsx          # 转发确认弹窗
 ├── data/
-│   ├── topics.ts               # 议题枚举（TOPIC_KEYS: fertility/ai/eldercare）
+│   ├── topics.ts               # 正式议题枚举（TOPIC_KEYS: fertility/ai）
 │   ├── materials/
-│   │   ├── fertility.json      # 生育议题材料库（正式，三胎购房补贴）
-│   │   ├── ai.json             # AI议题材料库（正式，AI简历筛选）
-│   │   └── eldercare.json      # 养老议题材料库（正式，养老院年轻人入住计划）
+│   │   ├── fertility.json      # 正式：育儿补贴
+│   │   ├── ai.json             # 正式：AI就业
+│   │   └── eldercare.json      # 历史保留，不参与分配
 │   ├── avatarPool.ts           # 高信源头像/昵称池 + 按议题拆分的身份描述映射
 │   └── identityPool.ts        # 身份描述文本池
 ├── lib/
@@ -307,7 +304,7 @@ app/
 │   ├── materialsRegistry.ts    # 按 topic 查找对应材料文件
 │   ├── enrichPosts.ts          # 按 topic 给帖子分配展示昵称/头像
 │   ├── blockRandomize.ts       # 分块随机化算法
-│   ├── conditionAssignment.ts  # 按 uid 哈希自动分配 N×topic 9 条件（生成端只需传 uid）
+│   ├── conditionAssignment.ts  # 按 uid 哈希自动分配 N×topic 6 条件（生成端只需传 uid）
 │   └── scrollTracker.ts        # 滚动追踪 hook
 ├── globals.css
 ├── layout.tsx
@@ -351,12 +348,12 @@ function blockRandomize(materials: MaterialsByCell, n: number): PostItem[] {
 
 ---
 
-## 给 Claude Code 的使用提示
+## 后续实现约定
 
 1. 项目已有基础代码（LabWeb），在此基础上重构
 2. 保留已有的 PostAvatar、GoldVBadge 等组件，只需调整和扩展
-3. 新增 Firebase 集成、教程页、结束页、滚动追踪
+3. 当前使用 Supabase 服务端接口；教程、结束页及滚动追踪已实现，后续修改需先确认范围
 4. 材料从 JSON 加载，不硬编码
-5. 所有实验参数（n、uid、topic）从 URL 读取
+5. `uid` 从URL读取；默认分组由uid计算，手动覆盖时 `n` 和 `topic` 须同时合法
 6. 倒计时 90 秒（不是 3 分钟）
 7. 优先保证功能正确性，样式可以后续微调

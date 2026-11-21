@@ -8,6 +8,7 @@ export const runtime = "nodejs";
 // 用于判断某个 uid 是否已经在 LabWeb 走完完整实验流程（即 experiments 表已有对应记录）。
 // 因此必须允许跨域读取响应。
 const CORS_HEADERS = {
+  "Cache-Control": "no-store, max-age=0",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",

@@ -51,7 +51,7 @@ export function PostCard({
   const hasPlatformLabel = highSource && Boolean(post.platformLabel?.trim());
 
   return (
-    <article ref={rootRef} className="px-4 py-4">
+    <article ref={rootRef} className="study-pad py-5">
       <div className="flex gap-3">
         <PostAvatar
           sourceLevel={post.sourceLevel}
@@ -62,30 +62,30 @@ export function PostCard({
         <div className="min-w-0 flex-1">
           {/* 第一行：昵称 · V标 · 平台类标签（三者同行） */}
           <div className="flex flex-wrap items-center gap-1">
-            <span className="text-[15px] font-medium text-neutral-900">
+            <span className="study-copy font-medium text-neutral-900">
               {post.displayName}
             </span>
             {highSource ? <GoldVBadge /> : null}
             {hasPlatformLabel ? (
-              <span className="text-[11px] leading-none text-neutral-400">
+              <span className="study-meta text-neutral-500">
                 {post.platformLabel}
               </span>
             ) : null}
           </div>
           {/* 第二行：身份类标签（独占一行，昵称下方小字） */}
           {hasIdentityLabel ? (
-            <p className="mt-0.5 text-[12px] leading-snug text-neutral-500">
+            <p className="study-meta mt-1 text-neutral-500">
               {post.identityLabel}
             </p>
           ) : null}
-          <p className="mt-2 whitespace-pre-wrap break-words text-[15px] leading-[1.65] text-neutral-800">
+          <p className="study-copy mt-3 whitespace-pre-wrap break-words text-neutral-800">
             {post.content}
           </p>
-          <div className="mt-3 flex flex-wrap items-center justify-end gap-x-6 gap-y-2 text-[13px]">
-            <div className="inline-flex items-center gap-2">
+          <div className="study-copy mt-3 flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+            <div className="inline-flex max-w-full flex-wrap items-center gap-2">
               <button
                 type="button"
-                className={`inline-flex items-center gap-1.5 transition-colors ${
+                className={`inline-flex min-h-11 items-center gap-2 px-1 transition-colors ${
                   hasShared
                     ? "cursor-not-allowed text-red-600"
                     : shareDisabled
@@ -95,20 +95,20 @@ export function PostCard({
                 disabled={shareDisabled || interactionsDisabled}
                 onClick={onShareClick}
               >
-                <Share2 className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <Share2 className="h-5 w-5 shrink-0" strokeWidth={2} />
                 <span>{hasShared ? "已转发" : "转发"}</span>
               </button>
               {sharePracticeSuccess ? (
-                <span className="inline-flex items-center gap-1 text-green-600">
-                  <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} />
+                <span className="study-meta inline-flex items-center gap-1 text-green-600">
+                  <Check className="h-5 w-5 shrink-0" strokeWidth={2.5} />
                   <span>操作正确！</span>
                 </span>
               ) : null}
             </div>
-            <div className="inline-flex items-center gap-2">
+            <div className="inline-flex max-w-full flex-wrap items-center gap-2">
               <button
                 type="button"
-                className={`inline-flex items-center gap-1.5 transition-colors ${
+                className={`inline-flex min-h-11 items-center gap-2 px-1 transition-colors ${
                   isLiked
                     ? "text-red-600 active:text-red-700"
                     : "text-gray-500 active:text-neutral-700"
@@ -117,7 +117,7 @@ export function PostCard({
                 onClick={onLikeClick}
               >
                 <Heart
-                  className={`h-4 w-4 shrink-0 ${
+                  className={`h-5 w-5 shrink-0 ${
                     isLiked ? "fill-red-600 text-red-600" : "fill-none"
                   }`}
                   strokeWidth={2}
@@ -125,8 +125,8 @@ export function PostCard({
                 <span>点赞</span>
               </button>
               {likePracticeSuccess ? (
-                <span className="inline-flex items-center gap-1 text-green-600">
-                  <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} />
+                <span className="study-meta inline-flex items-center gap-1 text-green-600">
+                  <Check className="h-5 w-5 shrink-0" strokeWidth={2.5} />
                   <span>操作正确！</span>
                 </span>
               ) : null}
