@@ -74,7 +74,7 @@ GitHub 仓库为 `https://github.com/CoCcocStrauss/LabWeb`，所属账号为 `Co
 在本机运行 `npm run database:check` 可检查四张实验表的连接；检查不会返回已有记录，
 不会写入数据或调用提交 RPC，也不会输出密钥。添加 `-- --config-only` 可仅检查本地配置。
 本地 `.env.local` 不会自动成为 Netlify 的线上配置，发布时仍需在该项目设置中配置这两个变量。
-当前本地配置指向 `https://biobenawbymzsktnkmmx.supabase.co`；此记录不表示已核验线上配置或远程建表。
+当前使用现有 LabWeb Supabase 项目；连接地址以本地和服务端环境变量 `SUPABASE_URL` 为准。
 
 Netlify 发布状态变为 Published 后，再测试阅读、转发、数据提交，并核对后台完成码。
 `package.json` 中的 Netlify CLI 命令仅为本地手动部署的备用方式，GitHub 自动部署不使用它们。

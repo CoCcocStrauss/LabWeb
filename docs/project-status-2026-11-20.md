@@ -49,7 +49,7 @@
 
 | 项目 | 当前记录 |
 |---|---|
-| 本地配置指向的 Supabase URL | https://biobenawbymzsktnkmmx.supabase.co |
+| 本地配置指向的 Supabase URL | 见本地环境变量 `SUPABASE_URL` |
 | 本地配置指向的项目 ref | `biobenawbymzsktnkmmx` |
 | 对应控制台入口 | https://supabase.com/dashboard/project/biobenawbymzsktnkmmx |
 | 服务端变量名 | `SUPABASE_URL`、`SUPABASE_SERVICE_ROLE_KEY`；后者也可填入服务端 `sb_secret_…` 密钥 |
