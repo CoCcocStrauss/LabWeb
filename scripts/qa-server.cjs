@@ -65,9 +65,11 @@ async function main() {
       const pre=[p.p_uid,p.p_session_id,p.p_condition_n,p.p_topic_key,p.p_questionnaire_version,JSON.stringify(p.p_pretest)];
       if(name==='save_experiment_pretest') await db.query('select save_experiment_pretest($1,$2,$3,$4,$5,$6::jsonb)',pre);
       else if(name==='save_experiment_pretest_v3') await db.query('select save_experiment_pretest_v3($1,$2,$3,$4,$5,$6::jsonb,$7)',[...pre,p.p_secret_hash]);
-      else if(name==='submit_experiment_v2'||name==='submit_experiment_v3') {
-        const args=[JSON.stringify(p.p_payload),p.p_payload_hash,p.p_completion_code];if(name.endsWith('v3'))args.push(p.p_secret_hash);
-        result=(await db.query(`select ${name}($1::jsonb,$2,$3${name.endsWith('v3')?',$4':''}) as code`,args)).rows[0].code;
+      else if(name==='save_experiment_pretest_v4') await db.query('select save_experiment_pretest_v4($1,$2,$3,$4,$5,$6::jsonb,$7,$8::jsonb)',[...pre,p.p_secret_hash,JSON.stringify(p.p_permission_check)]);
+      else if(name==='save_experiment_explanation_v4') await db.query('select save_experiment_explanation_v4($1,$2,$3,$4::jsonb)',[p.p_uid,p.p_session_id,p.p_secret_hash,JSON.stringify(p.p_explanation)]);
+      else if(name==='submit_experiment_v2'||name==='submit_experiment_v3'||name==='submit_experiment_v4') {
+        const args=[JSON.stringify(p.p_payload),p.p_payload_hash,p.p_completion_code];if(!name.endsWith('v2'))args.push(p.p_secret_hash);
+        result=(await db.query(`select ${name}($1::jsonb,$2,$3${!name.endsWith('v2')?',$4':''}) as code`,args)).rows[0].code;
       } else if(name==='prepare_experiment_audio') result=(await db.query('select prepare_experiment_audio($1,$2,$3,$4,$5,$6,$7,$8,$9) as ready',[p.p_uid,p.p_session_id,p.p_secret_hash,p.p_recording_id,p.p_storage_path,p.p_mime_type,p.p_byte_length,p.p_duration_ms,p.p_sha256])).rows[0].ready;
       else if(name==='confirm_experiment_audio') await db.query('select confirm_experiment_audio($1,$2,$3,$4)',[p.p_uid,p.p_session_id,p.p_secret_hash,p.p_recording_id]);
       else return send(404,{code:'42883'});

@@ -1,7 +1,22 @@
+import type {
+  ReadingMetrics,
+  RulesResponse,
+  MicrophonePermission,
+  InteractionContext,
+} from "./readingProtocol";
 import type { TopicKey } from "../data/topics";
 import type { Quality, SourceLevel, Stance } from "./blockRandomize";
-import type { ComprehensionAttempt, QuestionnaireResponse } from "../data/questionnaire";
-import type { ExplanationResponse, Interruption, PresentedPost, RecognitionResponse, ReasonsResponse } from "./posttest";
+import type {
+  ComprehensionAttempt,
+  QuestionnaireResponse,
+} from "../data/questionnaire";
+import type {
+  ExplanationResponse,
+  Interruption,
+  PresentedPost,
+  RecognitionResponse,
+  ReasonsResponse,
+} from "./posttest";
 
 export type EndReason = "manual" | "timeout";
 
@@ -12,14 +27,25 @@ export type PostExperimentAttrs = {
 };
 
 export type ActionLog =
-  | {
+  | ({
+      interaction?: InteractionContext;
       type: "share";
       postId: string;
       timestamp: number;
       order: number;
-    } & PostExperimentAttrs
-  | ({ type: "like"; postId: string; timestamp: number } & PostExperimentAttrs)
-  | ({ type: "unlike"; postId: string; timestamp: number } & PostExperimentAttrs)
+    } & PostExperimentAttrs)
+  | ({
+      interaction?: InteractionContext;
+      type: "like";
+      postId: string;
+      timestamp: number;
+    } & PostExperimentAttrs)
+  | ({
+      interaction?: InteractionContext;
+      type: "unlike";
+      postId: string;
+      timestamp: number;
+    } & PostExperimentAttrs)
   | {
       type: "user_post";
       content: string;
@@ -55,6 +81,9 @@ export function generateCompletionCode(length = 6): string {
 export type SubmitExperimentDataInput = {
   sessionId: string;
   sessionSecret: string;
+  rules: RulesResponse;
+  microphonePermission: MicrophonePermission;
+  readingMetrics: ReadingMetrics;
   questionnaireVersion: string;
   pretest: QuestionnaireResponse;
   posttest: QuestionnaireResponse;
@@ -78,18 +107,38 @@ export type SubmitExperimentDataInput = {
   postVisibilitySummary: PostVisibilitySummary;
 };
 
-export type PretestInput = Pick<SubmitExperimentDataInput, "uid" | "conditionN" | "topicKey" | "sessionId" | "sessionSecret" | "questionnaireVersion" | "pretest">;
+export type PretestInput = Pick<
+  SubmitExperimentDataInput,
+  | "uid"
+  | "conditionN"
+  | "topicKey"
+  | "sessionId"
+  | "sessionSecret"
+  | "questionnaireVersion"
+  | "pretest"
+  | "microphonePermission"
+>;
 
-export async function postJson<T>(url: string, input: unknown, timeoutMs = 15_000): Promise<T> {
+export async function postJson<T>(
+  url: string,
+  input: unknown,
+  timeoutMs = 15_000,
+): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input), signal: controller.signal });
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+      signal: controller.signal,
+    });
     const data = await res.json().catch(() => null);
     if (!res.ok) throw new Error(data?.error ?? `保存失败（${res.status}）`);
     return data as T;
-  } finally { clearTimeout(timeout); }
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export async function savePretest(input: PretestInput): Promise<void> {
@@ -103,9 +152,10 @@ export async function savePretest(input: PretestInput): Promise<void> {
  * 浏览器端不再持有 Supabase 的任何写权限。
  */
 export async function submitExperimentData(
-  input: SubmitExperimentDataInput
+  input: SubmitExperimentDataInput,
 ): Promise<string> {
   const data = await postJson<{ completionCode: string }>("/api/submit", input);
-  if (typeof data.completionCode !== "string" || !data.completionCode) throw new Error("保存结果不完整，请重试。");
+  if (typeof data.completionCode !== "string" || !data.completionCode)
+    throw new Error("保存结果不完整，请重试。");
   return data.completionCode;
 }

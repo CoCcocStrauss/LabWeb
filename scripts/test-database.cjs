@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const { readFileSync } = require("node:fs");
 const { createHash } = require("node:crypto");
 const { PGlite } = require(process.env.PGLITE_MODULE || "@electric-sql/pglite");
-const { root, createLoader, fixture, legacyFixture } = require("./test-support.cjs");
+const { root, createLoader, fixture, legacyFixture, v2Fixture } = require("./test-support.cjs");
 const { canonicalJson } = createLoader()("app/lib/submissionValidation.ts");
 
 async function database() {
@@ -16,12 +16,18 @@ async function database() {
 const secretHash = f => createHash("sha256").update(f.sessionSecret).digest("hex");
 async function pretest(db, f) {
   const args = [f.uid, f.sessionId, f.conditionN, f.topicKey, f.questionnaireVersion, JSON.stringify(f.pretest)];
+  if(f.questionnaireVersion==="2026-11-21-v3")return db.query("select save_experiment_pretest_v4($1,$2,$3,$4,$5,$6::jsonb,$7,$8::jsonb)",[...args,secretHash(f),JSON.stringify(f.microphonePermission)]);
   if (f.sessionSecret) return db.query("select save_experiment_pretest_v3($1,$2,$3,$4,$5,$6::jsonb,$7)", [...args, secretHash(f)]);
   return db.query("select save_experiment_pretest($1,$2,$3,$4,$5,$6::jsonb)", args);
 }
-async function submit(db, f, code = "ABCDEF") {
+async function submit(db, f, code = "ABCDEF", saveExplanation=true) {
+  if(f.questionnaireVersion==="2026-11-21-v3"&&saveExplanation){
+   const existing=(await db.query("select completed_at from experiment_sessions where uid=$1",[f.uid])).rows[0];
+   if(!existing?.completed_at)await db.query("select save_experiment_explanation_v4($1,$2,$3,$4::jsonb)",[f.uid,f.sessionId,secretHash(f),JSON.stringify(f.explanation)]);
+  }
   const { sessionSecret, ...payload } = f;
   const args = [JSON.stringify(payload), createHash("sha256").update(canonicalJson(payload)).digest("hex"), code];
+  if(f.questionnaireVersion==="2026-11-21-v3")return db.query("select submit_experiment_v4($1::jsonb,$2,$3,$4) as code",[...args,secretHash(f)]);
   return sessionSecret ? db.query("select submit_experiment_v3($1::jsonb,$2,$3,$4) as code", [...args, secretHash(f)]) :
     db.query("select submit_experiment_v2($1::jsonb,$2,$3) as code", args);
 }
@@ -87,6 +93,7 @@ test("真实 PostgreSQL：旧四表数据保留，service_role 可执行新接�
     await db.exec(readFileSync(`${root}/supabase/migrations/20261121_questionnaires.sql`, "utf8"));
     assert.equal((await db.query("select completion_code from experiments where uid='legacy_uid'")).rows[0].completion_code, "LEGACY");
     await db.exec(readFileSync(`${root}/supabase/migrations/20261121_posttasks_audio.sql`, "utf8"));
+    await db.exec(readFileSync(`${root}/supabase/migrations/20261121_masonry_protocol_v3.sql`,"utf8"));
     await db.exec("set role service_role");
     const f = fixture("fertility", 48); await pretest(db, f); await submit(db, f);
     assert.equal((await db.query("select count(*)::int as n from experiments")).rows[0].n, 2);
@@ -120,5 +127,22 @@ test('Supabase存储迁移：桶私有，已有宽泛policy仍不能向匿名用
   await db.exec("insert into storage.objects values('experiment-audio'),('other');");
   assert.equal((await db.query("select public from storage.buckets where id='experiment-audio'")).rows[0].public,false);
   await db.exec('set role anon');assert.deepEqual((await db.query('select bucket_id from storage.objects')).rows,[{bucket_id:'other'}]);
+ }finally{await db.close();}
+});
+
+test('v3解释先独立保存、旧v2继续可提交、错答纠正与过程数据完整留存',async()=>{
+ const db=await database();try{
+  const f=fixture();await pretest(db,f);await assert.rejects(submit(db,f,'ABCDEF',false),e=>e.code==='23514');
+  await submit(db,f);const row=(await db.query('select rules,permission_check,reading_metrics,explanation_saved_at from experiment_sessions where uid=$1',[f.uid])).rows[0];
+  assert.deepEqual(row.rules,f.rules);assert.deepEqual(row.permission_check,f.microphonePermission);assert.deepEqual(row.reading_metrics,f.readingMetrics);assert.ok(row.explanation_saved_at);
+  const old=v2Fixture();old.uid='qa_v2_migration_compat';await pretest(db,old);await submit(db,old);assert.equal((await db.query('select questionnaire_version from experiment_sessions where uid=$1',[old.uid])).rows[0].questionnaire_version,'2026-11-21-v2');
+ }finally{await db.close();}
+});
+
+test('解释题较早的超时请求不能覆盖较新的重试内容',async()=>{
+ const db=await database();try{const f=fixture();await pretest(db,f);const newer={...f.explanation,completedAt:f.explanation.completedAt+100,text:'更新后的解释文字'.repeat(4)};newer.effectiveCharCount=createLoader()('app/lib/posttest.ts').countEffectiveCharacters(newer.text);
+ await db.query('select save_experiment_explanation_v4($1,$2,$3,$4::jsonb)',[f.uid,f.sessionId,secretHash(f),JSON.stringify(newer)]);
+ await db.query('select save_experiment_explanation_v4($1,$2,$3,$4::jsonb)',[f.uid,f.sessionId,secretHash(f),JSON.stringify(f.explanation)]);
+ assert.deepEqual((await db.query('select explanation from experiment_sessions where uid=$1',[f.uid])).rows[0].explanation,newer);
  }finally{await db.close();}
 });

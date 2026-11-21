@@ -1,30 +1,125 @@
 "use client";
-import { useState } from "react";
-import { COMPREHENSION_OPTIONS, COMPREHENSION_QUESTION, type ComprehensionAttempt } from "../data/questionnaire";
-
-export function ComprehensionPage({ attempts, onAttempt, onContinue }: {
-  attempts: ComprehensionAttempt[]; onAttempt: (attempt: ComprehensionAttempt) => void; onContinue: () => void;
+import { useEffect, useRef } from "react";
+import { Check } from "lucide-react";
+import {
+  COMPREHENSION_OPTIONS,
+  COMPREHENSION_QUESTION,
+  type ComprehensionAttempt,
+} from "../data/questionnaire";
+export function ComprehensionPage({
+  attempts,
+  onAttempt,
+  onContinue,
+}: {
+  attempts: ComprehensionAttempt[];
+  onAttempt: (attempt: ComprehensionAttempt) => void;
+  onContinue: () => void;
 }) {
-  const [selected, setSelected] = useState<number | null>(null);
-  const last = attempts.at(-1);
-  return <main className="study-shell study-page">
-    <h1 className="study-title">确认操作规则</h1>
-    <p className="study-copy mt-3 text-neutral-600">完成这道题后，将进入阅读准备页。现在尚未开始计时。</p>
-    <fieldset className="mt-6">
-      <legend className="study-copy font-medium">{COMPREHENSION_QUESTION}</legend>
-      <div className="mt-5 space-y-3">{COMPREHENSION_OPTIONS.map((option, i) => <label key={option} className="study-control flex items-start gap-3 rounded-lg border border-neutral-200 px-4 py-3">
-        <input type="radio" name="comprehension" checked={selected === i + 1} disabled={last?.correct} onChange={() => setSelected(i + 1)} className="mt-1 h-5 w-5 shrink-0 accent-[#0084ff]" />
-        {String.fromCharCode(65 + i)}. {option}
-      </label>)}</div>
-    </fieldset>
-    {last ? <p role="status" className={`study-copy mt-5 ${last.correct ? "text-green-700" : "text-neutral-700"}`}>
-      {last.correct ? "回答正确。选满两条后，可以继续阅读，也可以点击结束按钮。" : "选满两条后，可以继续阅读，也可以点击结束按钮；只有时间结束才会自动结束阅读。请重新选择。"}
-    </p> : null}
-    <button type="button" disabled={!last?.correct && selected === null} onClick={() => {
-      if (last?.correct) { onContinue(); return; }
-      if (selected !== null) { onAttempt({ value: selected, correct: selected === 2, timestamp: Date.now() }); setSelected(null); }
-    }} className="study-control mt-6 w-full rounded-full bg-[#0084ff] px-4 py-3 font-medium text-white disabled:bg-neutral-200 disabled:text-neutral-400">
-      {last?.correct ? "下一步" : "确认答案"}
-    </button>
-  </main>;
+  const attempt = attempts.at(-1),
+    latest = useRef({ attempt, onAttempt, onContinue });
+  latest.current = { attempt, onAttempt, onContinue };
+  useEffect(() => {
+    const saved = latest.current.attempt;
+    if (!saved) return;
+    if (saved.autoAdvancedAt) {
+      latest.current.onContinue();
+      return;
+    }
+    let last = performance.now(),
+      visible = saved.feedbackVisibleMs ?? 0;
+    let finished = false;
+    const tick = () => {
+      const now = performance.now();
+      if (document.visibilityState === "visible")
+        visible += Math.max(0, now - last);
+      last = now;
+      const { attempt: a, onAttempt: save, onContinue: next } = latest.current;
+      if (!a || finished) return;
+      const required = a.correct ? 3000 : 5000;
+      const done = visible >= required;
+      save({
+        ...a,
+        feedbackVisibleMs: Math.min(required, Math.floor(visible)),
+        autoAdvancedAt: done ? Date.now() : null,
+      });
+      if (done) {
+        finished = true;
+        next();
+      }
+    };
+    const changed = () => {
+      last = performance.now();
+    };
+    document.addEventListener("visibilitychange", changed);
+    const timer = setInterval(tick, 100);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", changed);
+    };
+  }, [attempt?.timestamp, attempt?.autoAdvancedAt]);
+  const remaining = attempt
+    ? Math.max(
+        0,
+        Math.ceil(
+          ((attempt.correct ? 3000 : 5000) - (attempt.feedbackVisibleMs ?? 0)) /
+            1000,
+        ),
+      )
+    : 0;
+  return (
+    <main className="study-shell study-page">
+      <h1 className="study-title">确认任务规则</h1>
+      <p className="study-meta mt-3 text-neutral-600">
+        选一项即可；随后会显示答案并自动进入下一步。
+      </p>
+      <fieldset className="mt-5">
+        <legend className="study-copy font-medium">
+          {COMPREHENSION_QUESTION}
+        </legend>
+        <div className="mt-4 space-y-3">
+          {COMPREHENSION_OPTIONS.map((text, i) => {
+            const value = i + 1,
+              correct = !!attempt && value === 1,
+              wrong = !!attempt && !attempt.correct && value === attempt.value;
+            return (
+              <button
+                type="button"
+                key={text}
+                disabled={!!attempt}
+                onClick={() => {
+                  const now = Date.now();
+                  onAttempt({
+                    value,
+                    correct: value === 1,
+                    timestamp: now,
+                    feedbackPresentedAt: now,
+                    feedbackVisibleMs: 0,
+                    autoAdvancedAt: null,
+                  });
+                }}
+                className={`study-control flex w-full items-start gap-3 rounded-lg border p-4 text-left ${correct ? "border-green-600 bg-green-50 text-green-800" : wrong ? "border-red-600 bg-red-50 text-red-800" : "border-neutral-200"}`}
+              >
+                <span>
+                  {String.fromCharCode(65 + i)}. {text}
+                </span>
+                {correct ? (
+                  <Check className="shrink-0" aria-label="正确答案" />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+      {attempt ? (
+        <p
+          role="status"
+          className={`study-copy mt-5 ${attempt.correct ? "text-green-700" : "text-red-700"}`}
+        >
+          {attempt.correct
+            ? `回答正确，${remaining}秒后进入开始页`
+            : `正确规则是选择两条内容转发，${remaining}秒后进入开始页`}
+        </p>
+      ) : null}
+    </main>
+  );
 }

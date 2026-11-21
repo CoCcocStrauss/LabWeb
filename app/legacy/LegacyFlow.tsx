@@ -12,13 +12,13 @@ import { enrichPostsForDisplay } from "../lib/enrichPosts";
 import { createSession, loadSession, saveSession, READING_DURATION_MS, type ExperimentSession, type ReadingEndData, type ReadingSnapshot } from "./experimentSession";
 import { getMaterialsForTopic } from "../lib/materialsRegistry";
 
-const TutorialPage = dynamic(() => import("../components/TutorialPage").then(m => m.TutorialPage), { ssr: false });
-const ExperimentPage = dynamic(() => import("../components/ExperimentPage").then(m => m.ExperimentPage), { ssr: false });
+const TutorialPage = dynamic(() => import("../compat/v2/components/TutorialPage").then(m => m.TutorialPage), { ssr: false });
+const ExperimentPage = dynamic(() => import("../compat/v2/components/ExperimentPage").then(m => m.ExperimentPage), { ssr: false });
 const EndPage = dynamic(() => import("./EndPage").then(m => m.EndPage), { ssr: false });
 const CompletePage = dynamic(() => import("./EndPage").then(m => m.CompletePage), { ssr: false });
 const QuestionnairePage = dynamic(() => import("./QuestionnairePage").then(m => m.QuestionnairePage), { ssr: false });
-const ComprehensionPage = dynamic(() => import("../components/ComprehensionPage").then(m => m.ComprehensionPage), { ssr: false });
-const ReadyPage = dynamic(() => import("../components/ReadyPage").then(m => m.ReadyPage), { ssr: false });
+const ComprehensionPage = dynamic(() => import("../compat/v2/components/ComprehensionPage").then(m => m.ComprehensionPage), { ssr: false });
+const ReadyPage = dynamic(() => import("../compat/v2/components/ReadyPage").then(m => m.ReadyPage), { ssr: false });
 
 function sanitizeReturnUrl(raw: string | null): string | null {
   if (!raw) return null;

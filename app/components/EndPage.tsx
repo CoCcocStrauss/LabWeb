@@ -23,7 +23,7 @@ export function EndPage({ session, pretestOnly = false, onSaved }: {
       try {
         if (pretestOnly) {
           await savePretest({ uid: session.uid, conditionN: session.conditionN, topicKey: session.topicKey,
-            sessionId: session.sessionId, sessionSecret: session.sessionSecret, questionnaireVersion: session.questionnaireVersion, pretest: session.pretest });
+            sessionId: session.sessionId, sessionSecret: session.sessionSecret, questionnaireVersion: session.questionnaireVersion, pretest: session.pretest, microphonePermission: session.microphonePermission });
           if (!onSavedRef.current()) throw new Error("无法保存本地进度");
         } else {
           const code = await submitExperimentData(finalPayload(session));

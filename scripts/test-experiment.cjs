@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const React = require("react");
 const { renderToStaticMarkup } = require("react-dom/server");
-const { createLoader, fixture, refreshRecognition, legacyFixture } = require("./test-support.cjs");
+const { createLoader, fixture, refreshRecognition, legacyFixture, v2Fixture } = require("./test-support.cjs");
 const load = createLoader();
 const { getQuestions, QUESTIONNAIRES } = load("app/data/questionnaire.ts");
 const { validSubmission, validPretest, canonicalJson } = load("app/lib/submissionValidation.ts");
@@ -15,7 +15,7 @@ test("新前测5题、后测立场/把握/博物馆3题，博物馆无议题情�
     assert.equal(post[0].statement, QUESTIONNAIRES[topic].statement);
     assert.equal(pre[3].id, "confidence"); assert.deepEqual(pre[4], post[2]);
     assert.equal(pre[4].context, "none");
-    for (const q of [...pre, ...post]) assert.equal(q.options.length, 5);
+    for (const q of [...pre, ...post]) assert.equal(q.options.length, q.context === "none" ? 3 : 5);
   }
 });
 
@@ -27,7 +27,7 @@ test("问卷固定情境、没有预选，未选不能前进，后测不展示�
       const html = renderToStaticMarkup(React.createElement(QuestionnairePage, { topic, stage,
         response: { ...f[stage], answers: f[stage].answers.slice(0, i) }, onAnswer() {} }));
       assert.equal(html.includes(QUESTIONNAIRES[topic].scenario), stage === "pretest" && i < 4);
-      assert.equal((html.match(/type="radio"/g) || []).length, 5);
+      assert.equal((html.match(/type="radio"/g) || []).length, getQuestions(topic,stage)[i].options.length);
       assert.ok(!html.includes("checked="));
       assert.match(html, /<button[^>]*disabled/);
       assert.ok(!html.includes("情境说明"));
@@ -63,8 +63,8 @@ test("拒绝非法答案、阶段时间、理解题、材料、转发、行为�
     f => { f.pretest.answers.pop(); }, f => { f.posttest.answers.reverse(); },
     f => { f.questionnaireVersion = "old"; }, f => { f.topicKey = "eldercare"; },
     f => { f.pretest.completedAt = f.startTime + 1; }, f => { f.posttest.startedAt = f.endTime - 1; },
-    f => { f.comprehension[0].correct = true; }, f => { f.comprehension.pop(); },
-    f => { f.comprehension[1].timestamp = f.startTime + 1; }, f => { f.startTime = NaN; },
+    f => { f.comprehension[0].correct = false; }, f => { f.comprehension.pop(); },
+    f => { f.comprehension[0].timestamp = f.startTime + 1; }, f => { f.startTime = NaN; },
     f => { f.postOrder[0] = f.postOrder[1]; }, f => { f.postOrder[0] = "fake"; },
     f => { f.actions = [{ type: "like", postId: f.postOrder[0], timestamp: f.endTime + 1 }]; },
     f => { f.actions = [{ type: "user_post", timestamp: f.startTime + 1, content: "a".repeat(101), charCount: 101 }]; },
@@ -86,7 +86,7 @@ test("本地恢复保留条件、材料、人设、截止时间和行为；过�
   const f = fixture("ai", 48, s.uid);
   s.phase = "experiment";
   s.pretest = f.pretest;
-  s.comprehension = f.comprehension;
+  s.comprehension = f.comprehension; s.rules = f.rules; s.microphonePermission=f.microphonePermission;
   s.reading = { posts: f.postOrder.map(id => ({ id, content: "已保存的原始正文", displayName: `saved_${id}` })),
     startTime: f.startTime, deadline: f.endTime, savedAt: f.startTime + 100, actions: f.actions,
     scrollEvents: [], postVisibilitySummary: f.postVisibilitySummary, maxScrollY: 42, scrollY: 42,
@@ -121,8 +121,8 @@ test("API校验及完成状态：前测不创建完成记录，失败可重试�
     rpc: async (name, params) => {
       calls.push({ name, params });
       if (fail) return { data: null, error: { code: "XX000" } };
-      if (name === "submit_experiment_v3") completed = true;
-      return { data: name === "submit_experiment_v3" ? "ABCDEF" : null, error: null };
+      if (name === "submit_experiment_v4") completed = true;
+      return { data: name === "submit_experiment_v4" ? "ABCDEF" : null, error: null };
     },
     from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: completed ? { uid: "qa" } : null, error: null }) }) }) }),
   }) } });
@@ -138,7 +138,7 @@ test("API校验及完成状态：前测不创建完成记录，失败可重试�
   fail = true; assert.equal((await submit.POST(request(f))).status, 500);
   fail = false; result = await submit.POST(request(f));
   assert.deepEqual(await result.json(), { completionCode: "ABCDEF" });
-  assert.equal(calls.at(-1).name, "submit_experiment_v3");
+  assert.equal(calls.at(-1).name, "submit_experiment_v4");
   assert.equal((await status.GET(new Request("http://localhost/api/status"))).status, 400);
   assert.deepEqual(await (await status.GET(new Request("http://localhost/api/status?uid=qa"))).json(), { completed: true });
 });
@@ -201,4 +201,55 @@ test('录音时长明确表示下限，完成规则显示在录音框外',()=>{
  assert.ok(recorder.includes('已录音22秒，已达到最低时长'));assert.ok(!recorder.includes('/ 20 秒'));assert.ok(!recorder.includes('任选一种'));
  const html=renderToStaticMarkup(React.createElement(ExplanationPage,{topic:'ai',identity:f,response:{...f.explanation,audio},onChange(){},onContinue(){return true;}}));
  assert.ok(html.indexOf('任选一种即可')<html.indexOf('aria-label="录音解释"'));
+});
+
+test('首句预览按终止标点与20个可见字符取短，不拼接后句',()=>{
+ const {previewText}=load('app/lib/readingProtocol.ts');
+ for(const [source,expected,truncated] of [
+  ['我先说一句：这件事要看具体情况。','我先说一句',false],
+  ['补贴真的会有用吗？我觉得还得讨论。','补贴真的会有用吗',false],
+  ['我不太认同；理由是后面这些。','我不太认同',false],
+  ['  短句。后面不能拼进来','短句',false],
+  ['一'.repeat(20)+'。后文','一'.repeat(20),false],
+  ['一'.repeat(21)+'。后文','一'.repeat(20)+'…',true],
+  ['第一行\n第二行','第一行',false],
+  ['。异常开头不跳到后句','',false],
+  ['👨‍👩‍👧‍👦'.repeat(21),'👨‍👩‍👧‍👦'.repeat(20)+'…',true],
+ ]) {const p=previewText(source);assert.equal(p.text,expected);assert.equal(p.lengthTruncated,truncated);}
+});
+
+test('浏览覆盖需50%可见持续250ms；详情暂停背景曝光，刷新不计离开间隙',()=>{
+ const {ReadingTracker}=load('app/lib/readingProtocol.ts');const f=fixture();
+ const materials=Object.values(load('app/lib/materialsRegistry.ts').getMaterialsForTopic('ai').materials).flat();
+ const posts=f.presentedPosts.map(p=>({...materials.find(m=>m.id===p.postId),displayName:p.displayName}));
+ const t=new ReadingTracker(posts),a=posts[0].id,b=posts[1].id,start=f.startTime;
+ t.setVisible(a,true,start,0);assert.equal(t.snapshot(start+249,0,[]).metrics.viewedPostIds.length,0);
+ t.setVisible(b,true,start+100,0);t.open(a,start+300,0);
+ let snap=t.snapshot(start+1000,0,[]);assert.deepEqual(snap.metrics.viewedPostIds,[a]);assert.equal(snap.visibility[a].totalVisibleMs,300);assert.equal(snap.visibility[b].totalVisibleMs,200);
+ assert.deepEqual(t.context(a,'detail'),{surface:'detail',detailOpenedBefore:true});assert.deepEqual(t.context(b,'preview'),{surface:'preview',detailOpenedBefore:false});
+ const restored=new ReadingTracker(posts,{metrics:snap.metrics,scrollEvents:snap.events,postVisibilitySummary:snap.visibility});
+ restored.resumeDetail(start+5000);restored.close(start+5300);snap=restored.snapshot(start+5400,0,[]);
+ assert.equal(snap.metrics.detailEvents.filter(e=>e.type==='open').length,1);assert.equal(snap.metrics.detailIntervals.reduce((sum,i)=>sum+i.endedAt-i.startedAt,0),1000);
+ assert.equal(snap.visibility[a].totalVisibleMs,300);
+ restored.open(a,start+5500,0);assert.equal(restored.visits(a),2);
+});
+
+test('错答经5秒真实显示纠正后可进入，三档博物馆不接受旧五档值',()=>{
+ const f=fixture();f.comprehension=[{value:2,correct:false,timestamp:f.pretest.completedAt+100,feedbackPresentedAt:f.pretest.completedAt+101,feedbackVisibleMs:5000,autoAdvancedAt:f.pretest.completedAt+5101}];
+ assert.ok(validSubmission(f));f.comprehension[0].feedbackVisibleMs=4999;assert.equal(validSubmission(f),false);
+ const g=fixture();g.pretest.answers.at(-1).value=4;assert.equal(validSubmission(g),false);
+ const v2=v2Fixture();assert.ok(load('app/compat/v2/lib/submissionValidation.ts').validSubmission(v2));assert.equal(validSubmission(v2),false);
+});
+
+test('统一解释提交保留已生成的短录音；非法预览、操作来源、规则与未核实曝光被拒绝',()=>{
+ const {validExplanation}=load('app/lib/posttestValidation.ts');const f=fixture();const e={...f.explanation,audio:{recordingId:crypto.randomUUID(),mimeType:'audio/mp4',durationMs:10000,byteLength:100,sha256:'a'.repeat(64),state:'uploaded',storagePath:null,recordedAt:f.explanation.startedAt,finishedAt:f.explanation.startedAt+10000},inputMethod:'both',completedAt:f.explanation.startedAt+10001};e.audio.storagePath=`${f.sessionId}/${e.audio.recordingId}.m4a`;
+ assert.ok(validExplanation(e,f.sessionId));e.audio.state='excluded';assert.equal(validExplanation(e,f.sessionId),false);
+ for(const mutate of [g=>g.readingMetrics.cards[0].preview.text='改写',g=>g.readingMetrics.cards[0].column=1,g=>g.readingMetrics.viewedPostIds=[g.postOrder[0]],g=>g.rules.items[0].checked=false,g=>g.readingMetrics.taskGoal.achieved=true]){const g=fixture();mutate(g);assert.equal(validSubmission(g),false);}
+ const {ExplanationPage}=load('app/components/ExplanationPage.tsx');const html=renderToStaticMarkup(React.createElement(ExplanationPage,{topic:'ai',identity:f,response:f.explanation,onChange(){},onContinue(){return true;}}));assert.ok(html.includes('>提交</button>'));assert.ok(!html.includes('仅使用文字继续'));assert.ok(!html.includes('>下一步</button>'));
+});
+
+test('瀑布流按当前最短列放置，只有首排对齐，不重排随机材料序列',()=>{
+ const {assignMasonryColumns}=load('app/lib/readingProtocol.ts');
+ assert.deepEqual(assignMasonryColumns([240,150,120,200,90,80],2,10),[0,1,1,0,1,1]);
+ assert.deepEqual(assignMasonryColumns([240,150,120,200,90],3,10),[0,1,2,2,1]);
 });

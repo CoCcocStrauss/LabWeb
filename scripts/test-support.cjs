@@ -32,17 +32,17 @@ function fixture(topicKey = "ai", conditionN = 8, uid = `qa_unit_${topicKey}_${c
   const { newExplanation, newReasons } = load("app/lib/posttest.ts");
   const base = 1795248000000;
   const response = (stage, startedAt) => ({ stage, startedAt, completedAt: startedAt + (stage === "pretest" ? 100 : 700),
-    answers: getQuestions(topicKey, stage).map((q, i) => ({ questionId: q.id, value: i % 5 + 1,
+    answers: getQuestions(topicKey, stage).map((q, i) => ({ questionId: q.id, value: i % q.options.length + 1,
       startedAt: startedAt + (stage === "posttest" && i === 2 ? 600 : i * 10),
       answeredAt: startedAt + (stage === "posttest" && i === 2 ? 605 : i * 10 + 5) })) });
   const posts = enrichPostsForDisplay(blockRandomize(getMaterialsForTopic(topicKey).materials, conditionN), topicKey);
-  const postStart = base + 91200;
+  const postStart = base + 100200;
   const reasons = newReasons(topicKey, postStart + 500);
   reasons.selected = [reasons.order[0]]; reasons.primary = reasons.order[0]; reasons.selectedAt = postStart + 510; reasons.completedAt = postStart + 520;
   const f = { uid, sessionId: crypto.randomUUID(), sessionSecret: crypto.randomBytes ? crypto.randomBytes(32).toString("hex") : require("node:crypto").randomBytes(32).toString("hex"), questionnaireVersion: QUESTIONNAIRE_VERSION,
     conditionN, topicKey, topic: getMaterialsForTopic(topicKey).topic, pretest: response("pretest", base),
-    comprehension: [{ value: 1, correct: false, timestamp: base + 200 }, { value: 2, correct: true, timestamp: base + 300 }],
-    startTime: base + 1000, endTime: base + 91000, endReason: "timeout", maxScrollY: 0,
+    comprehension: [{ value: 1, correct: true, timestamp: base + 200, feedbackPresentedAt:base+201, feedbackVisibleMs:3000, autoAdvancedAt:base+3201 }],
+    startTime: base + 10000, endTime: base + 100000, endReason: "timeout", maxScrollY: 0,
     postOrder: posts.map(p => p.id), actions: [], scrollEvents: [],
     presentedPosts: posts.map(p => ({ postId: p.id, displayName: p.displayName, avatarFile: p.avatarFile ?? null, identityLabel: p.identityLabel ?? null, platformLabel: p.platformLabel ?? null })),
     postVisibilitySummary: Object.fromEntries(posts.map(p => [p.id, { totalVisibleMs: 0, firstSeenAt: null }])),
@@ -50,10 +50,16 @@ function fixture(topicKey = "ai", conditionN = 8, uid = `qa_unit_${topicKey}_${c
     explanation: { ...newExplanation(postStart + 300), completedAt: postStart + 400, text: "我认为技术会改变现有岗位同时创造一些新的就业机会", effectiveCharCount: 25, inputMethod: "text" },
     reasons, interruptions: [] };
   f.explanation.effectiveCharCount = load("app/lib/posttest.ts").countEffectiveCharacters(f.explanation.text);
+  const protocol = load("app/lib/readingProtocol.ts");
+  f.rules = protocol.newRules(base+120);f.rules.completedAt=base+180;f.rules.items=f.rules.items.map((v,i)=>({...v,checked:true,changedAt:base+121+i}));
+  f.microphonePermission={state:"denied",requestedAt:base-10,completedAt:base-5};
+  f.readingMetrics=protocol.newReadingMetrics(posts);
+  f.readingMetrics.cards.forEach((c,i)=>c.layouts.push({column:c.column,columns:2,timestamp:f.startTime,left:i%2*188,top:Math.floor(i/2)*210,width:178,height:200,viewportWidth:375,viewportHeight:667}));
   refreshRecognition(f);
   return f;
 }
 function refreshRecognition(f) {
+  if(f.readingMetrics){const shares=f.actions.filter(a=>a.type==="share").length;f.readingMetrics.taskGoal={requiredShares:2,actualShares:shares,achieved:shares===2};f.actions.forEach(a=>{if(a.type!=="user_post"&&!a.interaction)a.interaction={surface:"preview",detailOpenedBefore:false};});}
   const load = createLoader();
   const materials = Object.values(load("app/lib/materialsRegistry.ts").getMaterialsForTopic(f.topicKey).materials).flat();
   const posts = f.presentedPosts.map(p => ({ ...materials.find(m => m.id === p.postId), ...p }));
@@ -67,7 +73,14 @@ function legacyFixture() {
   const { getQuestions, QUESTIONNAIRE_VERSION } = load("app/legacy/questionnaire.ts");
   f.questionnaireVersion = QUESTIONNAIRE_VERSION;
   for (const stage of ["pretest", "posttest"]) f[stage].answers = getQuestions(f.topicKey, stage).map((q, i) => ({questionId:q.id,value:3,startedAt:f[stage].startedAt+i*10,answeredAt:f[stage].startedAt+i*10+5}));
-  for (const key of ["sessionSecret", "recognition", "explanation", "reasons", "presentedPosts", "interruptions"]) delete f[key];
+  f.comprehension=[{value:1,correct:false,timestamp:f.pretest.completedAt+100},{value:2,correct:true,timestamp:f.pretest.completedAt+200}];
+  for (const key of ["rules","microphonePermission","readingMetrics","sessionSecret", "recognition", "explanation", "reasons", "presentedPosts", "interruptions"]) delete f[key];
   return f;
 }
-module.exports = { root, createLoader, fixture, refreshRecognition, legacyFixture };
+function v2Fixture() {
+ const f=fixture();const load=createLoader();const {getQuestions,QUESTIONNAIRE_VERSION}=load("app/compat/v2/data/questionnaire.ts");f.questionnaireVersion=QUESTIONNAIRE_VERSION;
+ for(const stage of ["pretest","posttest"])f[stage].answers=getQuestions(f.topicKey,stage).map((q,i)=>({questionId:q.id,value:3,startedAt:f[stage].startedAt+(stage==="posttest"&&i===2?600:i*10),answeredAt:f[stage].startedAt+(stage==="posttest"&&i===2?605:i*10+5)}));
+ f.comprehension=[{value:2,correct:true,timestamp:f.pretest.completedAt+100}];
+ for(const key of ["rules","microphonePermission","readingMetrics"])delete f[key];return f;
+}
+module.exports = { root, createLoader, fixture, refreshRecognition, legacyFixture, v2Fixture };

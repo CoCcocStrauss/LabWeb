@@ -13,6 +13,7 @@ test("实际HTTP接口：六种条件前测保存、后测完成及四表关联"
     const f = fixture(topic, n, `qa_http_${topic}_${n}_${Date.now()}`);
     assert.equal((await post("/api/progress", f)).status, 200);
     assert.deepEqual(await status(f.uid), { completed: false });
+    assert.equal((await post("/api/explanation",{...f,explanation:f.explanation})).status,200);
     const result = await post("/api/submit", f); assert.equal(result.status, 200, await result.clone().text());
     assert.match((await result.json()).completionCode, /^[A-Z2-9]{6}$/);
     assert.deepEqual(await status(f.uid), { completed: true });
@@ -25,11 +26,12 @@ test("实际HTTP接口：六种条件前测保存、后测完成及四表关联"
 
 test("实际HTTP接口：数据库成功后响应丢失，原载荷重试恢复且不重复入库", async () => {
   const f = fixture("ai", 8, `qa_http_retry_${Date.now()}`);
-  await fetch(`${db}/_qa/fail-next?phase=save_experiment_pretest_v3`);
+  await fetch(`${db}/_qa/fail-next?phase=save_experiment_pretest_v4`);
   assert.equal((await post("/api/progress", f)).status, 500);
   assert.deepEqual(await status(f.uid), { completed: false });
   assert.equal((await post("/api/progress", f)).status, 200);
-  await fetch(`${db}/_qa/fail-next?phase=submit_experiment_v3`);
+  assert.equal((await post("/api/explanation",{...f,explanation:f.explanation})).status,200);
+  await fetch(`${db}/_qa/fail-next?phase=submit_experiment_v4`);
   assert.equal((await post("/api/submit", f)).status, 500);
   assert.deepEqual(await status(f.uid), { completed: true });
   const before = await state(f.uid);
@@ -62,6 +64,34 @@ test('实际HTTP音频：失败保留、重试校验、私有文件、不可覆�
   assert.equal((await post('/api/audio/confirm',body)).status,500);
   assert.equal((await post('/api/audio/confirm',body)).status,200);
   upload=await (await post('/api/audio/prepare',body)).json();assert.equal(upload.uploaded,true);
+  assert.equal((await post('/api/explanation',{...f,explanation:final.explanation})).status,200);
   assert.equal((await post('/api/submit',final)).status,200);
   assert.equal((await state(f.uid)).audio[0].verified,true);
+});
+
+test('解释题提前保存的响应丢失可重试，最终提交前完整回读，旧v2和v1均兼容',async()=>{
+ const {v2Fixture,legacyFixture}=require('./test-support.cjs');
+ const f=fixture('fertility',16,`qa_v3_explanation_retry_${Date.now()}`);
+ f.comprehension=[{value:3,correct:false,timestamp:f.pretest.completedAt+100,feedbackPresentedAt:f.pretest.completedAt+101,feedbackVisibleMs:5000,autoAdvancedAt:f.pretest.completedAt+5101}];
+ assert.equal((await post('/api/progress',f)).status,200);
+ assert.equal((await post('/api/submit',f)).status,500);
+ await fetch(`${db}/_qa/fail-next?phase=save_experiment_explanation_v4`);
+ assert.equal((await post('/api/explanation',f)).status,500);assert.deepEqual(await status(f.uid),{completed:false});
+ assert.equal((await post('/api/explanation',f)).status,200);assert.deepEqual((await state(f.uid)).session.explanation,f.explanation);
+ assert.equal((await post('/api/submit',f)).status,200);
+ const saved=await state(f.uid);assert.deepEqual(saved.session.comprehension,f.comprehension);assert.deepEqual(saved.session.rules,f.rules);assert.deepEqual(saved.session.reading_metrics,f.readingMetrics);
+ for(const make of [v2Fixture,legacyFixture]){const old=make();old.uid=`qa_compat_${old.questionnaireVersion}_${Date.now()}`;assert.equal((await post('/api/progress',old)).status,200);assert.equal((await post('/api/submit',old)).status,200);}
+});
+
+test('统一解释提交矩阵：文字单独、音频单独、文字达标配短录音、音频达标配短文字',async()=>{
+ const {createHash}=require('node:crypto');
+ for(const [label,text,duration] of [['text','有效文字'.repeat(5),null],['audio','',21000],['text_short_audio','有效文字'.repeat(5),10000],['audio_short_text','补充文字',21000]]){
+  const f=fixture('ai',8,`qa_v3_matrix_${label}_${Date.now()}`);f.explanation.text=text;f.explanation.effectiveCharCount=require('./test-support.cjs').createLoader()('app/lib/posttest.ts').countEffectiveCharacters(text);
+  assert.equal((await post('/api/progress',f)).status,200);
+  if(duration!==null){const bytes=Buffer.concat([Buffer.from('1a45dfa3','hex'),Buffer.from(label)]);const a={recordingId:crypto.randomUUID(),mimeType:'audio/webm',durationMs:duration,byteLength:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),state:'ready',storagePath:null,recordedAt:f.explanation.startedAt,finishedAt:f.explanation.startedAt+duration};
+   const body={...f,recording:a};const preparation=await post('/api/audio/prepare',body);assert.equal(preparation.status,200);const prepared=await preparation.json();assert.equal((await fetch(prepared.signedUrl,{method:'PUT',headers:{'Content-Type':a.mimeType},body:bytes})).status,200);assert.equal((await post('/api/audio/confirm',body)).status,200);
+   f.explanation.audio={...a,state:'uploaded',storagePath:prepared.storagePath};f.explanation.inputMethod=text?'both':'audio';f.explanation.completedAt=a.finishedAt+10;f.reasons.startedAt=a.finishedAt+20;f.reasons.selectedAt=a.finishedAt+30;f.reasons.completedAt=a.finishedAt+40;f.posttest.answers[2].startedAt=a.finishedAt+50;f.posttest.answers[2].answeredAt=a.finishedAt+60;f.posttest.completedAt=a.finishedAt+70;
+  }
+  assert.equal((await post('/api/explanation',f)).status,200,label);assert.deepEqual((await state(f.uid)).session.explanation,f.explanation,label+' early save');assert.deepEqual(await status(f.uid),{completed:false});assert.equal((await post('/api/submit',f)).status,200,label);
+ }
 });
