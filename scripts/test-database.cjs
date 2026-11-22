@@ -16,17 +16,19 @@ async function database() {
 const secretHash = f => createHash("sha256").update(f.sessionSecret).digest("hex");
 async function pretest(db, f) {
   const args = [f.uid, f.sessionId, f.conditionN, f.topicKey, f.questionnaireVersion, JSON.stringify(f.pretest)];
+  if(f.questionnaireVersion==="2026-11-23-reasons-v1")return db.query("select save_experiment_pretest_v5($1,$2,$3,$4,$5,$6::jsonb,$7,$8::jsonb,$9::jsonb)",[...args,secretHash(f),JSON.stringify(f.microphonePermission),JSON.stringify(f.preReasons)]);
   if(f.questionnaireVersion==="2026-11-21-v3")return db.query("select save_experiment_pretest_v4($1,$2,$3,$4,$5,$6::jsonb,$7,$8::jsonb)",[...args,secretHash(f),JSON.stringify(f.microphonePermission)]);
   if (f.sessionSecret) return db.query("select save_experiment_pretest_v3($1,$2,$3,$4,$5,$6::jsonb,$7)", [...args, secretHash(f)]);
   return db.query("select save_experiment_pretest($1,$2,$3,$4,$5,$6::jsonb)", args);
 }
 async function submit(db, f, code = "ABCDEF", saveExplanation=true) {
-  if(f.questionnaireVersion==="2026-11-21-v3"&&saveExplanation){
+  if(["2026-11-21-v3","2026-11-23-reasons-v1"].includes(f.questionnaireVersion)&&saveExplanation){
    const existing=(await db.query("select completed_at from experiment_sessions where uid=$1",[f.uid])).rows[0];
-   if(!existing?.completed_at)await db.query("select save_experiment_explanation_v4($1,$2,$3,$4::jsonb)",[f.uid,f.sessionId,secretHash(f),JSON.stringify(f.explanation)]);
+   if(!existing?.completed_at)await db.query(`select ${f.questionnaireVersion==="2026-11-23-reasons-v1"?"save_experiment_explanation_v5":"save_experiment_explanation_v4"}($1,$2,$3,$4::jsonb)`,[f.uid,f.sessionId,secretHash(f),JSON.stringify(f.explanation)]);
   }
   const { sessionSecret, ...payload } = f;
   const args = [JSON.stringify(payload), createHash("sha256").update(canonicalJson(payload)).digest("hex"), code];
+  if(f.questionnaireVersion==="2026-11-23-reasons-v1")return db.query("select submit_experiment_v5($1::jsonb,$2,$3,$4) as code",[...args,secretHash(f)]);
   if(f.questionnaireVersion==="2026-11-21-v3")return db.query("select submit_experiment_v4($1::jsonb,$2,$3,$4) as code",[...args,secretHash(f)]);
   return sessionSecret ? db.query("select submit_experiment_v3($1::jsonb,$2,$3,$4) as code", [...args, secretHash(f)]) :
     db.query("select submit_experiment_v2($1::jsonb,$2,$3) as code", args);
@@ -144,5 +146,38 @@ test('解释题较早的超时请求不能覆盖较新的重试内容',async()=>
  await db.query('select save_experiment_explanation_v4($1,$2,$3,$4::jsonb)',[f.uid,f.sessionId,secretHash(f),JSON.stringify(newer)]);
  await db.query('select save_experiment_explanation_v4($1,$2,$3,$4::jsonb)',[f.uid,f.sessionId,secretHash(f),JSON.stringify(f.explanation)]);
  assert.deepEqual((await db.query('select explanation from experiment_sessions where uid=$1',[f.uid])).rows[0].explanation,newer);
+ }finally{await db.close();}
+});
+
+
+test("理由新版增量迁移、完整前测保存、最终三模块入库及幂等，不更改旧v3",async()=>{
+ const {reasonsFixture}=require('./test-reasons-support.cjs'),db=new PGlite();try{
+  await db.exec('create role anon;create role authenticated;create role service_role bypassrls;');
+  await db.exec(readFileSync(`${root}/supabase/schema.sql`,'utf8').split('-- Additive reasons protocol.')[0]);
+  const old=fixture('ai',8,'test_db_v3_before_v4');await pretest(db,old);await submit(db,old);
+  const before=(await db.query('select * from experiment_sessions where uid=$1',[old.uid])).rows[0];
+  const oldExperiment=(await db.query('select * from experiments where uid=$1',[old.uid])).rows[0];
+  await db.exec(readFileSync(`${root}/supabase/release-reasons-20261123.sql`,'utf8'));
+  await db.exec(readFileSync(`${root}/supabase/release-reasons-20261123.sql`,'utf8'));
+  const after=(await db.query('select * from experiment_sessions where uid=$1',[old.uid])).rows[0];
+  for(const k of Object.keys(before))assert.deepEqual(after[k],before[k]);
+  assert.deepEqual((await db.query('select * from experiments where uid=$1',[old.uid])).rows[0],oldExperiment);
+
+  for(const topic of ['ai','fertility']){
+   const f=reasonsFixture(topic,48,'test_db_reasons_'+topic);await pretest(db,f);
+   let saved=(await db.query('select * from experiment_sessions where uid=$1',[f.uid])).rows[0];assert.deepEqual(saved.pre_reasons,f.preReasons);assert.equal(saved.completed_at,null);
+   const first=await submit(db,f);const second=await submit(db,f);assert.equal(first.rows[0].code,second.rows[0].code);
+   saved=(await db.query('select * from experiment_sessions where uid=$1',[f.uid])).rows[0];assert.deepEqual(saved.pre_reasons,f.preReasons);assert.deepEqual(saved.post_reasons,f.postReasons);assert.deepEqual(saved.interaction_comparison,f.interactionComparison);assert.equal(saved.reasons,null);assert.ok(saved.completed_at);
+   assert.equal((await db.query('select count(*)::int as n from post_visibility where uid=$1',[f.uid])).rows[0].n,48);
+  }
+  const later=fixture('ai',8,'test_db_v3_after_v4');await pretest(db,later);await submit(db,later);assert.ok((await db.query('select completed_at from experiment_sessions where uid=$1',[later.uid])).rows[0].completed_at);
+ }finally{await db.close();}
+});
+test("理由新版拒绝前测理由覆盖、缺少新模块与未提前保存解释；事务不产生完成记录",async()=>{
+ const {reasonsFixture}=require('./test-reasons-support.cjs'),db=await database();try{
+  const f=reasonsFixture();await pretest(db,f);const g=structuredClone(f);g.preReasons.selectedIds=['feeling'];await assert.rejects(pretest(db,g));
+  await assert.rejects(submit(db,f,'ABCDEF',false));const missing=structuredClone(f);delete missing.interactionComparison;await assert.rejects(submit(db,missing));
+  assert.equal((await db.query('select completed_at from experiment_sessions where uid=$1',[f.uid])).rows[0].completed_at,null);assert.equal((await db.query('select count(*)::int as n from experiments where uid=$1',[f.uid])).rows[0].n,0);
+  await submit(db,f);assert.ok((await db.query('select completed_at from experiment_sessions where uid=$1',[f.uid])).rows[0].completed_at);
  }finally{await db.close();}
 });

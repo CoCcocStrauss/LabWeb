@@ -95,3 +95,26 @@ test('统一解释提交矩阵：文字单独、音频单独、文字达标配�
   assert.equal((await post('/api/explanation',f)).status,200,label);assert.deepEqual((await state(f.uid)).session.explanation,f.explanation,label+' early save');assert.deepEqual(await status(f.uid),{completed:false});assert.equal((await post('/api/submit',f)).status,200,label);
  }
 });
+
+test('理由新版实际HTTP：六条件前后理由与互动比较完整保存，最终保存前不完成',async()=>{
+ const {reasonsFixture,refreshNewTasks}=require('./test-reasons-support.cjs');
+ for(const topic of ['ai','fertility'])for(const n of [8,16,48]){
+  const f=reasonsFixture(topic,n,`test_http_reasons_${topic}_${n}_${Date.now()}`);
+  const load=require('./test-support.cjs').createLoader(),p=Object.values(load('app/lib/materialsRegistry.ts').getMaterialsForTopic(topic).materials).flat().find(x=>x.id===f.postOrder[0]);
+  f.actions=[{type:'like',postId:p.id,stance:p.stance,sourceLevel:p.sourceLevel,quality:p.quality,timestamp:f.startTime+1}];refreshNewTasks(f);
+  let response=await post('/api/progress',f);assert.equal(response.status,200,await response.clone().text());assert.deepEqual(await status(f.uid),{completed:false});assert.deepEqual((await state(f.uid)).session.pre_reasons,f.preReasons);
+  response=await post('/api/explanation',f);assert.equal(response.status,200,await response.clone().text());assert.deepEqual(await status(f.uid),{completed:false});response=await post('/api/submit',f);assert.equal(response.status,200,await response.clone().text());const code=(await response.json()).completionCode;
+  const saved=await state(f.uid);assert.deepEqual(saved.session.post_reasons,f.postReasons);assert.deepEqual(saved.session.interaction_comparison,f.interactionComparison);assert.equal(saved.session.reasons,null);assert.equal(saved.counts.post_visibility,n);assert.deepEqual(await status(f.uid),{completed:true});assert.equal((await(await post('/api/submit',f)).json()).completionCode,code);
+ }
+});
+test('理由新版HTTP拒绝缺少前测理由、伪造候选与跨版本提交',async()=>{
+ const {reasonsFixture}=require('./test-reasons-support.cjs'),f=reasonsFixture();const missing=structuredClone(f);delete missing.readingMetrics;assert.equal((await post('/api/submit',missing)).status,400);const g=structuredClone(f);delete g.preReasons;assert.equal((await post('/api/progress',g)).status,400);await post('/api/progress',f);await post('/api/explanation',f);f.interactionComparison.candidatePostIds=['not_presented'];assert.equal((await post('/api/submit',f)).status,400);assert.deepEqual(await status(f.uid),{completed:false});
+});
+
+test('理由新版保留补充短录音并与文字、比较模块一并保存',async()=>{
+ const {reasonsFixture,doneReasons}=require('./test-reasons-support.cjs'),{createHash}=require('node:crypto'),f=reasonsFixture('fertility',8,'test_http_reasons_audio_'+Date.now());
+ const bytes=Buffer.concat([Buffer.from('1a45dfa3','hex'),Buffer.from('new-protocol-qa-audio')]),a={recordingId:crypto.randomUUID(),mimeType:'audio/webm',durationMs:10000,byteLength:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),state:'ready',storagePath:null,recordedAt:f.explanation.startedAt,finishedAt:f.explanation.startedAt+10000};
+ assert.equal((await post('/api/progress',f)).status,200);const body={uid:f.uid,sessionId:f.sessionId,sessionSecret:f.sessionSecret,recording:a};const prepared=await post('/api/audio/prepare',body);assert.equal(prepared.status,200,await prepared.clone().text());const upload=await prepared.json();assert.equal((await fetch(upload.signedUrl,{method:'PUT',headers:{'Content-Type':a.mimeType},body:bytes})).status,200);assert.equal((await post('/api/audio/confirm',body)).status,200);
+ f.explanation.audio={...a,state:'uploaded',storagePath:upload.storagePath};f.explanation.inputMethod='both';f.explanation.completedAt=a.finishedAt+1;f.postReasons=doneReasons(f.topicKey,'posttest',f.explanation.completedAt+1,f.preReasons);f.posttest.answers[2].startedAt=f.postReasons.completedAt+1;f.posttest.answers[2].answeredAt=f.postReasons.completedAt+2;f.posttest.completedAt=f.postReasons.completedAt+3;
+ assert.equal((await post('/api/explanation',f)).status,200);const response=await post('/api/submit',f);assert.equal(response.status,200,await response.clone().text());const saved=await state(f.uid);assert.equal(saved.counts.experiment_audio,1);assert.equal(saved.session.explanation.audio.durationMs,10000);assert.equal(saved.session.explanation.inputMethod,'both');assert.deepEqual(saved.session.post_reasons,f.postReasons);
+});

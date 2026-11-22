@@ -17,6 +17,8 @@ import type {
   RecognitionResponse,
   ReasonsResponse,
 } from "./posttest";
+import type { ReasonResponse } from "../protocol/v4/lib/reasons";
+import type { InteractionComparison } from "../protocol/v4/lib/interactionComparison";
 
 export type EndReason = "manual" | "timeout";
 
@@ -90,7 +92,10 @@ export type SubmitExperimentDataInput = {
   comprehension: ComprehensionAttempt[];
   recognition: RecognitionResponse;
   explanation: ExplanationResponse;
-  reasons: ReasonsResponse;
+  reasons: ReasonsResponse | null;
+  preReasons?: ReasonResponse;
+  postReasons?: ReasonResponse;
+  interactionComparison?: InteractionComparison;
   presentedPosts: PresentedPost[];
   interruptions: Interruption[];
   uid: string;
@@ -117,6 +122,7 @@ export type PretestInput = Pick<
   | "questionnaireVersion"
   | "pretest"
   | "microphonePermission"
+  | "preReasons"
 >;
 
 export async function postJson<T>(

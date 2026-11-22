@@ -1,0 +1,366 @@
+{
+  "ai": [
+    {
+      "id": "ai_support_01",
+      "text": "新产品和服务创造岗位。",
+      "direction": "support"
+    },
+    {
+      "id": "ai_support_02",
+      "text": "AI研发和维护需要人手。",
+      "direction": "support"
+    },
+    {
+      "id": "ai_support_03",
+      "text": "生产成本下降带动需求。",
+      "direction": "support"
+    },
+    {
+      "id": "ai_support_04",
+      "text": "企业扩大业务增加招聘。",
+      "direction": "support"
+    },
+    {
+      "id": "ai_support_05",
+      "text": "创业门槛降低带来工作。",
+      "direction": "support"
+    },
+    {
+      "id": "ai_support_06",
+      "text": "小企业更容易生存发展。",
+      "direction": "support"
+    },
+    {
+      "id": "ai_support_07",
+      "text": "传统行业升级产生新分工。",
+      "direction": "support"
+    },
+    {
+      "id": "ai_support_08",
+      "text": "人机协作增加新的任务。",
+      "direction": "support"
+    },
+    {
+      "id": "ai_support_09",
+      "text": "普通人能承接更复杂的工作。",
+      "direction": "support"
+    },
+    {
+      "id": "ai_support_10",
+      "text": "技能培训帮助劳动者转岗。",
+      "direction": "support"
+    },
+    {
+      "id": "ai_support_11",
+      "text": "AI帮助个人接单和创业。",
+      "direction": "support"
+    },
+    {
+      "id": "ai_support_12",
+      "text": "收入增长带动其他行业就业。",
+      "direction": "support"
+    },
+    {
+      "id": "ai_support_13",
+      "text": "新市场带来配套服务岗位。",
+      "direction": "support"
+    },
+    {
+      "id": "ai_support_14",
+      "text": "更多人能进入原本门槛高的行业。",
+      "direction": "support"
+    },
+    {
+      "id": "ai_support_15",
+      "text": "AI提高企业竞争力，带动用工。",
+      "direction": "support"
+    },
+    {
+      "id": "ai_support_16",
+      "text": "新需求可能超过被替代的工作。",
+      "direction": "support"
+    },
+    {
+      "id": "ai_oppose_01",
+      "text": "自动化直接替代部分岗位。",
+      "direction": "oppose"
+    },
+    {
+      "id": "ai_oppose_02",
+      "text": "同样产出需要的员工更少。",
+      "direction": "oppose"
+    },
+    {
+      "id": "ai_oppose_03",
+      "text": "初级岗位和入行机会减少。",
+      "direction": "oppose"
+    },
+    {
+      "id": "ai_oppose_04",
+      "text": "专业岗位也可能被AI替代。",
+      "direction": "oppose"
+    },
+    {
+      "id": "ai_oppose_05",
+      "text": "新岗位增长赶不上旧岗减少。",
+      "direction": "oppose"
+    },
+    {
+      "id": "ai_oppose_06",
+      "text": "新岗位的技能要求难以满足。",
+      "direction": "oppose"
+    },
+    {
+      "id": "ai_oppose_07",
+      "text": "转岗培训耗时且成本高。",
+      "direction": "oppose"
+    },
+    {
+      "id": "ai_oppose_08",
+      "text": "年龄和地区限制转岗机会。",
+      "direction": "oppose"
+    },
+    {
+      "id": "ai_oppose_09",
+      "text": "新增机会集中在少数人身上。",
+      "direction": "oppose"
+    },
+    {
+      "id": "ai_oppose_10",
+      "text": "企业增产未必增加招聘。",
+      "direction": "oppose"
+    },
+    {
+      "id": "ai_oppose_11",
+      "text": "需求增长未必抵消节省的用工。",
+      "direction": "oppose"
+    },
+    {
+      "id": "ai_oppose_12",
+      "text": "大企业扩张挤压小企业岗位。",
+      "direction": "oppose"
+    },
+    {
+      "id": "ai_oppose_13",
+      "text": "AI外包替代原有雇佣岗位。",
+      "direction": "oppose"
+    },
+    {
+      "id": "ai_oppose_14",
+      "text": "失业减少消费，拖累其他岗位。",
+      "direction": "oppose"
+    },
+    {
+      "id": "ai_oppose_15",
+      "text": "企业可能先减人，再观望扩张。",
+      "direction": "oppose"
+    },
+    {
+      "id": "ai_oppose_16",
+      "text": "更多人竞争少量新增岗位。",
+      "direction": "oppose"
+    },
+    {
+      "id": "ai_conditional_01",
+      "text": "不同行业的就业变化不同。",
+      "direction": "conditional"
+    },
+    {
+      "id": "ai_conditional_02",
+      "text": "短期和长期的结果可能不同。",
+      "direction": "conditional"
+    },
+    {
+      "id": "ai_conditional_03",
+      "text": "替代任务不等于取消整个岗位。",
+      "direction": "conditional"
+    },
+    {
+      "id": "ai_conditional_04",
+      "text": "结果取决于企业用AI的方式。",
+      "direction": "conditional"
+    }
+  ],
+  "fertility": [
+    {
+      "id": "fertility_support_01",
+      "text": "每月补贴减轻日常养育支出。",
+      "direction": "support"
+    },
+    {
+      "id": "fertility_support_02",
+      "text": "长期领取减少未来经济顾虑。",
+      "direction": "support"
+    },
+    {
+      "id": "fertility_support_03",
+      "text": "稳定补贴缓解家庭收入波动。",
+      "direction": "support"
+    },
+    {
+      "id": "fertility_support_04",
+      "text": "补贴帮助支付托育费用。",
+      "direction": "support"
+    },
+    {
+      "id": "fertility_support_05",
+      "text": "补贴分担教育相关开支。",
+      "direction": "support"
+    },
+    {
+      "id": "fertility_support_06",
+      "text": "补贴弥补部分生育收入损失。",
+      "direction": "support"
+    },
+    {
+      "id": "fertility_support_07",
+      "text": "部分家庭能减少加班照顾孩子。",
+      "direction": "support"
+    },
+    {
+      "id": "fertility_support_08",
+      "text": "祖辈家庭的经济负担减轻。",
+      "direction": "support"
+    },
+    {
+      "id": "fertility_support_09",
+      "text": "低收入家庭更有能力生育。",
+      "direction": "support"
+    },
+    {
+      "id": "fertility_support_10",
+      "text": "原本想生的人更容易实现计划。",
+      "direction": "support"
+    },
+    {
+      "id": "fertility_support_11",
+      "text": "犹豫家庭可能因此决定生育。",
+      "direction": "support"
+    },
+    {
+      "id": "fertility_support_12",
+      "text": "已有孩子的家庭更愿意再生。",
+      "direction": "support"
+    },
+    {
+      "id": "fertility_support_13",
+      "text": "每多一个孩子都有相应补贴。",
+      "direction": "support"
+    },
+    {
+      "id": "fertility_support_14",
+      "text": "持续支持增强家庭养育信心。",
+      "direction": "support"
+    },
+    {
+      "id": "fertility_support_15",
+      "text": "政策重视生育，释放支持信号。",
+      "direction": "support"
+    },
+    {
+      "id": "fertility_support_16",
+      "text": "部分家庭改变也能增加出生。",
+      "direction": "support"
+    },
+    {
+      "id": "fertility_oppose_01",
+      "text": "住房教育等支出仍然很高。",
+      "direction": "oppose"
+    },
+    {
+      "id": "fertility_oppose_02",
+      "text": "养育总成本仍超过补贴金额。",
+      "direction": "oppose"
+    },
+    {
+      "id": "fertility_oppose_03",
+      "text": "照顾孩子仍需大量时间精力。",
+      "direction": "oppose"
+    },
+    {
+      "id": "fertility_oppose_04",
+      "text": "生育仍可能影响工作和晋升。",
+      "direction": "oppose"
+    },
+    {
+      "id": "fertility_oppose_05",
+      "text": "家庭照料分工未必改变。",
+      "direction": "oppose"
+    },
+    {
+      "id": "fertility_oppose_06",
+      "text": "托育不足仍难兼顾工作。",
+      "direction": "oppose"
+    },
+    {
+      "id": "fertility_oppose_07",
+      "text": "就业收入不稳仍让人犹豫。",
+      "direction": "oppose"
+    },
+    {
+      "id": "fertility_oppose_08",
+      "text": "结婚和建立家庭的困难仍在。",
+      "direction": "oppose"
+    },
+    {
+      "id": "fertility_oppose_09",
+      "text": "个人不生育的意愿未必改变。",
+      "direction": "oppose"
+    },
+    {
+      "id": "fertility_oppose_10",
+      "text": "伴侣意见不一致仍难决定。",
+      "direction": "oppose"
+    },
+    {
+      "id": "fertility_oppose_11",
+      "text": "年龄健康等条件限制生育。",
+      "direction": "oppose"
+    },
+    {
+      "id": "fertility_oppose_12",
+      "text": "补贴多发给本来就会生的家庭。",
+      "direction": "oppose"
+    },
+    {
+      "id": "fertility_oppose_13",
+      "text": "可能只是提前生育，而非多生。",
+      "direction": "oppose"
+    },
+    {
+      "id": "fertility_oppose_14",
+      "text": "新增生育可能集中在少数群体。",
+      "direction": "oppose"
+    },
+    {
+      "id": "fertility_oppose_15",
+      "text": "生活成本上涨可能抵消补贴。",
+      "direction": "oppose"
+    },
+    {
+      "id": "fertility_oppose_16",
+      "text": "补贴的刺激作用可能难以持续。",
+      "direction": "oppose"
+    },
+    {
+      "id": "fertility_conditional_01",
+      "text": "不同收入家庭的反应不同。",
+      "direction": "conditional"
+    },
+    {
+      "id": "fertility_conditional_02",
+      "text": "不同子女数量家庭的反应不同。",
+      "direction": "conditional"
+    },
+    {
+      "id": "fertility_conditional_03",
+      "text": "效果取决于补贴能否稳定兑现。",
+      "direction": "conditional"
+    },
+    {
+      "id": "fertility_conditional_04",
+      "text": "效果取决于托育等配套服务。",
+      "direction": "conditional"
+    }
+  ]
+}

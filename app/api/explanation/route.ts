@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import {
-  authorizeSession,
+  authorizeSessionRecord,
   hashSessionSecret,
   SessionAccessError,
 } from "../../lib/serverSession";
@@ -33,13 +33,18 @@ export async function POST(request: Request) {
       sessionId: b.sessionId,
       sessionSecret: b.sessionSecret,
     };
-    const db = await authorizeSession(identity);
-    const { error } = await db.rpc("save_experiment_explanation_v4", {
-      p_uid: b.uid,
-      p_session_id: b.sessionId,
-      p_secret_hash: hashSessionSecret(b.sessionSecret),
-      p_explanation: b.explanation,
-    });
+    const { db, questionnaireVersion } = await authorizeSessionRecord(identity);
+    const { error } = await db.rpc(
+      questionnaireVersion === "2026-11-23-reasons-v1"
+        ? "save_experiment_explanation_v5"
+        : "save_experiment_explanation_v4",
+      {
+        p_uid: b.uid,
+        p_session_id: b.sessionId,
+        p_secret_hash: hashSessionSecret(b.sessionSecret),
+        p_explanation: b.explanation,
+      },
+    );
     if (error) throw new Error("save failed");
     return NextResponse.json(
       { saved: true },

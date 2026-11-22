@@ -79,6 +79,7 @@ const ReasonsPage = dynamic(
   () => import("./components/ReasonsPage").then((m) => m.ReasonsPage),
   { ssr: false },
 );
+const V4Home = dynamic(() => import("./protocol/v4/Flow"), { ssr: false });
 const V2Home = dynamic(() => import("./compat/v2/Flow"), { ssr: false });
 const LegacyHome = dynamic(() => import("./legacy/LegacyFlow"), { ssr: false });
 
@@ -136,10 +137,23 @@ function SessionFlow({
   const [fatalError, setFatalError] = useState<string | null>(null);
   const [legacy, setLegacy] = useState(false);
   const [v2, setV2] = useState(false);
+  const [v4, setV4] = useState(false);
 
   useEffect(() => {
     try {
+      if (
+        localStorage.getItem(
+          `labweb:session:v4:${encodeURIComponent(params.uid)}`,
+        ) !== null
+      ) {
+        setV4(true);
+        return;
+      }
       const existing = loadSession(params.uid);
+      if (!existing) {
+        setV4(true);
+        return;
+      }
       if (
         existing &&
         params.manual &&
@@ -277,6 +291,7 @@ function SessionFlow({
     [update],
   );
 
+  if (v4) return <V4Home />;
   if (v2)
     return (
       <div className="old-protocol">

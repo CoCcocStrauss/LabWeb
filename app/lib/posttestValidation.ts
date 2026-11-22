@@ -64,9 +64,11 @@ export function validAudioMetadata(
 export function validPostTasks(
   raw: unknown,
   posts: Map<string, PostItem>,
+  newTasks?: (body: SubmitExperimentDataInput) => boolean,
 ): boolean {
   const b = raw as SubmitExperimentDataInput;
   if (
+    !obj(b.readingMetrics) ||
     !Array.isArray(b.presentedPosts) ||
     b.presentedPosts.length !== b.conditionN ||
     !Array.isArray(b.interruptions) ||
@@ -209,6 +211,15 @@ export function validPostTasks(
     e.inputMethod !== (hasAudio ? (e.text.trim() ? "both" : "audio") : "text")
   )
     return false;
+  if (newTasks)
+    return (
+      newTasks(b) &&
+      validInterruptions(b, [
+        "pre_reasons",
+        "pre_museum",
+        "interaction_comparison",
+      ])
+    );
   const reasons = b.reasons;
   const validIds = getReasons(b.topicKey as TopicKey).map(
     (reason) => reason.id,
@@ -239,6 +250,13 @@ export function validPostTasks(
     b.posttest.answers[2].startedAt < reasons.completedAt
   )
     return false;
+  return validInterruptions(b);
+}
+
+function validInterruptions(
+  b: SubmitExperimentDataInput,
+  extra: string[] = [],
+) {
   return b.interruptions.every(
     (event) =>
       obj(event) &&
@@ -255,6 +273,7 @@ export function validPostTasks(
         "explanation",
         "reasons",
         "post_museum",
+        ...extra,
       ].includes(event.phase) &&
       ["reload", "hidden", "visible"].includes(event.type) &&
       time(event.timestamp) &&

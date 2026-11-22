@@ -824,3 +824,16 @@ body {
 .feed-content {
   margin-top: 12px;
 }
+
+/* Shared reason pools and read-only post-reading comparisons. */
+.reason-pool-options { display:grid; grid-template-columns:minmax(0,1fr); gap:10px; }
+.reason-choice { display:flex; align-items:flex-start; gap:12px; min-width:0; padding:12px 14px; border:1px solid #e5e5e5; border-radius:10px; cursor:pointer; line-height:1.6; }
+.reason-choice input { flex-shrink:0; width:20px; height:20px; margin-top:3px; accent-color:#0084ff; }
+.reason-choice span { min-width:0; overflow-wrap:anywhere; }
+.reason-choice.is-chosen { border-color:#0084ff; background:#eff6ff; }
+.review-posts { display:grid; grid-template-columns:minmax(0,1fr); gap:16px; }
+.review-ranking { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+@media(min-width:768px) {
+ .reason-pool-options { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .review-posts { grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; }
+}

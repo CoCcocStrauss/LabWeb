@@ -26,6 +26,7 @@ export function validQuestionnaire(
   value: unknown,
   topic: TopicKey,
   stage: QuestionnaireStage,
+  questionList = getQuestions,
 ): value is QuestionnaireResponse {
   if (
     !record(value) ||
@@ -36,7 +37,7 @@ export function validQuestionnaire(
     !Array.isArray(value.answers)
   )
     return false;
-  const questions = getQuestions(topic, stage);
+  const questions = questionList(topic, stage);
   if (value.answers.length !== questions.length) return false;
   let previous = value.startedAt;
   for (let i = 0; i < questions.length; i++) {
@@ -83,10 +84,25 @@ export function validPretest(value: unknown): value is PretestInput {
 export function validSubmission(
   value: unknown,
 ): value is SubmitExperimentDataInput {
-  if (!validPretest(value) || !record(value)) return false;
+  return validSubmissionWith(
+    value,
+    validPretest,
+    validQuestionnaire,
+    validPostTasks,
+  );
+}
+
+/** Shared reading/behavior checks; questionnaire versions supply their own tasks. */
+export function validSubmissionWith(
+  value: unknown,
+  pretestCheck: (value: unknown) => boolean,
+  questionnaireCheck: typeof validQuestionnaire,
+  postTasksCheck: typeof validPostTasks,
+): value is SubmitExperimentDataInput {
+  if (!pretestCheck(value) || !record(value)) return false;
   const b = value as PretestInput & Record<string, unknown>;
   if (
-    !validQuestionnaire(b.posttest, b.topicKey, "posttest") ||
+    !questionnaireCheck(b.posttest, b.topicKey, "posttest") ||
     !timestamp(b.startTime) ||
     !timestamp(b.endTime) ||
     b.endTime < b.startTime ||
@@ -219,7 +235,7 @@ export function validSubmission(
     )
       return false;
   }
-  return validPostTasks(b, posts) && validReadingProtocol(b, posts);
+  return postTasksCheck(b, posts) && validReadingProtocol(b, posts);
 }
 
 /** 排序对象键，客户端重试只要数据相同就得到同一摘要。 */
