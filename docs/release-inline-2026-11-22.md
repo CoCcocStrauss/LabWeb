@@ -18,7 +18,13 @@
 
 ## 发布状态
 
-本记录随代码提交；GitHub提交、Netlify部署及正式域名验收将在发布后补记。
+- GitHub main 代码提交：`a3a6895fb4c493494ee6fa1e8db729133107a918`，已推送。
+- Netlify 生产部署：`6b028e3100e7bc9010ef890a`，ready，2026-11-22北京时间14:40发布至 https://myexperiment.cn，部署对应上述提交，密钥扫描通过。
+- 正式域名 Chromium 完整流程：`test_browser_inline_20261122_1795329694428`。48条育儿补贴材料，教程独立展开、正式页整卡展开／收起、两张全文保持、点赞转发操作隔离、四／三／双列切换、无丢失／重叠／越界、手机全宽、刷新后标签及截止时间稳定、转发满两条后的结束按钮、完整后测与最终完成均通过。
+- 正式库只回读上述测试UID：前测5题、后测3题、48条presented_posts、教程标签、reading_metrics与客户端最终提交完全一致，completed_at与explanation_saved_at均已保存，实际转发2条、结束后无遗留展开ID；packingVersion和单标签版本正确。
+- 正式域名API和私有音频：`test_api_inline_20261122_1795329693722`，48条AI就业材料。前测提前保存、解释提前保存、标签及各JSON字段回读、最终提交与幂等重试通过；关联行数experiments 1、experiment_sessions 1、experiment_audio 1、actions 4、scroll_events 4、post_visibility 48。21秒合成MP4/AAC测试音频共676096字节，上传和SHA-256回读一致，公开访问被拒绝；不是实际被试声音。
+- 本轮新增两条test_验收记录，需从正式样本中排除；没有删除、清空或修改既有被试记录，没有执行数据库迁移。
+- 发布前数据库测试另8组通过，检查迁移保留、事务、幂等、权限及音频验证。线上浏览器证据在 `/private/tmp/labweb-inline-live-20261122/`，API结果在 `/private/tmp/labweb-inline-live-api-result.json`。后续文档补记使用 `[skip netlify]`，不重复部署已验证的应用。
 
 ## 48条测试链接
 
