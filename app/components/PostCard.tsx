@@ -3,11 +3,12 @@
 import { Check, Heart, Share2 } from "lucide-react";
 import type { MouseEvent, Ref } from "react";
 
+import type { DisplayedLabelSelection } from "../lib/labelSelection";
 import type { SourceLevel } from "../lib/blockRandomize";
 import { GoldVBadge } from "./GoldVBadge";
 import { PostAvatar } from "./PostAvatar";
 
-export type PostCardData = {
+export type PostCardData = Partial<DisplayedLabelSelection> & {
   id: string | number;
   content: string;
   sourceLevel: SourceLevel;

@@ -14,7 +14,7 @@
         "sourceLevel": "high",
         "stance": "support",
         "identityLabel": "资深猎头顾问",
-        "platformLabel": "职场趋势话题答主",
+        "platformLabel": "职场趋势答主",
         "sourceCandidates": [
           {
             "displayName": "摸鱼选手本人",
@@ -28,7 +28,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "support",
-        "identityLabel": "大型互联网公司人力资源负责人",
+        "identityLabel": "大厂人力资源负责人",
         "platformLabel": null,
         "sourceCandidates": [
           {
@@ -44,7 +44,7 @@
         "sourceLevel": "high",
         "stance": "support",
         "identityLabel": "本地化翻译公司创始人",
-        "platformLabel": "语言服务行业创作者",
+        "platformLabel": "语言服务创作者",
         "sourceCandidates": [
           {
             "displayName": "随遇而安",
@@ -59,7 +59,7 @@
         "sourceLevel": "high",
         "stance": "support",
         "identityLabel": null,
-        "platformLabel": "知乎AI与就业话题优质答主",
+        "platformLabel": "AI就业优质答主",
         "sourceCandidates": [
           {
             "displayName": "且行且珍惜",
@@ -73,7 +73,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "support",
-        "identityLabel": "硅谷科技公司产品设计师",
+        "identityLabel": "硅谷产品设计师",
         "platformLabel": null,
         "sourceCandidates": [
           {
@@ -88,7 +88,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "support",
-        "identityLabel": "中国人民大学劳动关系副教授",
+        "identityLabel": "人大劳动关系副教授",
         "platformLabel": null,
         "sourceCandidates": [
           {
@@ -106,7 +106,7 @@
         "sourceLevel": "high",
         "stance": "support",
         "identityLabel": null,
-        "platformLabel": "职场话题优质创作者",
+        "platformLabel": "职场优质创作者",
         "sourceCandidates": [
           {
             "displayName": "追风的少年",
@@ -120,8 +120,8 @@
         "quality": "low",
         "sourceLevel": "high",
         "stance": "support",
-        "identityLabel": "注册人力资源管理师（一级）",
-        "platformLabel": "HR话题答主",
+        "identityLabel": "一级人力资源管理师",
+        "platformLabel": "HR答主",
         "sourceCandidates": [
           {
             "displayName": "半亩方塘",
@@ -136,7 +136,7 @@
         "sourceLevel": "high",
         "stance": "support",
         "identityLabel": null,
-        "platformLabel": "算法伦理话题活跃用户",
+        "platformLabel": "算法伦理活跃用户",
         "sourceCandidates": [
           {
             "displayName": "咕咕咕了",
@@ -151,7 +151,7 @@
         "sourceLevel": "high",
         "stance": "support",
         "identityLabel": null,
-        "platformLabel": "职场话题博主 · 80万粉丝",
+        "platformLabel": "职场博主·80万粉丝",
         "sourceCandidates": [
           {
             "displayName": "Coco的日常",
@@ -165,8 +165,8 @@
         "quality": "low",
         "sourceLevel": "high",
         "stance": "support",
-        "identityLabel": "同济大学就业指导中心讲师",
-        "platformLabel": "大学生职业规划话题答主",
+        "identityLabel": "同济就业指导讲师",
+        "platformLabel": "职业规划答主",
         "sourceCandidates": [
           {
             "displayName": "拖延症晚期患者",
@@ -309,7 +309,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "oppose",
-        "identityLabel": "中国人民大学劳动关系副教授",
+        "identityLabel": "人大劳动关系副教授",
         "platformLabel": null,
         "sourceCandidates": [
           {
@@ -325,7 +325,7 @@
         "sourceLevel": "high",
         "stance": "oppose",
         "identityLabel": "大厂AI算法产品经理",
-        "platformLabel": "大模型应用话题答主",
+        "platformLabel": "大模型应用答主",
         "sourceCandidates": [
           {
             "displayName": "奶茶不加冰",
@@ -340,7 +340,7 @@
         "sourceLevel": "high",
         "stance": "oppose",
         "identityLabel": "资深猎头顾问",
-        "platformLabel": "职场趋势话题答主",
+        "platformLabel": "职场趋势答主",
         "sourceCandidates": [
           {
             "displayName": "摸鱼选手本人",
@@ -354,7 +354,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "oppose",
-        "identityLabel": "大型互联网公司人力资源负责人",
+        "identityLabel": "大厂人力资源负责人",
         "platformLabel": null,
         "sourceCandidates": [
           {
@@ -369,7 +369,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "oppose",
-        "identityLabel": "硅谷科技公司产品设计师",
+        "identityLabel": "硅谷产品设计师",
         "platformLabel": null,
         "sourceCandidates": [
           {
@@ -385,7 +385,7 @@
         "sourceLevel": "high",
         "stance": "oppose",
         "identityLabel": null,
-        "platformLabel": "知乎AI与就业话题优质答主",
+        "platformLabel": "AI就业优质答主",
         "sourceCandidates": [
           {
             "displayName": "且行且珍惜",
@@ -402,7 +402,7 @@
         "sourceLevel": "high",
         "stance": "oppose",
         "identityLabel": null,
-        "platformLabel": "职场话题优质创作者",
+        "platformLabel": "职场优质创作者",
         "sourceCandidates": [
           {
             "displayName": "追风的少年",
@@ -416,8 +416,8 @@
         "quality": "low",
         "sourceLevel": "high",
         "stance": "oppose",
-        "identityLabel": "注册人力资源管理师（一级）",
-        "platformLabel": "HR话题答主",
+        "identityLabel": "一级人力资源管理师",
+        "platformLabel": "HR答主",
         "sourceCandidates": [
           {
             "displayName": "半亩方塘",
@@ -432,7 +432,7 @@
         "sourceLevel": "high",
         "stance": "oppose",
         "identityLabel": null,
-        "platformLabel": "算法伦理话题活跃用户",
+        "platformLabel": "算法伦理活跃用户",
         "sourceCandidates": [
           {
             "displayName": "咕咕咕了",
@@ -447,7 +447,7 @@
         "sourceLevel": "high",
         "stance": "oppose",
         "identityLabel": null,
-        "platformLabel": "职场话题博主 · 80万粉丝",
+        "platformLabel": "职场博主·80万粉丝",
         "sourceCandidates": [
           {
             "displayName": "Coco的日常",
@@ -461,8 +461,8 @@
         "quality": "low",
         "sourceLevel": "high",
         "stance": "oppose",
-        "identityLabel": "同济大学就业指导中心讲师",
-        "platformLabel": "大学生职业规划话题答主",
+        "identityLabel": "同济就业指导讲师",
+        "platformLabel": "职业规划答主",
         "sourceCandidates": [
           {
             "displayName": "拖延症晚期患者",

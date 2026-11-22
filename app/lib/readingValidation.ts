@@ -1,7 +1,11 @@
+import { LABEL_SELECTION_VERSION, validDisplayedLabel } from "./labelSelection";
+import { TUTORIAL_POSTS } from "../data/tutorial";
 import {
   RULES,
   PREVIEW_VERSION,
   READING_UI_VERSION,
+  PANEL_READING_UI_VERSION,
+  SINGLE_INLINE_READING_UI_VERSION,
   COVERAGE_RULE,
   previewText,
 } from "./readingProtocol";
@@ -61,14 +65,46 @@ export function validReadingProtocol(
   const within = (t: unknown) => ts(t) && t >= b.startTime && t <= b.endTime;
   if (
     !obj(m) ||
-    m.version !== READING_UI_VERSION ||
+    ![
+      READING_UI_VERSION,
+      PANEL_READING_UI_VERSION,
+      SINGLE_INLINE_READING_UI_VERSION,
+    ].includes(m.version) ||
     ![2, 3, 4].includes(m.columns) ||
     !obj(m.coverageRule) ||
     m.coverageRule.minimumRatio !== COVERAGE_RULE.minimumRatio ||
     m.coverageRule.continuousMs !== COVERAGE_RULE.continuousMs ||
     !Array.isArray(m.cards) ||
     m.cards.length !== b.conditionN ||
-    m.openDetailId !== null
+    m.openDetailId !== null ||
+    (m.version === READING_UI_VERSION &&
+      (!Array.isArray(m.openDetailIds) || m.openDetailIds.length !== 0))
+  )
+    return false;
+  if (
+    m.labelSelectionVersion !== undefined &&
+    m.labelSelectionVersion !== LABEL_SELECTION_VERSION
+  )
+    return false;
+  if (
+    r.demoLabelSelectionVersion !== undefined &&
+    r.demoLabelSelectionVersion !== LABEL_SELECTION_VERSION
+  )
+    return false;
+  if (
+    (r.demoLabelSelectionVersion === LABEL_SELECTION_VERSION ||
+      r.demoLabelSelections !== undefined) &&
+    (!obj(r.demoLabelSelections) ||
+      TUTORIAL_POSTS.some(
+        (p) =>
+          !obj(r.demoLabelSelections![String(p.id)]) ||
+          !validDisplayedLabel(p, r.demoLabelSelections![String(p.id)]),
+      ))
+  )
+    return false;
+  if (
+    m.packingVersion !== undefined &&
+    m.packingVersion !== "free-rect-top-first-v1"
   )
     return false;
   for (let i = 0; i < m.cards.length; i++) {
@@ -80,6 +116,9 @@ export function validReadingProtocol(
       !Number.isInteger(c.column) ||
       c.column < 0 ||
       c.column >= m.columns ||
+      (m.version === READING_UI_VERSION &&
+        (![1, 2].includes(c.columnSpan!) ||
+          c.column + c.columnSpan! > m.columns)) ||
       !obj(c.preview) ||
       c.preview.ruleVersion !== PREVIEW_VERSION
     )
@@ -95,7 +134,9 @@ export function validReadingProtocol(
       return false;
     if (
       c.column !== c.layouts.at(-1)?.column ||
-      c.layouts.at(-1)?.columns !== m.columns
+      c.layouts.at(-1)?.columns !== m.columns ||
+      (m.version === READING_UI_VERSION &&
+        c.columnSpan !== c.layouts.at(-1)?.columnSpan)
     )
       return false;
     let prev = b.startTime;
@@ -107,6 +148,9 @@ export function validReadingProtocol(
         !Number.isInteger(p.column) ||
         p.column < 0 ||
         p.column >= p.columns ||
+        (m.version === READING_UI_VERSION &&
+          (![1, 2].includes(p.columnSpan!) ||
+            p.column + p.columnSpan! > p.columns)) ||
         p.timestamp < prev ||
         !(["left", "top"] as const).every(
           (k) =>
@@ -162,7 +206,8 @@ export function validReadingProtocol(
     return false;
   let previous = b.startTime;
   const visits = new Map<string, number>();
-  let active: string | null = null;
+  const active = new Map<string, number>(),
+    ranges = new Map<string, { start: number; end: number }[]>();
   for (const e of m.detailEvents) {
     if (
       !obj(e) ||
@@ -174,15 +219,25 @@ export function validReadingProtocol(
       return false;
     previous = e.timestamp;
     if (e.type === "open") {
-      if (active !== null) return false;
+      if (
+        active.has(e.postId) ||
+        (m.version !== READING_UI_VERSION && active.size)
+      )
+        return false;
       visits.set(e.postId, (visits.get(e.postId) ?? 0) + 1);
-      active = e.postId;
-    } else if (active !== e.postId) return false;
+      active.set(e.postId, e.timestamp);
+    } else if (!active.has(e.postId)) return false;
     if (e.visit !== visits.get(e.postId)) return false;
-    if (e.type === "close") active = null;
+    if (e.type === "close") {
+      ranges.set(e.postId, [
+        ...(ranges.get(e.postId) ?? []),
+        { start: active.get(e.postId)!, end: e.timestamp },
+      ]);
+      active.delete(e.postId);
+    }
   }
-  if (active !== null) return false;
-  previous = b.startTime;
+  if (active.size) return false;
+  const previousEnds = new Map<string, number>();
   for (const interval of m.detailIntervals) {
     if (
       !obj(interval) ||
@@ -190,11 +245,15 @@ export function validReadingProtocol(
       !within(interval.startedAt) ||
       !within(interval.endedAt) ||
       interval.endedAt < interval.startedAt ||
-      interval.startedAt < previous ||
-      !visits.has(interval.postId)
+      interval.startedAt < (previousEnds.get(interval.postId) ?? b.startTime) ||
+      !ranges
+        .get(interval.postId)
+        ?.some(
+          (r) => interval.startedAt >= r.start && interval.endedAt <= r.end,
+        )
     )
       return false;
-    previous = interval.endedAt;
+    previousEnds.set(interval.postId, interval.endedAt);
   }
   for (const a of b.actions) {
     if (a.type === "user_post") continue;
@@ -224,7 +283,7 @@ export function validReadingProtocol(
       !["threshold", "restored_below_threshold"].includes(a.reason) ||
       !Number.isInteger(a.flashes) ||
       a.flashes < 0 ||
-      a.flashes > 2 ||
+      a.flashes > (m.version === PANEL_READING_UI_VERSION ? 2 : 5) ||
       (a.kind === "three_seconds" && a.flashes !== 0) ||
       (a.completedAt !== null &&
         (!within(a.completedAt) || a.completedAt < a.shownAt)) ||

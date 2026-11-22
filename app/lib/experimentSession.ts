@@ -1,4 +1,9 @@
 import {
+  storedLabelSelection,
+  LABEL_SELECTION_VERSION,
+  validDisplayedLabel,
+} from "./labelSelection";
+import {
   newRules,
   newPermission,
   type RulesResponse,
@@ -282,6 +287,8 @@ export function loadSession(uid: string): ExperimentSession | null {
           typeof p.displayName !== "string",
       ) ||
       new Set(r.posts.map((p) => p.id)).size !== s.conditionN ||
+      (r.metrics?.labelSelectionVersion === LABEL_SELECTION_VERSION &&
+        r.posts.some((p) => !validDisplayedLabel(p, p))) ||
       !Number.isSafeInteger(r.startTime) ||
       r.deadline !== r.startTime + READING_DURATION_MS ||
       !Number.isSafeInteger(r.savedAt) ||
@@ -396,6 +403,7 @@ export function readingEndData(
       avatarFile: p.avatarFile ?? null,
       identityLabel: p.identityLabel ?? null,
       platformLabel: p.platformLabel ?? null,
+      ...storedLabelSelection(p),
     })),
   };
 }

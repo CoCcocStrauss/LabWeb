@@ -1,5 +1,13 @@
 # Credamo HTML题、自定义变量与LabWeb接入方案
 
+## 2026-11-22 最新决定
+
+用户确认现阶段HTML题还不能接通，本轮只独立修改、测试网页，问卷嵌入、UID传递及完成后显示下一页，待HTML题可用再配置和联调。以下早期SSO、前后测位置等记录仅供历史参考；当前站点无需团队SSO，前后测已在LabWeb。
+
+拟采用用户引用的[官方HTML题与JavaScript说明](https://help.credamo.app/web/#/4/416)中的`Credamo.hideNextBtn()`及`Credamo.showNextBtn()`：HTML题起始隐藏外层下一页，以同一UID轮询LabWeb的`/api/status`，仅在完整保存并返回completed:true后收起实验区，显示“本部分已完成，请点击下一页继续”及Credamo自己的下一页按钮。网络失败不得放行，不推测自动翻页接口，也不以iframe内的returnUrl跳转替代外层推进。当前未配置这些平台脚本，真实UID读取／持久化写法仍待HTML题联调；本轮工具未能直接读取该动态帮助页，不把用户提供的函数引用写成独立验证通过。
+
+网页端已将最后按钮改为“提交”；在iframe中完成后显示点击外层下一页的提示，不执行iframe内returnUrl跳转。该显示逻辑可以本机普通iframe验证，但不能代替Credamo真实集成验收。
+
 更新日期：2026年11月20日。此文件记录对接方案，不表示HTML题已经配置或联调成功。部署、研究问题及待修改项见 [项目进度记录](docs/project-status-2026-11-20.md)。
 
 ## 1. 已知依据与方案边界

@@ -109,7 +109,7 @@ export function QuestionnairePage({
           onClick={next}
           className="study-control w-full rounded-full bg-[#0084ff] px-4 py-3 font-medium text-white disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-400"
         >
-          {last && stage === "posttest" ? "提交并返回问卷" : "下一步"}
+          {last && stage === "posttest" ? "提交" : "下一步"}
         </button>
       </footer>
     </div>

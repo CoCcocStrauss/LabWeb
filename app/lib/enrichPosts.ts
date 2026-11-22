@@ -1,3 +1,7 @@
+import {
+  chooseDisplayedLabel,
+  type DisplayedLabelSelection,
+} from "./labelSelection";
 import type { TopicKey } from "../data/topics";
 import {
   HIGH_SOURCE_AVATAR_MAP,
@@ -7,18 +11,19 @@ import {
 } from "../data/avatarPool";
 import { shuffleArray, type PostItem } from "./blockRandomize";
 
-export type PostItemWithDisplay = PostItem & {
-  displayName: string;
-  avatarFile?: string;
-  /** enrichPosts 写入；与材料里的 identityLabel/platformLabel 相同 */
-  identityLabel?: string | null;
-  platformLabel?: string | null;
-};
+export type PostItemWithDisplay = PostItem &
+  Partial<DisplayedLabelSelection> & {
+    displayName: string;
+    avatarFile?: string;
+    /** enrichPosts 写入；与材料里的 identityLabel/platformLabel 相同 */
+    identityLabel?: string | null;
+    platformLabel?: string | null;
+  };
 
 /** 为每条帖子分配展示名与头像（会话内固定）；身份描述来自材料 JSON，按当前议题查找专属身份池。 */
 export function enrichPostsForDisplay(
   posts: PostItem[],
-  topic: TopicKey
+  topic: TopicKey,
 ): PostItemWithDisplay[] {
   const namesByIdentity: Record<
     string,
@@ -31,13 +36,13 @@ export function enrichPostsForDisplay(
     Object.entries(namesByIdentity).map(([identity, names]) => [
       identity,
       shuffleArray([...names]),
-    ])
+    ]),
   );
   // 兜底池优先用本议题已配置的昵称（避免跨议题串味）；
   // 若某议题尚未配置任何身份映射（如占位材料），退回全局昵称池，保证不崩溃。
   const topicNamePool = Object.values(namesByIdentity).flat();
   const fallbackHighNames = shuffleArray(
-    topicNamePool.length > 0 ? [...topicNamePool] : [...HIGH_SOURCE_NAMES]
+    topicNamePool.length > 0 ? [...topicNamePool] : [...HIGH_SOURCE_NAMES],
   );
   const usedHighNames = new Set<keyof typeof HIGH_SOURCE_AVATAR_MAP>();
   const usedLowNames = new Set<string>();
@@ -46,12 +51,10 @@ export function enrichPostsForDisplay(
   // identityLabel 优先；仅有 platformLabel 时用 platformLabel 作 lookup key
   const takeHighSourceName = (
     identityLabel?: string | null,
-    platformLabel?: string | null
+    platformLabel?: string | null,
   ): keyof typeof HIGH_SOURCE_AVATAR_MAP => {
     const lookupKey = identityLabel ?? platformLabel ?? undefined;
-    const identityQueue = lookupKey
-      ? identityQueues.get(lookupKey)
-      : undefined;
+    const identityQueue = lookupKey ? identityQueues.get(lookupKey) : undefined;
     const matchedName = identityQueue?.find((name) => !usedHighNames.has(name));
     if (matchedName) {
       usedHighNames.add(matchedName);
@@ -59,7 +62,7 @@ export function enrichPostsForDisplay(
     }
 
     const fallbackName = fallbackHighNames.find(
-      (name) => !usedHighNames.has(name)
+      (name) => !usedHighNames.has(name),
     );
     if (fallbackName) {
       usedHighNames.add(fallbackName);
@@ -78,14 +81,18 @@ export function enrichPostsForDisplay(
         // Keep the workbook's name/avatar pairs. If an author appears again,
         // reuse a candidate for that source instead of borrowing another identity.
         const candidate =
-          p.sourceCandidates.find((c) => !usedCandidateNames.has(c.displayName)) ??
-          p.sourceCandidates[Math.floor(Math.random() * p.sourceCandidates.length)]!;
+          p.sourceCandidates.find(
+            (c) => !usedCandidateNames.has(c.displayName),
+          ) ??
+          p.sourceCandidates[
+            Math.floor(Math.random() * p.sourceCandidates.length)
+          ]!;
         usedCandidateNames.add(candidate.displayName);
-        return { ...p, ...candidate };
+        return { ...p, ...candidate, ...chooseDisplayedLabel(p) };
       }
       const displayName = takeHighSourceName(p.identityLabel, p.platformLabel);
       const avatarFile = HIGH_SOURCE_AVATAR_MAP[displayName];
-      return { ...p, displayName, avatarFile };
+      return { ...p, displayName, avatarFile, ...chooseDisplayedLabel(p) };
     }
 
     let displayName = randomLowSourceNickname();
@@ -93,6 +100,6 @@ export function enrichPostsForDisplay(
       displayName = randomLowSourceNickname();
     }
     usedLowNames.add(displayName);
-    return { ...p, displayName };
+    return { ...p, displayName, ...chooseDisplayedLabel(p) };
   });
 }

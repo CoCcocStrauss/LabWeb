@@ -12,6 +12,8 @@ import type { TopicKey } from "../data/topics";
 import type { ActionLog, EndReason } from "../lib/dataSubmit";
 import {
   ReadingTracker,
+  READING_UI_VERSION,
+  PANEL_READING_UI_VERSION,
   COVERAGE_RULE,
   type ReadingAlert,
 } from "../lib/readingProtocol";
@@ -23,6 +25,7 @@ import {
 } from "../lib/experimentSession";
 import { getMaterialsForTopic } from "../lib/materialsRegistry";
 import { MasonryFeed } from "./MasonryFeed";
+import { SpanningMasonryFeed } from "./SpanningMasonryFeed";
 import { CompactPostCard } from "./CompactPostCard";
 import { PostDetail } from "./PostDetail";
 import { ReadingStatus } from "./ReadingStatus";
@@ -45,6 +48,9 @@ export function ExperimentPage({
 }: ExperimentPageProps) {
   const initial = useRef(initialReading).current,
     posts = initial.posts;
+  const spanning = initial.metrics?.version === READING_UI_VERSION;
+  const inline = initial.metrics?.version !== PANEL_READING_UI_VERSION;
+  const alertFlashTarget = inline ? 5 : 2;
   const materials = useMemo(() => getMaterialsForTopic(topic), [topic]);
   const tracker = useMemo(
     () => new ReadingTracker(posts, initial),
@@ -52,12 +58,15 @@ export function ExperimentPage({
   );
   const [actions, setActions] = useState(initial.actions),
     actionsRef = useRef(initial.actions);
-  const [remaining, setRemaining] = useState(() => remainingReadingMs(initial)),
-    [viewed, setViewed] = useState(tracker.metrics.viewedPostIds.length);
+  const [remaining, setRemaining] = useState(() => remainingReadingMs(initial));
   const [opened, setOpened] = useState<string | null>(
       tracker.metrics.openDetailId,
     ),
     openedRef = useRef(tracker.metrics.openDetailId);
+  const [expanded, setExpanded] = useState(
+      initial.metrics?.openDetailIds ?? [],
+    ),
+    expandedRef = useRef(initial.metrics?.openDetailIds ?? []);
   const [sharePending, setSharePending] = useState<{
     id: string;
     surface: "preview" | "detail";
@@ -67,6 +76,8 @@ export function ExperimentPage({
     scroller = useRef<HTMLElement | null>(null),
     elements = useRef(new Map<string, HTMLElement>()),
     observer = useRef<IntersectionObserver | null>(null),
+    detailObserver = useRef<IntersectionObserver | null>(null),
+    anchor = useRef<{ id: string; offset: number } | null>(null),
     refs = useRef(new Map<string, (el: HTMLElement | null) => void>());
   const maxScroll = useRef(initial.maxScrollY),
     lastSave = useRef(0),
@@ -101,9 +112,10 @@ export function ExperimentPage({
   }, [capture, onSnapshot]);
   const observe = useCallback(() => {
     observer.current?.disconnect();
+    detailObserver.current?.disconnect();
     if (
       !scroller.current ||
-      openedRef.current ||
+      (openedRef.current && !inline) ||
       document.visibilityState === "hidden" ||
       Date.now() >= initial.deadline
     )
@@ -111,7 +123,7 @@ export function ExperimentPage({
     observer.current = new IntersectionObserver(
       (entries) => {
         if (
-          openedRef.current ||
+          (openedRef.current && !inline) ||
           document.visibilityState === "hidden" ||
           Date.now() < stableAt.current
         )
@@ -122,7 +134,13 @@ export function ExperimentPage({
           const id = (e.target as HTMLElement).dataset.postId!;
           tracker.setVisible(
             id,
-            e.isIntersecting &&
+            !(
+              inline &&
+              (spanning
+                ? expandedRef.current.includes(id)
+                : id === openedRef.current)
+            ) &&
+              e.isIntersecting &&
               e.intersectionRatio >= COVERAGE_RULE.minimumRatio,
             time,
             y,
@@ -132,7 +150,37 @@ export function ExperimentPage({
       { root: scroller.current, threshold: [0, COVERAGE_RULE.minimumRatio] },
     );
     elements.current.forEach((el) => observer.current?.observe(el));
-  }, [initial.deadline, now, scrollY, tracker]);
+    const expandedIds = spanning
+      ? expandedRef.current
+      : openedRef.current
+        ? [openedRef.current]
+        : [];
+    if (inline && expandedIds.length) {
+      detailObserver.current = new IntersectionObserver(
+        (entries) => {
+          if (document.visibilityState === "hidden") return;
+          for (const e of entries) {
+            const id = (e.target.closest(".feed-card") as HTMLElement).dataset
+              .postId!;
+            if (
+              !(spanning
+                ? expandedRef.current.includes(id)
+                : openedRef.current === id)
+            )
+              continue;
+            if (e.isIntersecting && e.intersectionRect.height > 0)
+              tracker.resumeDetail(now(), id);
+            else tracker.stopDetail(now(), id);
+          }
+        },
+        { root: scroller.current, threshold: 0 },
+      );
+      for (const id of expandedIds) {
+        const text = elements.current.get(id)?.querySelector(".feed-fulltext");
+        if (text) detailObserver.current.observe(text);
+      }
+    }
+  }, [initial.deadline, inline, spanning, now, scrollY, tracker]);
   const register = useCallback((id: string) => {
     if (!refs.current.has(id))
       refs.current.set(id, (el) => {
@@ -158,6 +206,7 @@ export function ExperimentPage({
         timestamp: now(),
         column: card.column,
         columns: tracker.metrics.columns,
+        ...(spanning ? { columnSpan: card.columnSpan ?? 1 } : {}),
         left: Math.round(r.left - rect.left),
         top: Math.round(r.top - rect.top + root.scrollTop),
         width: Math.round(r.width),
@@ -186,7 +235,7 @@ export function ExperimentPage({
         }
       }
     }
-  }, [now, tracker]);
+  }, [now, spanning, tracker]);
   useLayoutEffect(() => {
     if (scroller.current) scroller.current.scrollTop = initial.scrollY;
     measure();
@@ -207,14 +256,15 @@ export function ExperimentPage({
       resize?.disconnect();
       window.removeEventListener("resize", changed);
       observer.current?.disconnect();
+      detailObserver.current?.disconnect();
     };
   }, [initial.scrollY, measure, observe]);
   useEffect(() => {
     if (scroller.current) {
-      if (opened) scroller.current.setAttribute("inert", "");
+      if (opened && !inline) scroller.current.setAttribute("inert", "");
       else scroller.current.removeAttribute("inert");
     }
-  }, [opened]);
+  }, [opened, inline]);
   const finalize = useCallback(
     (reason: EndReason) => {
       if (ended.current) return;
@@ -224,6 +274,7 @@ export function ExperimentPage({
       tracker.close(now());
       tracker.suspend(now(), scrollY());
       observer.current?.disconnect();
+      detailObserver.current?.disconnect();
       const reading = capture();
       onSnapshot(reading);
       if (
@@ -254,7 +305,7 @@ export function ExperimentPage({
     ],
   );
   useEffect(() => {
-    if (openedRef.current && document.visibilityState === "visible")
+    if (!inline && openedRef.current && document.visibilityState === "visible")
       tracker.resumeDetail(now());
     const alert = (kind: ReadingAlert["kind"], remainingMs: number) => {
       if (
@@ -282,8 +333,6 @@ export function ExperimentPage({
         finalize("timeout");
         return;
       }
-      const snap = tracker.snapshot(now(), scrollY(), actionsRef.current);
-      setViewed(snap.metrics.viewedPostIds.length);
       if (left <= 30000) alert("thirty_seconds", left);
       if (left <= 3000) alert("three_seconds", left);
       if (Date.now() - lastSave.current >= 1000) {
@@ -295,9 +344,10 @@ export function ExperimentPage({
       if (document.visibilityState === "hidden") {
         tracker.suspend(now(), scrollY());
         observer.current?.disconnect();
+        detailObserver.current?.disconnect();
         checkpoint();
       } else {
-        if (openedRef.current) tracker.resumeDetail(now());
+        if (openedRef.current && !inline) tracker.resumeDetail(now());
         else observe();
         tick();
       }
@@ -322,7 +372,7 @@ export function ExperimentPage({
       el?.removeEventListener("scroll", onScroll);
       tracker.suspend(now(), scrollY());
     };
-  }, [checkpoint, finalize, initial, now, observe, scrollY, tracker]);
+  }, [checkpoint, finalize, initial, inline, now, observe, scrollY, tracker]);
   const canAct = () => {
     if (ended.current) return false;
     if (Date.now() >= initial.deadline) {
@@ -371,19 +421,68 @@ export function ExperimentPage({
     };
   const open = (id: string) => {
     if (!canAct()) return;
-    tracker.open(id, now(), scrollY());
-    observer.current?.disconnect();
-    openedRef.current = id;
-    setOpened(id);
+    const el = elements.current.get(id),
+      root = scroller.current;
+    if (inline && el && root)
+      anchor.current = {
+        id,
+        offset: Math.max(
+          0,
+          el.getBoundingClientRect().top - root.getBoundingClientRect().top,
+        ),
+      };
+    if (!spanning && openedRef.current) tracker.close(now());
+    tracker.open(id, now(), scrollY(), inline);
+    if (!inline) observer.current?.disconnect();
+    if (spanning) {
+      expandedRef.current = [...expandedRef.current, id];
+      setExpanded(expandedRef.current);
+    } else {
+      openedRef.current = id;
+      setOpened(id);
+    }
     checkpoint();
+    if (inline) requestAnimationFrame(observe);
   };
-  const close = useCallback(() => {
-    tracker.close(now());
-    openedRef.current = null;
-    setOpened(null);
-    checkpoint();
-    requestAnimationFrame(observe);
-  }, [checkpoint, now, observe, tracker]);
+  const close = useCallback(
+    (postId?: string) => {
+      const id = postId ?? openedRef.current,
+        root = scroller.current,
+        el = id ? elements.current.get(id) : null;
+      if (inline && id && root && el)
+        anchor.current = {
+          id,
+          offset: Math.max(
+            0,
+            el.getBoundingClientRect().top - root.getBoundingClientRect().top,
+          ),
+        };
+      tracker.close(now(), spanning ? (id ?? undefined) : undefined);
+      if (spanning) {
+        expandedRef.current = expandedRef.current.filter((v) => v !== id);
+        setExpanded(expandedRef.current);
+      } else {
+        openedRef.current = null;
+        setOpened(null);
+      }
+      checkpoint();
+      requestAnimationFrame(observe);
+    },
+    [checkpoint, inline, spanning, now, observe, tracker],
+  );
+  useLayoutEffect(() => {
+    if (spanning || !inline || !anchor.current || !scroller.current) return;
+    const { id, offset } = anchor.current,
+      el = elements.current.get(id),
+      root = scroller.current;
+    if (el)
+      root.scrollTop +=
+        el.getBoundingClientRect().top -
+        root.getBoundingClientRect().top -
+        offset;
+    anchor.current = null;
+    measure();
+  }, [opened, inline, spanning, measure]);
   const liked = (id: string) =>
     actions
       .filter(
@@ -401,12 +500,11 @@ export function ExperimentPage({
       <span className="study-meta text-green-700">已发布</span>
     </article>
   ) : null;
+  const Feed = spanning ? SpanningMasonryFeed : MasonryFeed;
   return (
     <div className="study-shell study-screen experiment-shell">
       <ReadingStatus
         remainingMs={remaining}
-        total={conditionN}
-        viewed={viewed}
         shares={shares}
         title={materials.topic}
       />
@@ -415,27 +513,57 @@ export function ExperimentPage({
           ref={scroller}
           className="study-scroll reading-feed"
           aria-label="实验内容"
-          aria-hidden={!!opened}
+          aria-hidden={!!opened && !inline}
         >
           <p className="reading-scenario study-meta">
             {materials.topicDescription}
           </p>
-          <MasonryFeed
-            onLayout={(columns, assignments) => {
+          <Feed
+            initialLayout={
+              initial.metrics?.cards[0]?.layouts.at(-1)
+                ? {
+                    columns: initial.metrics.columns,
+                    viewportWidth:
+                      initial.metrics.cards[0].layouts.at(-1)!.viewportWidth,
+                    assignments: Object.fromEntries(
+                      initial.metrics.cards.map((c) => [c.postId, c.column]),
+                    ),
+                  }
+                : undefined
+            }
+            onLayout={(
+              columns: number,
+              assignments: Record<string, number>,
+              spans?: Record<string, number>,
+            ) => {
               tracker.metrics.columns = columns;
-              for (const c of tracker.metrics.cards)
+              for (const c of tracker.metrics.cards) {
                 c.column = assignments[c.postId];
+                if (spanning) c.columnSpan = spans?.[c.postId] ?? 1;
+              }
               // Restore only after cards have moved into their measured columns.
               // Restoring against the temporary round-robin layout shifts the viewport.
               if (!layoutReady.current && scroller.current)
                 scroller.current.scrollTop = initial.scrollY;
               layoutReady.current = true;
+              if (spanning && anchor.current && scroller.current) {
+                const el = elements.current.get(anchor.current.id),
+                  root = scroller.current;
+                if (el)
+                  root.scrollTop +=
+                    el.getBoundingClientRect().top -
+                    root.getBoundingClientRect().top -
+                    anchor.current.offset;
+                anchor.current = null;
+              }
               measure();
+              if (spanning) requestAnimationFrame(observe);
             }}
             items={posts
               .flatMap((post, index) => {
                 const item = {
                   id: post.id,
+                  expanded: spanning ? expanded.includes(post.id) : false,
                   node: (
                     <CompactPostCard
                       post={post}
@@ -445,24 +573,48 @@ export function ExperimentPage({
                       shareDisabled={shares >= 2 || shared(post.id)}
                       disabled={remaining <= 0}
                       rootRef={register(post.id)}
+                      expanded={
+                        inline &&
+                        (spanning
+                          ? expanded.includes(post.id)
+                          : opened === post.id)
+                      }
+                      presentation={inline ? "inline" : "panel"}
                       onOpen={() => open(post.id)}
-                      onLike={like(post.id, "preview")}
-                      onShare={share(post.id, "preview")}
+                      onCollapse={() => close(post.id)}
+                      onLike={like(
+                        post.id,
+                        inline &&
+                          (spanning
+                            ? expanded.includes(post.id)
+                            : opened === post.id)
+                          ? "detail"
+                          : "preview",
+                      )}
+                      onShare={share(
+                        post.id,
+                        inline &&
+                          (spanning
+                            ? expanded.includes(post.id)
+                            : opened === post.id)
+                          ? "detail"
+                          : "preview",
+                      )}
                     />
                   ),
                 };
                 return initial.insertBeforePostId === post.id && ownCard
-                  ? [{ id: "own-post", node: ownCard }, item]
+                  ? [{ id: "own-post", expanded: false, node: ownCard }, item]
                   : [item];
               })
               .concat(
                 initial.insertBeforePostId === null && ownCard
-                  ? [{ id: "own-post", node: ownCard }]
+                  ? [{ id: "own-post", expanded: false, node: ownCard }]
                   : [],
               )}
           />
         </main>
-        {opened ? (
+        {opened && !inline ? (
           <PostDetail
             post={posts.find((p) => p.id === opened)!}
             liked={liked(opened)}
@@ -492,18 +644,19 @@ export function ExperimentPage({
         <div
           className="reading-time-alert"
           aria-hidden
+          style={{ animationIterationCount: alertFlashTarget }}
           onAnimationIteration={() => {
             const a = tracker.metrics.alerts.find(
               (a) => a.kind === "thirty_seconds",
             )!;
-            a.flashes = 1;
+            a.flashes = Math.min(alertFlashTarget - 1, a.flashes + 1);
             checkpoint();
           }}
           onAnimationEnd={() => {
             const a = tracker.metrics.alerts.find(
               (a) => a.kind === "thirty_seconds",
             )!;
-            a.flashes = 2;
+            a.flashes = alertFlashTarget;
             a.completedAt = now();
             setBorderAlert(false);
             checkpoint();

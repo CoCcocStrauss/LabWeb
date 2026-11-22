@@ -1,3 +1,4 @@
+import { matchesStoredLabelPair } from "../../../lib/materialLabels";
 // Frozen v2 protocol: preserve existing sessions and scoring.
 import { getReasons } from "../../../data/reasons";
 import type { TopicKey } from "../../../data/topics";
@@ -33,7 +34,7 @@ export function validPostTasks(raw: unknown, posts: Map<string, PostItem>): bool
     const post = posts.get(item.postId)!;
     if (post.sourceLevel === "high") {
       if (!post.sourceCandidates?.some(p => p.displayName === item.displayName && p.avatarFile === item.avatarFile) ||
-          item.identityLabel !== (post.identityLabel ?? null) || item.platformLabel !== (post.platformLabel ?? null)) return false;
+          !matchesStoredLabelPair(b.topicKey,post,item)) return false;
     } else if (item.avatarFile !== null || item.identityLabel !== null || item.platformLabel !== null) return false;
     presentation.set(item.postId, item);
   }

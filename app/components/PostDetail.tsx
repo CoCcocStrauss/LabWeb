@@ -90,7 +90,6 @@ export function PostDetail({
           >
             ← 返回内容
           </button>
-          <span className="study-meta text-neutral-500">再点内容可收起</span>
         </header>
         <div
           className="detail-body"

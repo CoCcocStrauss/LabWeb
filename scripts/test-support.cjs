@@ -44,7 +44,7 @@ function fixture(topicKey = "ai", conditionN = 8, uid = `qa_unit_${topicKey}_${c
     comprehension: [{ value: 1, correct: true, timestamp: base + 200, feedbackPresentedAt:base+201, feedbackVisibleMs:3000, autoAdvancedAt:base+3201 }],
     startTime: base + 10000, endTime: base + 100000, endReason: "timeout", maxScrollY: 0,
     postOrder: posts.map(p => p.id), actions: [], scrollEvents: [],
-    presentedPosts: posts.map(p => ({ postId: p.id, displayName: p.displayName, avatarFile: p.avatarFile ?? null, identityLabel: p.identityLabel ?? null, platformLabel: p.platformLabel ?? null })),
+    presentedPosts: posts.map(p => ({ postId: p.id, displayName: p.displayName, avatarFile: p.avatarFile ?? null, identityLabel: p.identityLabel ?? null, platformLabel: p.platformLabel ?? null, labelSelectionVersion:p.labelSelectionVersion,displayedLabelType:p.displayedLabelType,displayedLabelText:p.displayedLabelText })),
     postVisibilitySummary: Object.fromEntries(posts.map(p => [p.id, { totalVisibleMs: 0, firstSeenAt: null }])),
     posttest: response("posttest", postStart),
     explanation: { ...newExplanation(postStart + 300), completedAt: postStart + 400, text: "我认为技术会改变现有岗位同时创造一些新的就业机会", effectiveCharCount: 25, inputMethod: "text" },
@@ -54,7 +54,7 @@ function fixture(topicKey = "ai", conditionN = 8, uid = `qa_unit_${topicKey}_${c
   f.rules = protocol.newRules(base+120);f.rules.completedAt=base+180;f.rules.items=f.rules.items.map((v,i)=>({...v,checked:true,changedAt:base+121+i}));
   f.microphonePermission={state:"denied",requestedAt:base-10,completedAt:base-5};
   f.readingMetrics=protocol.newReadingMetrics(posts);
-  f.readingMetrics.cards.forEach((c,i)=>c.layouts.push({column:c.column,columns:2,timestamp:f.startTime,left:i%2*188,top:Math.floor(i/2)*210,width:178,height:200,viewportWidth:375,viewportHeight:667}));
+  f.readingMetrics.cards.forEach((c,i)=>c.layouts.push({column:c.column,columns:2,columnSpan:1,timestamp:f.startTime,left:i%2*188,top:Math.floor(i/2)*210,width:178,height:200,viewportWidth:375,viewportHeight:667}));
   refreshRecognition(f);
   return f;
 }

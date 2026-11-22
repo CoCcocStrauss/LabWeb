@@ -253,3 +253,62 @@ test('瀑布流按当前最短列放置，只有首排对齐，不重排随机�
  assert.deepEqual(assignMasonryColumns([240,150,120,200,90,80],2,10),[0,1,1,0,1,1]);
  assert.deepEqual(assignMasonryColumns([240,150,120,200,90],3,10),[0,1,2,2,1]);
 });
+
+test('页内展开只暂停该帖预览，其他可见卡片继续计时；全文离开视野不累计',()=>{
+ const {ReadingTracker}=load('app/lib/readingProtocol.ts'),f=fixture();
+ const all=Object.values(load('app/lib/materialsRegistry.ts').getMaterialsForTopic('ai').materials).flat(),posts=f.presentedPosts.map(p=>({...all.find(m=>m.id===p.postId),displayName:p.displayName}));
+ const t=new ReadingTracker(posts),[a,b]=posts.map(p=>p.id),start=f.startTime;
+ t.setVisible(a,true,start,0);t.setVisible(b,true,start,0);t.open(a,start+300,0,true);
+ assert.equal(t.snapshot(start+500,0,[]).metrics.detailIntervals.length,0);
+ t.resumeDetail(start+500);t.stopDetail(start+900);
+ let s=t.snapshot(start+1500,0,[]);assert.equal(s.visibility[a].totalVisibleMs,300);assert.equal(s.visibility[b].totalVisibleMs,1500);assert.equal(s.metrics.detailIntervals[0].endedAt-s.metrics.detailIntervals[0].startedAt,400);
+ t.resumeDetail(start+1600);t.close(start+1800);s=t.snapshot(start+2000,0,[]);assert.equal(s.metrics.detailIntervals.reduce((n,v)=>n+v.endedAt-v.startedAt,0),600);assert.deepEqual(t.context(a,'preview'),{surface:'preview',detailOpenedBefore:true});
+});
+
+test('页内版本接受30秒五闪，旧详情版本继续按两闪校验',()=>{
+ const p=load('app/lib/readingProtocol.ts'),f=fixture();
+ f.readingMetrics.alerts=[{kind:'thirty_seconds',shownAt:f.endTime-29000,reason:'threshold',flashes:5,completedAt:f.endTime-25000}];assert.ok(validSubmission(f));
+ f.readingMetrics.alerts[0].flashes=6;assert.equal(validSubmission(f),false);
+ f.readingMetrics.version=p.PANEL_READING_UI_VERSION;f.readingMetrics.alerts[0].flashes=2;assert.ok(validSubmission(f));f.readingMetrics.alerts[0].flashes=5;assert.equal(validSubmission(f),false);
+});
+
+test('手机展开独占一行、后续顺延；矩形回填不重叠、不越界',()=>{
+ const {placeSpanningCards}=load('app/lib/spanningMasonry.ts');
+ const first=placeSpanningCards([100,100,100,100],[100,250,100,100],[false,true,false,false],2,10);assert.equal(first[1].column,0);assert.equal(first[1].span,2);assert.equal(first[1].top,110);assert.equal(first[0].top,0);assert.ok(first[2].top>=370);
+ for(const columns of [2,3,4]){const collapsed=Array.from({length:48},(_,i)=>100+i%7*15),expanded=collapsed.map((_,i)=>i%5===1),heights=collapsed.map((h,i)=>expanded[i]?h*2:h),boxes=placeSpanningCards(collapsed,heights,expanded,columns,12);
+  assert.equal(boxes.length,48);for(let i=0;i<48;i++){const a=boxes[i];assert.equal(a.span,expanded[i]?2:1);assert.ok(a.column>=0&&a.column+a.span<=columns);for(let j=0;j<i;j++){const b=boxes[j];assert.ok(!(a.column<b.column+b.span&&a.column+a.span>b.column&&a.top<b.top+b.height&&a.top+a.height>b.top));}}
+ }
+});
+
+test('多张全文独立保持展开、分别计时和收起；并行可见区间可正常保存',()=>{
+ const {ReadingTracker,SINGLE_INLINE_READING_UI_VERSION}=load('app/lib/readingProtocol.ts'),f=fixture(),all=Object.values(load('app/lib/materialsRegistry.ts').getMaterialsForTopic('ai').materials).flat(),posts=f.presentedPosts.map(p=>({...all.find(m=>m.id===p.postId),displayName:p.displayName})),t=new ReadingTracker(posts),[a,b]=posts.map(p=>p.id),start=f.startTime;
+ t.open(a,start+100,0,true);t.resumeDetail(start+200,a);t.open(b,start+300,0,true);t.resumeDetail(start+400,b);assert.deepEqual(t.metrics.openDetailIds,[a,b]);t.close(start+600,a);assert.deepEqual(t.metrics.openDetailIds,[b]);const partial=t.snapshot(start+900,0,[]);assert.equal(partial.metrics.detailIntervals.find(v=>v.postId===b).endedAt,start+900);t.close(start+1000,b);const done=t.snapshot(start+1100,0,[]);assert.deepEqual(done.metrics.openDetailIds,[]);assert.equal(done.metrics.detailIntervals.filter(v=>v.postId===a).reduce((n,v)=>n+v.endedAt-v.startedAt,0),400);assert.equal(done.metrics.detailIntervals.filter(v=>v.postId===b).reduce((n,v)=>n+v.endedAt-v.startedAt,0),600);
+ done.metrics.cards=f.readingMetrics.cards;f.readingMetrics=done.metrics;assert.ok(validSubmission(f));f.readingMetrics.version=SINGLE_INLINE_READING_UI_VERSION;assert.equal(validSubmission(f),false);
+});
+
+test('两类标签按50%边界选一种，单类直接显示，低信源不抽签且无标签',()=>{
+ const {chooseDisplayedLabel}=load('app/lib/labelSelection.ts'),both={sourceLevel:'high',identityLabel:'身份',platformLabel:'平台'};
+ assert.equal(chooseDisplayedLabel(both,()=>.499999).displayedLabelType,'identity');assert.equal(chooseDisplayedLabel(both,()=>.5).displayedLabelType,'platform');
+ let calls=0;const rng=()=>{calls++;return .1;};assert.equal(chooseDisplayedLabel({...both,platformLabel:null},rng).displayedLabelText,'身份');assert.equal(chooseDisplayedLabel({...both,identityLabel:null},rng).displayedLabelText,'平台');const low=chooseDisplayedLabel({...both,sourceLevel:'low'},rng);assert.equal(low.displayedLabelType,null);assert.equal(low.displayedLabelText,null);assert.equal(calls,0);
+});
+
+test('新会话保存真实选中标签，恢复和渲染不再抽签；教程选择随规则保存',()=>{
+ const f=fixture('ai',48),protocol=load('app/lib/readingProtocol.ts'),selection=load('app/lib/labelSelection.ts'),{PostAuthor}=load('app/components/CompactPostCard.tsx'),materials=Object.values(load('app/lib/materialsRegistry.ts').getMaterialsForTopic('ai').materials).flat();
+ const s=createSession({uid:'qa_label_restore',conditionN:48,topic:'ai',returnUrl:null});Object.assign(s,{phase:'experiment',pretest:f.pretest,comprehension:f.comprehension,rules:f.rules,microphonePermission:f.microphonePermission});const posts=f.presentedPosts.map(p=>({...materials.find(m=>m.id===p.postId),...p,id:p.postId}));s.reading={posts,startTime:f.startTime,deadline:f.endTime,savedAt:f.startTime,metrics:f.readingMetrics,actions:[],scrollEvents:[],postVisibilitySummary:f.postVisibilitySummary,maxScrollY:0,scrollY:0,userPostDraft:'',ownPost:null,insertBeforePostId:null};saveSession(s);
+ const random=Math.random;Math.random=()=>{throw Error('Unexpected redraw');};try{const restored=loadSession(s.uid);assert.deepEqual(restored.reading.posts,s.reading.posts);assert.deepEqual(restored.rules.demoLabelSelections,s.rules.demoLabelSelections);assert.deepEqual(protocol.newRules(Date.now(),s.rules.demoLabelSelections).demoLabelSelections,s.rules.demoLabelSelections);const high=posts.find(p=>p.sourceLevel==='high'&&p.identityLabel&&p.platformLabel);const html=renderToStaticMarkup(React.createElement(PostAuthor,{post:high,compact:true}));assert.ok(html.includes(high.displayedLabelText));const notShown=high.displayedLabelType==='identity'?high.platformLabel:high.identityLabel;assert.ok(!html.includes(notShown));}finally{Math.random=random;}
+ const end=readingEndData(s,s.reading,f.endTime,'timeout',f.topic);for(const p of end.presentedPosts){assert.ok(selection.validDisplayedLabel(posts.find(x=>x.id===p.postId),p));}assert.equal(end.readingMetrics.labelSelectionVersion,selection.LABEL_SELECTION_VERSION);
+});
+
+test('选中标签不可篡改或漏存，更新短标签不阻断旧标签记录提交',()=>{
+ const f=fixture('ai',48),high=f.presentedPosts.find(p=>p.identityLabel&&p.platformLabel);assert.ok(validSubmission(f));const text=high.displayedLabelText;high.displayedLabelText='伪造标签';assert.equal(validSubmission(f),false);high.displayedLabelText=text;delete high.labelSelectionVersion;assert.equal(validSubmission(f),false);
+ const priorTutorial=fixture();delete priorTutorial.rules.demoLabelSelections;delete priorTutorial.rules.demoLabelSelectionVersion;assert.ok(validSubmission(priorTutorial));const missingDemo=fixture();delete missingDemo.rules.demoLabelSelections;assert.equal(validSubmission(missingDemo),false);
+ const history=load('app/data/materials/labels-before-20261122.json');for(const make of [()=>fixture('ai',48),v2Fixture]){const old=make();if(old.readingMetrics)delete old.readingMetrics.labelSelectionVersion;for(const p of old.presentedPosts){if(history[old.topicKey][p.postId])Object.assign(p,history[old.topicKey][p.postId]);for(const k of ['labelSelectionVersion','displayedLabelType','displayedLabelText'])delete p[k];}const validate=old.questionnaireVersion==='2026-11-21-v2'?load('app/compat/v2/lib/submissionValidation.ts').validSubmission:validSubmission;assert.ok(validate(old));}
+});
+
+
+test('桌面后续短卡回填宽卡上方的有限空洞，等高位置优先靠近原列',()=>{
+ const {placeSpanningCards}=load('app/lib/spanningMasonry.ts');
+ const boxes=placeSpanningCards([100,300,100,80],[100,300,200,80],[false,false,true,false],3,10);
+ assert.equal(boxes[2].top,310);assert.equal(boxes[2].span,2);assert.equal(boxes[3].column,2);assert.equal(boxes[3].top,0);assert.ok(boxes[3].top+boxes[3].height<boxes[2].top);
+ const near=placeSpanningCards([100,100],[100,100],[false,false],4,10,[{column:3,span:1,top:0,height:100},{column:2,span:1,top:0,height:100}]);assert.equal(near[0].column,3);assert.equal(near[1].column,2);
+});

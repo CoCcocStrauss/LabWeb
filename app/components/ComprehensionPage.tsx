@@ -57,21 +57,9 @@ export function ComprehensionPage({
       document.removeEventListener("visibilitychange", changed);
     };
   }, [attempt?.timestamp, attempt?.autoAdvancedAt]);
-  const remaining = attempt
-    ? Math.max(
-        0,
-        Math.ceil(
-          ((attempt.correct ? 3000 : 5000) - (attempt.feedbackVisibleMs ?? 0)) /
-            1000,
-        ),
-      )
-    : 0;
   return (
     <main className="study-shell study-page">
       <h1 className="study-title">确认任务规则</h1>
-      <p className="study-meta mt-3 text-neutral-600">
-        选一项即可；随后会显示答案并自动进入下一步。
-      </p>
       <fieldset className="mt-5">
         <legend className="study-copy font-medium">
           {COMPREHENSION_QUESTION}
@@ -115,9 +103,7 @@ export function ComprehensionPage({
           role="status"
           className={`study-copy mt-5 ${attempt.correct ? "text-green-700" : "text-red-700"}`}
         >
-          {attempt.correct
-            ? `回答正确，${remaining}秒后进入开始页`
-            : `正确规则是选择两条内容转发，${remaining}秒后进入开始页`}
+          {attempt.correct ? "回答正确" : "回答错误"}
         </p>
       ) : null}
     </main>

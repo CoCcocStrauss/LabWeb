@@ -1,14 +1,10 @@
 "use client";
 export function ReadingStatus({
   remainingMs,
-  total,
-  viewed,
   shares,
   title,
 }: {
   remainingMs: number;
-  total: number;
-  viewed: number;
   shares: number;
   title: string;
 }) {
@@ -25,6 +21,7 @@ export function ReadingStatus({
         >
           剩余 <strong>{time}</strong>
         </span>
+        <span className="reading-shares">已转发{shares}／2条</span>
       </div>
       <div
         className="reading-meter time-meter"
@@ -38,22 +35,6 @@ export function ReadingStatus({
           className={remainingMs <= 30000 ? "is-urgent" : ""}
           style={{ width: `${Math.min(100, remainingMs / 900)}%` }}
         />
-      </div>
-      <div className="reading-status-line reading-counts">
-        <span>
-          已浏览{viewed}／{total}条
-        </span>
-        <span>已转发{shares}／2条</span>
-      </div>
-      <div
-        className="reading-meter coverage-meter"
-        role="progressbar"
-        aria-label="浏览覆盖"
-        aria-valuemin={0}
-        aria-valuemax={total}
-        aria-valuenow={viewed}
-      >
-        <span style={{ width: `${(viewed / total) * 100}%` }} />
       </div>
     </header>
   );

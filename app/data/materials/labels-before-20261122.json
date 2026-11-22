@@ -1,0 +1,198 @@
+{
+  "ai": {
+    "shh_01": {
+      "identityLabel": "资深猎头顾问",
+      "platformLabel": "职场趋势话题答主"
+    },
+    "shh_02": {
+      "identityLabel": "大型互联网公司人力资源负责人",
+      "platformLabel": null
+    },
+    "shh_03": {
+      "identityLabel": "本地化翻译公司创始人",
+      "platformLabel": "语言服务行业创作者"
+    },
+    "shh_04": {
+      "identityLabel": null,
+      "platformLabel": "知乎AI与就业话题优质答主"
+    },
+    "shh_05": {
+      "identityLabel": "硅谷科技公司产品设计师",
+      "platformLabel": null
+    },
+    "shh_06": {
+      "identityLabel": "中国人民大学劳动关系副教授",
+      "platformLabel": null
+    },
+    "shl_01": {
+      "identityLabel": null,
+      "platformLabel": "职场话题优质创作者"
+    },
+    "shl_02": {
+      "identityLabel": "注册人力资源管理师（一级）",
+      "platformLabel": "HR话题答主"
+    },
+    "shl_03": {
+      "identityLabel": null,
+      "platformLabel": "算法伦理话题活跃用户"
+    },
+    "shl_04": {
+      "identityLabel": null,
+      "platformLabel": "职场话题博主 · 80万粉丝"
+    },
+    "shl_05": {
+      "identityLabel": "同济大学就业指导中心讲师",
+      "platformLabel": "大学生职业规划话题答主"
+    },
+    "shl_06": {
+      "identityLabel": "国家认证生涯规划师",
+      "platformLabel": null
+    },
+    "ohh_01": {
+      "identityLabel": "中国人民大学劳动关系副教授",
+      "platformLabel": null
+    },
+    "ohh_02": {
+      "identityLabel": "大厂AI算法产品经理",
+      "platformLabel": "大模型应用话题答主"
+    },
+    "ohh_03": {
+      "identityLabel": "资深猎头顾问",
+      "platformLabel": "职场趋势话题答主"
+    },
+    "ohh_04": {
+      "identityLabel": "大型互联网公司人力资源负责人",
+      "platformLabel": null
+    },
+    "ohh_05": {
+      "identityLabel": "硅谷科技公司产品设计师",
+      "platformLabel": null
+    },
+    "ohh_06": {
+      "identityLabel": null,
+      "platformLabel": "知乎AI与就业话题优质答主"
+    },
+    "ohl_01": {
+      "identityLabel": null,
+      "platformLabel": "职场话题优质创作者"
+    },
+    "ohl_02": {
+      "identityLabel": "注册人力资源管理师（一级）",
+      "platformLabel": "HR话题答主"
+    },
+    "ohl_03": {
+      "identityLabel": null,
+      "platformLabel": "算法伦理话题活跃用户"
+    },
+    "ohl_04": {
+      "identityLabel": null,
+      "platformLabel": "职场话题博主 · 80万粉丝"
+    },
+    "ohl_05": {
+      "identityLabel": "同济大学就业指导中心讲师",
+      "platformLabel": "大学生职业规划话题答主"
+    },
+    "ohl_06": {
+      "identityLabel": "国家认证生涯规划师",
+      "platformLabel": null
+    }
+  },
+  "fertility": {
+    "shh_01": {
+      "identityLabel": "二孩家庭成员",
+      "platformLabel": "育儿话题优质创作者"
+    },
+    "shh_02": {
+      "identityLabel": "家庭财务规划师",
+      "platformLabel": "家庭理财话题答主"
+    },
+    "shh_03": {
+      "identityLabel": "应用心理学副教授",
+      "platformLabel": null
+    },
+    "shh_04": {
+      "identityLabel": "妇产科副主任医师",
+      "platformLabel": null
+    },
+    "shh_05": {
+      "identityLabel": null,
+      "platformLabel": "知乎育儿话题优质答主"
+    },
+    "shh_06": {
+      "identityLabel": "中国人民大学公共政策副研究员",
+      "platformLabel": null
+    },
+    "shl_01": {
+      "identityLabel": null,
+      "platformLabel": "时评话题优质创作者"
+    },
+    "shl_02": {
+      "identityLabel": "苏州市政协委员",
+      "platformLabel": "生育政策话题答主"
+    },
+    "shl_03": {
+      "identityLabel": null,
+      "platformLabel": "家庭教育话题博主 · 50万粉丝"
+    },
+    "shl_04": {
+      "identityLabel": "市场研究总监",
+      "platformLabel": null
+    },
+    "shl_05": {
+      "identityLabel": null,
+      "platformLabel": "孕产健康话题活跃用户"
+    },
+    "shl_06": {
+      "identityLabel": "华东理工大学社会工作系讲师",
+      "platformLabel": "家庭社会学话题答主"
+    },
+    "ohh_01": {
+      "identityLabel": "执业律师",
+      "platformLabel": null
+    },
+    "ohh_02": {
+      "identityLabel": "妇产科副主任医师",
+      "platformLabel": null
+    },
+    "ohh_03": {
+      "identityLabel": "中国人民大学公共政策副研究员",
+      "platformLabel": null
+    },
+    "ohh_04": {
+      "identityLabel": null,
+      "platformLabel": "知乎育儿话题优质答主"
+    },
+    "ohh_05": {
+      "identityLabel": "应用心理学副教授",
+      "platformLabel": null
+    },
+    "ohh_06": {
+      "identityLabel": "社区普惠托育机构负责人",
+      "platformLabel": "婴幼儿照护话题答主"
+    },
+    "ohl_01": {
+      "identityLabel": null,
+      "platformLabel": "时评话题优质创作者"
+    },
+    "ohl_02": {
+      "identityLabel": "苏州市政协委员",
+      "platformLabel": "生育政策话题答主"
+    },
+    "ohl_03": {
+      "identityLabel": null,
+      "platformLabel": "家庭教育话题博主 · 50万粉丝"
+    },
+    "ohl_04": {
+      "identityLabel": "市场研究总监",
+      "platformLabel": null
+    },
+    "ohl_05": {
+      "identityLabel": null,
+      "platformLabel": "孕产健康话题活跃用户"
+    },
+    "ohl_06": {
+      "identityLabel": "华东理工大学社会工作系讲师",
+      "platformLabel": "家庭社会学话题答主"
+    }
+  }
+}

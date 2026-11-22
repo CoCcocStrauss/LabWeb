@@ -14,25 +14,60 @@ function columnCount() {
 export function MasonryFeed({
   items,
   onLayout,
+  initialLayout,
 }: {
   items: { id: string; node: ReactNode }[];
   onLayout?: (columns: number, assignments: Record<string, number>) => void;
+  initialLayout?: {
+    columns: number;
+    viewportWidth: number;
+    assignments: Record<string, number>;
+  };
 }) {
   const [columns, setColumns] = useState(columnCount),
-    [assignment, setAssignment] = useState<Record<string, number>>({});
+    [assignment, setAssignment] = useState<Record<string, number>>(() =>
+      initialLayout?.columns === columnCount() ? initialLayout.assignments : {},
+    );
   const grid = useRef<HTMLDivElement>(null),
     nodes = useRef(new Map<string, HTMLDivElement>()),
-    latest = useRef({ items, onLayout });
-  latest.current = { items, onLayout };
+    latest = useRef({ items, onLayout, assignment }),
+    measured = useRef("");
+  latest.current = { items, onLayout, assignment };
   const key = items.map((i) => i.id).join("|");
   useLayoutEffect(() => {
     let frame = 0;
     const calculate = () => {
       const current = latest.current.items;
+      const width = grid.current?.clientWidth ?? 0;
+      const signature = `${columns}:${width}:${key}`;
+      if (measured.current === signature) {
+        if (
+          current.every(
+            (i) =>
+              latest.current.assignment[i.id] !== undefined &&
+              latest.current.assignment[i.id] < columns,
+          )
+        )
+          latest.current.onLayout?.(columns, latest.current.assignment);
+        return;
+      }
       const heights = current.map(
         (i) => nodes.current.get(i.id)?.getBoundingClientRect().height ?? 0,
       );
       if (heights.some((h) => h <= 0)) return;
+      const firstMeasurement = !measured.current;
+      measured.current = signature;
+      if (
+        firstMeasurement &&
+        initialLayout &&
+        initialLayout.columns === columns &&
+        grid.current?.parentElement?.clientWidth ===
+          initialLayout.viewportWidth &&
+        current.every((i) => initialLayout.assignments[i.id] !== undefined)
+      ) {
+        setAssignment(initialLayout.assignments);
+        return;
+      }
       const gap = grid.current
         ? parseFloat(getComputedStyle(grid.current).columnGap) || 10
         : 10;
@@ -65,6 +100,8 @@ export function MasonryFeed({
       observer?.disconnect();
       window.removeEventListener("resize", resize);
     };
+    // Card height changes push down their own column; only width or item changes rebalance.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [columns, key]);
   useLayoutEffect(() => {
     if (

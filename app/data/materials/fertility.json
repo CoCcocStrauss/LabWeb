@@ -14,7 +14,7 @@
         "sourceLevel": "high",
         "stance": "support",
         "identityLabel": "二孩家庭成员",
-        "platformLabel": "育儿话题优质创作者",
+        "platformLabel": "育儿优质创作者",
         "sourceCandidates": [
           {
             "displayName": "清风徐来",
@@ -29,7 +29,7 @@
         "sourceLevel": "high",
         "stance": "support",
         "identityLabel": "家庭财务规划师",
-        "platformLabel": "家庭理财话题答主",
+        "platformLabel": "家庭理财答主",
         "sourceCandidates": [
           {
             "displayName": "闲云野鹤",
@@ -90,7 +90,7 @@
         "sourceLevel": "high",
         "stance": "support",
         "identityLabel": null,
-        "platformLabel": "知乎育儿话题优质答主",
+        "platformLabel": "育儿优质答主",
         "sourceCandidates": [
           {
             "displayName": "Rainy Days",
@@ -108,7 +108,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "support",
-        "identityLabel": "中国人民大学公共政策副研究员",
+        "identityLabel": "人大公共政策副研究员",
         "platformLabel": null,
         "sourceCandidates": [
           {
@@ -130,7 +130,7 @@
         "sourceLevel": "high",
         "stance": "support",
         "identityLabel": null,
-        "platformLabel": "时评话题优质创作者",
+        "platformLabel": "时评优质创作者",
         "sourceCandidates": [
           {
             "displayName": "栀子花开了吗",
@@ -149,7 +149,7 @@
         "sourceLevel": "high",
         "stance": "support",
         "identityLabel": "苏州市政协委员",
-        "platformLabel": "生育政策话题答主",
+        "platformLabel": "生育政策答主",
         "sourceCandidates": [
           {
             "displayName": "故事没有那么多",
@@ -168,7 +168,7 @@
         "sourceLevel": "high",
         "stance": "support",
         "identityLabel": null,
-        "platformLabel": "家庭教育话题博主 · 50万粉丝",
+        "platformLabel": "家庭教育博主·50万粉丝",
         "sourceCandidates": [
           {
             "displayName": "把日子过成诗",
@@ -206,7 +206,7 @@
         "sourceLevel": "high",
         "stance": "support",
         "identityLabel": null,
-        "platformLabel": "孕产健康话题活跃用户",
+        "platformLabel": "孕产健康活跃用户",
         "sourceCandidates": [
           {
             "displayName": "慢生活研究所",
@@ -224,8 +224,8 @@
         "quality": "low",
         "sourceLevel": "high",
         "stance": "support",
-        "identityLabel": "华东理工大学社会工作系讲师",
-        "platformLabel": "家庭社会学话题答主",
+        "identityLabel": "华东理工社工讲师",
+        "platformLabel": "家庭社会学答主",
         "sourceCandidates": [
           {
             "displayName": "今天也要开心呀",
@@ -399,7 +399,7 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "oppose",
-        "identityLabel": "中国人民大学公共政策副研究员",
+        "identityLabel": "人大公共政策副研究员",
         "platformLabel": null,
         "sourceCandidates": [
           {
@@ -419,7 +419,7 @@
         "sourceLevel": "high",
         "stance": "oppose",
         "identityLabel": null,
-        "platformLabel": "知乎育儿话题优质答主",
+        "platformLabel": "育儿优质答主",
         "sourceCandidates": [
           {
             "displayName": "Rainy Days",
@@ -456,8 +456,8 @@
         "quality": "high",
         "sourceLevel": "high",
         "stance": "oppose",
-        "identityLabel": "社区普惠托育机构负责人",
-        "platformLabel": "婴幼儿照护话题答主",
+        "identityLabel": "托育机构负责人",
+        "platformLabel": "婴幼儿照护答主",
         "sourceCandidates": [
           {
             "displayName": "海边的卡夫卡",
@@ -478,7 +478,7 @@
         "sourceLevel": "high",
         "stance": "oppose",
         "identityLabel": null,
-        "platformLabel": "时评话题优质创作者",
+        "platformLabel": "时评优质创作者",
         "sourceCandidates": [
           {
             "displayName": "栀子花开了吗",
@@ -497,7 +497,7 @@
         "sourceLevel": "high",
         "stance": "oppose",
         "identityLabel": "苏州市政协委员",
-        "platformLabel": "生育政策话题答主",
+        "platformLabel": "生育政策答主",
         "sourceCandidates": [
           {
             "displayName": "故事没有那么多",
@@ -516,7 +516,7 @@
         "sourceLevel": "high",
         "stance": "oppose",
         "identityLabel": null,
-        "platformLabel": "家庭教育话题博主 · 50万粉丝",
+        "platformLabel": "家庭教育博主·50万粉丝",
         "sourceCandidates": [
           {
             "displayName": "把日子过成诗",
@@ -554,7 +554,7 @@
         "sourceLevel": "high",
         "stance": "oppose",
         "identityLabel": null,
-        "platformLabel": "孕产健康话题活跃用户",
+        "platformLabel": "孕产健康活跃用户",
         "sourceCandidates": [
           {
             "displayName": "慢生活研究所",
@@ -572,8 +572,8 @@
         "quality": "low",
         "sourceLevel": "high",
         "stance": "oppose",
-        "identityLabel": "华东理工大学社会工作系讲师",
-        "platformLabel": "家庭社会学话题答主",
+        "identityLabel": "华东理工社工讲师",
+        "platformLabel": "家庭社会学答主",
         "sourceCandidates": [
           {
             "displayName": "今天也要开心呀",

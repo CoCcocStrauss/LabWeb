@@ -11,6 +11,7 @@ import {
 } from "react";
 import { useSearchParams } from "next/navigation";
 import { ErrorPage } from "./components/ErrorPage";
+import { PretestSync } from "./components/PretestSync";
 import { emptyResponse } from "./data/questionnaire";
 import { isTopicKey } from "./data/topics";
 import { blockRandomize } from "./lib/blockRandomize";
@@ -163,6 +164,11 @@ function SessionFlow({
           type: "reload",
           timestamp: Date.now(),
         });
+      if (
+        initial.phase === "pretest_save" &&
+        initial.rules.startedAt < initial.pretest.completedAt!
+      )
+        initial.rules = newRules(Date.now(), initial.rules.demoLabelSelections);
       saveSession(initial);
       sessionRef.current = initial;
       setSession(initial);
@@ -371,6 +377,9 @@ function SessionFlow({
             update((s) => ({
               ...s,
               pretest,
+              rules: done
+                ? newRules(Date.now(), s.rules.demoLabelSelections)
+                : s.rules,
               phase: done ? "pretest_save" : "pretest",
             }))
           }
@@ -378,19 +387,27 @@ function SessionFlow({
       );
       break;
     case "pretest_save":
-      content = (
-        <EndPage
-          session={session}
-          pretestOnly
-          onSaved={() =>
-            update((s) => ({ ...s, rules: newRules(), phase: "tutorial" }))
-          }
-        />
-      );
-      break;
     case "tutorial":
       content = (
         <TutorialPage
+          canContinue={session.phase === "tutorial"}
+          saveStatus={
+            session.phase === "pretest_save" ? (
+              <PretestSync
+                input={{
+                  uid: session.uid,
+                  sessionId: session.sessionId,
+                  sessionSecret: session.sessionSecret,
+                  conditionN: session.conditionN,
+                  topicKey: session.topicKey,
+                  questionnaireVersion: session.questionnaireVersion,
+                  pretest: session.pretest,
+                  microphonePermission: session.microphonePermission,
+                }}
+                onSaved={() => update((s) => ({ ...s, phase: "tutorial" }))}
+              />
+            ) : null
+          }
           response={session.rules}
           onChange={(rules) => update((s) => ({ ...s, rules }))}
           onStart={() =>

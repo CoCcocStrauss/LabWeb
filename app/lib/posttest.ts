@@ -1,3 +1,4 @@
+import type { DisplayedLabelSelection } from "./labelSelection";
 import type { TopicKey } from "../data/topics";
 import { getReasons } from "../data/reasons";
 import { shuffleArray } from "./blockRandomize";
@@ -29,7 +30,7 @@ export type ReasonsResponse = {
   startedAt: number; selectedAt: number | null; completedAt: number | null;
 };
 export type Interruption = { phase: string; type: "reload" | "hidden" | "visible"; timestamp: number };
-export type PresentedPost = { postId: string; displayName: string; avatarFile: string | null; identityLabel: string | null; platformLabel: string | null };
+export type PresentedPost = Partial<DisplayedLabelSelection> & { postId: string; displayName: string; avatarFile: string | null; identityLabel: string | null; platformLabel: string | null };
 
 export const recognitionExcerpt = (content: string) => [...content].slice(0, 48).join("");
 export function createRecognition(posts: PostItemWithDisplay[], actions: ActionLog[], now = Date.now()): RecognitionResponse {

@@ -252,10 +252,10 @@ body {
   line-height: 1.5;
 }
 .reading-status h1 {
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.45;
-  margin-bottom: 8px;
+  font-size: 20px;
+  font-weight: 650;
+  line-height: 1.5;
+  margin-block: 4px 12px;
 }
 .reading-clock {
   font-size: 16px;
@@ -510,7 +510,7 @@ body {
   z-index: 80;
   border: 5px solid #e43030;
   opacity: 0;
-  animation: reading-edge-pulse 0.85s ease-in-out 2;
+  animation: reading-edge-pulse 0.65s ease-in-out 5;
 }
 @keyframes reading-edge-pulse {
   0%,
@@ -707,4 +707,120 @@ body {
 }
 .feed-grid {
   overflow-anchor: none;
+}
+
+/* Inline reading keeps each card in its existing column. */
+.reading-shares {
+  font-size: 14px;
+  white-space: nowrap;
+}
+.feed-content {
+  margin-top: 12px;
+}
+.feed-fulltext {
+  font-size: 16px;
+  line-height: 1.7;
+  margin: 0;
+}
+.feed-collapse {
+  display: block;
+  min-height: 44px;
+  padding: 8px 0;
+  font-size: 14px;
+  color: #0875ca;
+}
+.feed-card.is-expanded .feed-name {
+  white-space: normal;
+}
+.tutorial-screen .feed-card {
+  padding: 12px;
+}
+.tutorial-screen .feed-identities {
+  margin-top: 8px;
+  line-height: 1.6;
+}
+.tutorial-screen .feed-content-button {
+  margin-top: 14px;
+}
+.tutorial-screen .feed-actions {
+  margin-top: 8px;
+}
+.tutorial-check-intro {
+  line-height: 1.7;
+}
+@media (min-width: 768px) {
+  .reading-status h1 {
+    font-size: 24px;
+    margin-block: 6px 16px;
+  }
+  .feed-fulltext {
+    font-size: 18px;
+  }
+}
+
+.spanning-feed {
+  position: relative;
+  column-gap: 10px;
+  overflow-anchor: none;
+  min-width: 0;
+}
+.spanning-feed-item {
+  position: absolute;
+  min-width: 0;
+}
+.spanning-feed .feed-card {
+  position: relative;
+}
+.feed-card-sizing {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--feed-column-width);
+  padding: inherit;
+  border: inherit;
+  visibility: hidden;
+  pointer-events: none;
+}
+.feed-card-sizing .feed-name {
+  white-space: nowrap !important;
+}
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  .spanning-feed {
+    column-gap: 12px;
+  }
+}
+
+/* Author label belongs to the text column, never underneath the avatar. */
+.feed-author-row {
+  align-items: flex-start;
+  gap: 8px;
+}
+.feed-avatar {
+  margin-top: 2px;
+}
+.feed-author-text {
+  flex: 1;
+  min-width: 0;
+}
+.feed-name-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.feed-name-row svg {
+  flex: none;
+}
+.feed-identities {
+  display: block;
+  margin-top: 6px;
+  line-height: 1.6;
+}
+.feed-identities span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.feed-content-button,
+.feed-content {
+  margin-top: 12px;
 }

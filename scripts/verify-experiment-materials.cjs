@@ -22,6 +22,7 @@ const { TOPIC_KEYS, isTopicKey } = load("app/data/topics.ts");
 const { assignCondition } = load("app/lib/conditionAssignment.ts");
 const { blockRandomize } = load("app/lib/blockRandomize.ts");
 const { enrichPostsForDisplay } = load("app/lib/enrichPosts.ts");
+const { validDisplayedLabel } = load("app/lib/labelSelection.ts");
 assert.deepEqual(TOPIC_KEYS, ["fertility", "ai"]);
 assert.equal(isTopicKey("eldercare"), false);
 const assignments = new Map();
@@ -50,6 +51,7 @@ for (const topic of TOPIC_KEYS) {
       assert.equal(new Set(posts.slice(offset, offset + 8).map(p => `${p.stance}_${p.sourceLevel}_${p.quality}`)).size, 8);
     }
     for (const p of enrichPostsForDisplay(posts, topic)) {
+      assert.ok(validDisplayedLabel(p,p));
       if (p.sourceLevel === "high") {
         assert.ok(p.identityLabel || p.platformLabel);
         assert.ok(p.sourceCandidates.some(c => c.displayName === p.displayName && c.avatarFile === p.avatarFile));

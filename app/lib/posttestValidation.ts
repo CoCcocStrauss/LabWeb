@@ -1,3 +1,5 @@
+import { LABEL_SELECTION_VERSION, validDisplayedLabel } from "./labelSelection";
+import { matchesStoredLabelPair } from "./materialLabels";
 import { getReasons } from "../data/reasons";
 import type { TopicKey } from "../data/topics";
 import type { PostItem } from "./blockRandomize";
@@ -90,14 +92,22 @@ export function validPostTasks(
             p.displayName === item.displayName &&
             p.avatarFile === item.avatarFile,
         ) ||
-        item.identityLabel !== (post.identityLabel ?? null) ||
-        item.platformLabel !== (post.platformLabel ?? null)
+        (b.readingMetrics.labelSelectionVersion === LABEL_SELECTION_VERSION
+          ? item.identityLabel !== (post.identityLabel ?? null) ||
+            item.platformLabel !== (post.platformLabel ?? null)
+          : !matchesStoredLabelPair(b.topicKey, post, item))
       )
         return false;
     } else if (
       item.avatarFile !== null ||
       item.identityLabel !== null ||
       item.platformLabel !== null
+    )
+      return false;
+    if (
+      (b.readingMetrics.labelSelectionVersion === LABEL_SELECTION_VERSION ||
+        item.labelSelectionVersion !== undefined) &&
+      !validDisplayedLabel(post, item)
     )
       return false;
     presentation.set(item.postId, item);

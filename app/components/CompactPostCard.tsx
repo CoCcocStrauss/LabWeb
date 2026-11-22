@@ -1,6 +1,7 @@
 "use client";
+import { LABEL_SELECTION_VERSION } from "../lib/labelSelection";
 import { Heart, Share2 } from "lucide-react";
-import type { MouseEvent, Ref } from "react";
+import { useRef, type MouseEvent, type Ref } from "react";
 import type { PostCardData } from "./PostCard";
 import { PostAvatar } from "./PostAvatar";
 import { GoldVBadge } from "./GoldVBadge";
@@ -12,32 +13,47 @@ export function PostAuthor({
   post: PostCardData;
   compact?: boolean;
 }) {
+  const labels =
+    post.sourceLevel !== "high"
+      ? []
+      : post.labelSelectionVersion === LABEL_SELECTION_VERSION
+        ? post.displayedLabelText
+          ? [post.displayedLabelText]
+          : []
+        : [post.identityLabel, post.platformLabel].filter(Boolean);
   return (
     <div className={compact ? "feed-author" : "detail-author"}>
-      <div className={compact ? "feed-author-row" : "flex items-center gap-3"}>
-        <div className={compact ? "feed-avatar" : ""}>
+      <div className="feed-author-row">
+        <div className={compact ? "feed-avatar" : "detail-avatar"}>
           <PostAvatar {...post} postId={post.id} />
         </div>
-        <span
-          className={compact ? "feed-name" : "study-copy font-medium"}
-          title={post.displayName}
-        >
-          {post.displayName}
-        </span>
-        {post.sourceLevel === "high" ? <GoldVBadge /> : null}
-      </div>
-      {post.sourceLevel === "high" ? (
-        <div className="feed-identities">
-          {[post.identityLabel, post.platformLabel]
-            .filter(Boolean)
-            .map((label) => (
-              <span key={label}>{label}</span>
-            ))}
+        <div className="feed-author-text">
+          <div className="feed-name-row">
+            <span
+              className={compact ? "feed-name" : "study-copy font-medium"}
+              title={post.displayName}
+            >
+              {post.displayName}
+            </span>
+            {post.sourceLevel === "high" ? <GoldVBadge /> : null}
+          </div>
+          {labels.length ? (
+            <div
+              className="feed-identities"
+              data-label-type={post.displayedLabelType ?? undefined}
+              data-label-rule={post.labelSelectionVersion}
+            >
+              {labels.map((label) => (
+                <span key={label}>{label}</span>
+              ))}
+            </div>
+          ) : null}
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }
+
 export function PostActions({
   liked,
   shared,
@@ -93,6 +109,9 @@ export function CompactPostCard({
   disabled = false,
   rootRef,
   onOpen,
+  onCollapse,
+  expanded = false,
+  presentation = "inline",
   onLike,
   onShare,
 }: {
@@ -104,35 +123,120 @@ export function CompactPostCard({
   disabled?: boolean;
   rootRef?: Ref<HTMLElement>;
   onOpen: () => void;
+  onCollapse?: () => void;
+  expanded?: boolean;
+  presentation?: "inline" | "panel";
   onLike: (e: MouseEvent<HTMLButtonElement>) => void;
   onShare: (e: MouseEvent<HTMLButtonElement>) => void;
 }) {
+  const gesture = useRef<{
+    x: number;
+    y: number;
+    scrollY: number;
+    moved: boolean;
+  } | null>(null);
   return (
     <article
       ref={rootRef}
-      className={`feed-card${disabled ? "" : " is-interactive"}`}
+      className={`feed-card${!disabled ? " is-interactive" : ""}${expanded ? " is-expanded" : ""}`}
       data-post-id={post.id}
+      onPointerDown={(event) => {
+        gesture.current = {
+          x: event.clientX,
+          y: event.clientY,
+          scrollY:
+            (event.currentTarget.closest(".study-scroll") as HTMLElement | null)
+              ?.scrollTop ?? 0,
+          moved: false,
+        };
+      }}
+      onPointerMove={(event) => {
+        const start = gesture.current;
+        if (
+          start &&
+          Math.hypot(event.clientX - start.x, event.clientY - start.y) > 8
+        )
+          start.moved = true;
+      }}
+      onPointerCancel={() => {
+        if (gesture.current) gesture.current.moved = true;
+      }}
       onClick={(event) => {
         if (
-          !disabled &&
-          !(event.target as HTMLElement).closest(".feed-actions button")
+          disabled ||
+          (event.target as HTMLElement).closest(
+            ".feed-actions,.feed-card-sizing",
+          )
         )
-          onOpen();
+          return;
+        const start = gesture.current,
+          scrollY =
+            (event.currentTarget.closest(".study-scroll") as HTMLElement | null)
+              ?.scrollTop ?? 0;
+        if (
+          event.detail > 0 &&
+          start &&
+          (start.moved || Math.abs(scrollY - start.scrollY) > 4)
+        )
+          return;
+        if (window.getSelection()?.toString()) return;
+        if (presentation === "inline" && expanded) onCollapse?.();
+        else onOpen();
       }}
     >
+      {expanded ? (
+        <div className="feed-card-sizing" aria-hidden="true">
+          <PostAuthor post={post} compact />
+          <div className="feed-content-button">
+            <span className="feed-preview">
+              {(preview ?? previewText(post.content)).text}
+            </span>
+            <span className="feed-open">展开全文</span>
+          </div>
+          <PostActions
+            liked={liked}
+            shared={shared}
+            disabled
+            shareDisabled
+            onLike={() => {}}
+            onShare={() => {}}
+          />
+        </div>
+      ) : null}
       <PostAuthor post={post} compact />
-      <button
-        type="button"
-        disabled={disabled}
-        className="feed-content-button"
-        aria-label={`查看${post.displayName}的全文`}
-        aria-haspopup="dialog"
-      >
-        <span className="feed-preview">
-          {(preview ?? previewText(post.content)).text}
-        </span>
-        <span className="feed-open">查看全文</span>
-      </button>
+      {expanded && presentation === "inline" ? (
+        <div className="feed-content">
+          <p className="feed-fulltext study-copy whitespace-pre-wrap">
+            {post.content}
+          </p>
+          <button
+            type="button"
+            className="feed-collapse"
+            disabled={disabled}
+            aria-expanded="true"
+            onClick={(event) => {
+              event.stopPropagation();
+              onCollapse?.();
+            }}
+          >
+            收起
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          disabled={disabled}
+          className="feed-content-button"
+          aria-label={`展开${post.displayName}的全文`}
+          aria-expanded={presentation === "inline" ? false : undefined}
+          aria-haspopup={presentation === "panel" ? "dialog" : undefined}
+        >
+          <span className="feed-preview">
+            {(preview ?? previewText(post.content)).text}
+          </span>
+          <span className="feed-open">展开全文</span>
+        </button>
+      )}
       <PostActions
         liked={liked}
         shared={shared}

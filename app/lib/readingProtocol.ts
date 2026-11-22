@@ -1,3 +1,9 @@
+import {
+  LABEL_SELECTION_VERSION,
+  chooseDisplayedLabel,
+  type DisplayedLabelSelection,
+} from "./labelSelection";
+import { TUTORIAL_POSTS } from "../data/tutorial";
 import type { PostItemWithDisplay } from "./enrichPosts";
 import type {
   ActionLog,
@@ -5,7 +11,9 @@ import type {
   ScrollEvent,
 } from "./dataSubmit";
 
-export const READING_UI_VERSION = "responsive-masonry-preview-v1";
+export const PANEL_READING_UI_VERSION = "responsive-masonry-preview-v1";
+export const SINGLE_INLINE_READING_UI_VERSION = "inline-masonry-preview-v1";
+export const READING_UI_VERSION = "spanning-inline-masonry-v1";
 export const PREVIEW_VERSION = "opening-before-punctuation-20-v1";
 export const COVERAGE_RULE = { minimumRatio: 0.5, continuousMs: 250 } as const;
 const cloneMetrics = (value: ReadingMetrics): ReadingMetrics =>
@@ -52,6 +60,7 @@ export function assignMasonryColumns(
 export type CardLayout = {
   column: number;
   columns: number;
+  columnSpan?: number;
   timestamp: number;
   left: number;
   top: number;
@@ -64,6 +73,7 @@ export type CardPresentation = {
   postId: string;
   order: number;
   column: number;
+  columnSpan?: number;
   preview: Preview;
   layouts: CardLayout[];
 };
@@ -86,7 +96,12 @@ export type ReadingAlert = {
   completedAt: number | null;
 };
 export type ReadingMetrics = {
-  version: typeof READING_UI_VERSION;
+  packingVersion?: "free-rect-top-first-v1";
+  labelSelectionVersion?: typeof LABEL_SELECTION_VERSION;
+  version:
+    | typeof READING_UI_VERSION
+    | typeof PANEL_READING_UI_VERSION
+    | typeof SINGLE_INLINE_READING_UI_VERSION;
   coverageRule: typeof COVERAGE_RULE;
   columns: number;
   cards: CardPresentation[];
@@ -94,6 +109,7 @@ export type ReadingMetrics = {
   detailEvents: DetailEvent[];
   detailIntervals: DetailInterval[];
   openDetailId: string | null;
+  openDetailIds?: string[];
   alerts: ReadingAlert[];
   taskGoal: { requiredShares: 2; actualShares: number; achieved: boolean };
 };
@@ -102,12 +118,15 @@ export function newReadingMetrics(
 ): ReadingMetrics {
   return {
     version: READING_UI_VERSION,
+    packingVersion: "free-rect-top-first-v1",
+    labelSelectionVersion: LABEL_SELECTION_VERSION,
     coverageRule: { ...COVERAGE_RULE },
     columns: 2,
     cards: posts.map((p, i) => ({
       postId: p.id,
       order: i + 1,
       column: (i % 2) as 0 | 1,
+      columnSpan: 1,
       preview: previewText(p.content),
       layouts: [],
     })),
@@ -115,11 +134,14 @@ export function newReadingMetrics(
     detailEvents: [],
     detailIntervals: [],
     openDetailId: null,
+    openDetailIds: [],
     alerts: [],
     taskGoal: { requiredShares: 2, actualShares: 0, achieved: false },
   };
 }
 export type RulesResponse = {
+  demoLabelSelectionVersion?: typeof LABEL_SELECTION_VERSION;
+  demoLabelSelections?: Record<string, DisplayedLabelSelection>;
   startedAt: number;
   completedAt: number | null;
   items: { id: string; checked: boolean; changedAt: number | null }[];
@@ -129,18 +151,27 @@ export const RULES = [
   ["shares", "在90秒内转发我最认同的两条内容，才算完成本次阅读任务。"],
   [
     "cards",
-    "每张短卡显示正文开头，点击卡片可查看全文，再点内容可收起；短卡和全文都可以点赞、转发。",
+    "每张短卡显示正文开头，点击卡片可展开全文，再次点击该卡片或“收起”恢复预览；点赞、转发区域不切换展开状态。",
   ],
   [
     "finish",
     "转发满两条后才显示“结束作答”按钮；我可以继续阅读，也可以点击它结束。",
   ],
-  ["coverage", "顶部显示剩余时间和浏览进度；不需要浏览到100%。"],
+  ["coverage", "顶部显示剩余时间和转发数量；不需要浏览完全部内容。"],
   ["timeout", "时间到后阅读自动结束，并进入后续问题。"],
 ] as const;
-export const newRules = (now = Date.now()): RulesResponse => ({
+export const newRules = (
+  now = Date.now(),
+  existingDemoLabels?: Record<string, DisplayedLabelSelection>,
+): RulesResponse => ({
   startedAt: now,
   completedAt: null,
+  demoLabelSelectionVersion: LABEL_SELECTION_VERSION,
+  demoLabelSelections:
+    existingDemoLabels ??
+    Object.fromEntries(
+      TUTORIAL_POSTS.map((p) => [p.id, chooseDisplayedLabel(p)]),
+    ),
   items: RULES.map(([id]) => ({ id, checked: false, changedAt: null })),
 });
 export type MicrophonePermission = {
@@ -172,7 +203,7 @@ export class ReadingTracker {
     string,
     { totalVisibleMs: number; firstSeenAt: number | null; enter: number | null }
   >();
-  private detailStarted: number | null = null;
+  private detailStarts = new Map<string, number>();
   constructor(
     posts: PostItemWithDisplay[],
     initial?: {
@@ -231,10 +262,12 @@ export class ReadingTracker {
       this.setVisible(id, false, time, scrollY);
     this.stopDetail(time);
   }
-  resumeDetail(time: number) {
-    const id = this.metrics.openDetailId;
-    if (id && this.detailStarted === null) {
-      this.detailStarted = time;
+  resumeDetail(
+    time: number,
+    id = this.metrics.openDetailId ?? this.metrics.openDetailIds?.[0],
+  ) {
+    if (id && !this.detailStarts.has(id)) {
+      this.detailStarts.set(id, time);
       this.metrics.detailEvents.push({
         postId: id,
         type: "resume",
@@ -248,19 +281,26 @@ export class ReadingTracker {
       (e) => e.postId === id && e.type === "open",
     ).length;
   }
-  stopDetail(time: number) {
-    if (this.detailStarted !== null && this.metrics.openDetailId)
+  stopDetail(time: number, id?: string) {
+    for (const [postId, startedAt] of this.detailStarts) {
+      if (id && postId !== id) continue;
       this.metrics.detailIntervals.push({
-        postId: this.metrics.openDetailId,
-        startedAt: this.detailStarted,
-        endedAt: Math.max(time, this.detailStarted),
+        postId,
+        startedAt,
+        endedAt: Math.max(time, startedAt),
       });
-    this.detailStarted = null;
+      this.detailStarts.delete(postId);
+    }
   }
-  open(id: string, time: number, scrollY: number) {
-    this.suspend(time, scrollY);
-    this.metrics.openDetailId = id;
-    this.detailStarted = time;
+  open(id: string, time: number, scrollY: number, inline = false) {
+    const multiple = inline && this.metrics.version === READING_UI_VERSION;
+    if (multiple && this.metrics.openDetailIds?.includes(id)) return;
+    if (inline) this.setVisible(id, false, time, scrollY);
+    else this.suspend(time, scrollY);
+    if (multiple)
+      this.metrics.openDetailIds = [...(this.metrics.openDetailIds ?? []), id];
+    else this.metrics.openDetailId = id;
+    if (!inline) this.detailStarts.set(id, time);
     this.metrics.detailEvents.push({
       postId: id,
       type: "open",
@@ -268,17 +308,33 @@ export class ReadingTracker {
       visit: this.visits(id) + 1,
     });
   }
-  close(time: number) {
-    const id = this.metrics.openDetailId;
-    if (!id) return;
-    this.stopDetail(time);
-    this.metrics.detailEvents.push({
-      postId: id,
-      type: "close",
-      timestamp: time,
-      visit: this.visits(id),
-    });
-    this.metrics.openDetailId = null;
+  close(time: number, id?: string) {
+    const ids = id
+      ? [id]
+      : [
+          ...(this.metrics.openDetailIds ?? []),
+          ...(this.metrics.openDetailId ? [this.metrics.openDetailId] : []),
+        ];
+    for (const postId of ids) {
+      if (
+        this.metrics.openDetailId !== postId &&
+        !this.metrics.openDetailIds?.includes(postId)
+      )
+        continue;
+      this.stopDetail(time, postId);
+      this.metrics.detailEvents.push({
+        postId,
+        type: "close",
+        timestamp: time,
+        visit: this.visits(postId),
+      });
+      if (this.metrics.openDetailId === postId)
+        this.metrics.openDetailId = null;
+      if (this.metrics.openDetailIds)
+        this.metrics.openDetailIds = this.metrics.openDetailIds.filter(
+          (v) => v !== postId,
+        );
+    }
   }
   context(id: string, surface: "preview" | "detail"): InteractionContext {
     return { surface, detailOpenedBefore: this.visits(id) > 0 };
@@ -303,11 +359,11 @@ export class ReadingTracker {
         });
     }
     const metrics = cloneMetrics(this.metrics);
-    if (this.detailStarted !== null && metrics.openDetailId)
+    for (const [postId, startedAt] of this.detailStarts)
       metrics.detailIntervals.push({
-        postId: metrics.openDetailId,
-        startedAt: this.detailStarted,
-        endedAt: Math.max(time, this.detailStarted),
+        postId,
+        startedAt,
+        endedAt: Math.max(time, startedAt),
       });
     const shares = actions.filter((a) => a.type === "share").length;
     metrics.taskGoal = {
