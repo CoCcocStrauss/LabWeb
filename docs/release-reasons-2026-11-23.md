@@ -34,4 +34,3 @@
 - API录音为21秒合成MP4/AAC，共676096字节，上传、私有下载SHA-256校验及公开访问拒绝通过；不是被试真实声音。关联行数experiments 1、experiment_sessions 1、experiment_audio 1、actions 4、scroll_events 4、post_visibility 48。
 - 初次线上验收遇到网络超时，重试后通过；重试产生的未完成test_记录也需排除。所有验收UID使用test_前缀，没有清空或修改既有被试数据。
 - 证据：`/private/tmp/labweb-reasons-live-20261123/desktop-flow.json`、同目录截图、`/private/tmp/labweb-reasons-live-api-result.json`。文档补记使用[skip netlify]，不重复部署已验收的应用。
-
