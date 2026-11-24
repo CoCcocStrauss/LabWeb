@@ -26,7 +26,7 @@
 
 增量SQL：supabase/release-blinded-20261124.sql，在已有2026-11-23迁移之后运行。只放宽条件约束到8/16/24/48、允许unshare、增加experiments.met_share_goal/final_share_count/unlock_shown_at_ms和experiment_sessions.blinded_post_evaluations；新增三个v6 RPC，沿用私有录音校验及原子事务。旧RPC与理由字段不删除不改写，旧16条完成记录保留。
 
-正式库尚未迁移。应先由用户执行增量SQL，再发布新应用；本轮测试只写隔离内存库。
+11月24日本机实现时未迁移正式库，以上本机测试只写隔离内存库。用户于11月25日确认增量SQL已执行；随后新应用已上线，正式保存验收见发布记录。
 
 ## 验证
 
