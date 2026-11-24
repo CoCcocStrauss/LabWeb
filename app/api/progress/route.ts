@@ -1,3 +1,4 @@
+import { validPretest as validLatest } from "../../protocol/v5/lib/submissionValidation";
 import { validPretest as validV4 } from "../../protocol/v4/lib/submissionValidation";
 import { NextResponse } from "next/server";
 import { readRequestJson, validPretest } from "../../lib/submissionValidation";
@@ -14,21 +15,24 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
-  const v4 = validV4(body),
+  const latest = validLatest(body),
+    v4 = validV4(body),
     v1 = validV1(body),
     v2 = validV2(body);
-  if (!v4 && !validPretest(body) && !validV2(body) && !validV1(body))
+  if (!latest && !v4 && !validPretest(body) && !validV2(body) && !validV1(body))
     return NextResponse.json({ error: "Invalid pretest" }, { status: 400 });
   const input = body as PretestInput;
   try {
     const { error } = await getSupabaseAdmin().rpc(
-      v4
-        ? "save_experiment_pretest_v5"
-        : v1
-          ? "save_experiment_pretest"
-          : v2
-            ? "save_experiment_pretest_v3"
-            : "save_experiment_pretest_v4",
+      latest
+        ? "save_experiment_pretest_v6"
+        : v4
+          ? "save_experiment_pretest_v5"
+          : v1
+            ? "save_experiment_pretest"
+            : v2
+              ? "save_experiment_pretest_v3"
+              : "save_experiment_pretest_v4",
       {
         p_uid: input.uid,
         p_session_id: input.sessionId,
@@ -39,7 +43,7 @@ export async function POST(request: Request) {
         ...(!v1 && "sessionSecret" in input
           ? { p_secret_hash: hashSessionSecret(input.sessionSecret as string) }
           : {}),
-        ...(v4 || validPretest(input)
+        ...(latest || v4 || validPretest(input)
           ? {
               p_permission_check: input.microphonePermission,
               ...(v4 ? { p_pre_reasons: input.preReasons } : {}),

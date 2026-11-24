@@ -1,3 +1,4 @@
+import { validSubmission as validLatest } from "../../protocol/v5/lib/submissionValidation";
 import { validSubmission as validV4Submission } from "../../protocol/v4/lib/submissionValidation";
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
@@ -20,10 +21,12 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
+  const latest = validLatest(body);
   const v4 = validV4Submission(body);
   const legacy = validLegacySubmission(body);
   const v2 = validV2Submission(body);
   if (
+    !latest &&
     !v4 &&
     !validSubmission(body) &&
     !validV2Submission(body) &&
@@ -38,13 +41,15 @@ export async function POST(request: Request) {
     .digest("hex");
   try {
     const { data, error } = await getSupabaseAdmin().rpc(
-      v4
-        ? "submit_experiment_v5"
-        : legacy
-          ? "submit_experiment_v2"
-          : v2
-            ? "submit_experiment_v3"
-            : "submit_experiment_v4",
+      latest
+        ? "submit_experiment_v6"
+        : v4
+          ? "submit_experiment_v5"
+          : legacy
+            ? "submit_experiment_v2"
+            : v2
+              ? "submit_experiment_v3"
+              : "submit_experiment_v4",
       {
         p_payload: payload,
         p_payload_hash: digest,

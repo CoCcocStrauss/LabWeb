@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --test scripts/test-experiment.cjs scripts/test-reasons.cjs",
+    "test": "node --test scripts/test-experiment.cjs scripts/test-reasons.cjs scripts/test-blinded.cjs",
     "test:database": "node --test scripts/test-database.cjs",
     "test:api": "node --test scripts/test-local-api.cjs",
     "qa:database": "node scripts/qa-server.cjs",

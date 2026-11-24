@@ -96,6 +96,7 @@ export type ReadingAlert = {
   completedAt: number | null;
 };
 export type ReadingMetrics = {
+  unlockShownAtMs?: number | null;
   packingVersion?: "free-rect-top-first-v1";
   labelSelectionVersion?: typeof LABEL_SELECTION_VERSION;
   version:

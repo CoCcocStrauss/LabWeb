@@ -79,6 +79,7 @@ const ReasonsPage = dynamic(
   () => import("./components/ReasonsPage").then((m) => m.ReasonsPage),
   { ssr: false },
 );
+const V5Home = dynamic(() => import("./protocol/v5/Flow"), { ssr: false });
 const V4Home = dynamic(() => import("./protocol/v4/Flow"), { ssr: false });
 const V2Home = dynamic(() => import("./compat/v2/Flow"), { ssr: false });
 const LegacyHome = dynamic(() => import("./legacy/LegacyFlow"), { ssr: false });
@@ -101,7 +102,7 @@ function parseParams(searchParams: URLSearchParams) {
   const manual = n !== null || topic !== undefined;
   if (
     manual &&
-    (![8, 16, 48].includes(Number(n)) || !topic || !isTopicKey(topic))
+    (![8, 16, 24, 48].includes(Number(n)) || !topic || !isTopicKey(topic))
   )
     return null;
   const assigned = manual
@@ -138,9 +139,18 @@ function SessionFlow({
   const [legacy, setLegacy] = useState(false);
   const [v2, setV2] = useState(false);
   const [v4, setV4] = useState(false);
+  const [v5, setV5] = useState(false);
 
   useEffect(() => {
     try {
+      if (
+        localStorage.getItem(
+          `labweb:session:v5:${encodeURIComponent(params.uid)}`,
+        ) !== null
+      ) {
+        setV5(true);
+        return;
+      }
       if (
         localStorage.getItem(
           `labweb:session:v4:${encodeURIComponent(params.uid)}`,
@@ -151,7 +161,7 @@ function SessionFlow({
       }
       const existing = loadSession(params.uid);
       if (!existing) {
-        setV4(true);
+        setV5(true);
         return;
       }
       if (
@@ -291,6 +301,7 @@ function SessionFlow({
     [update],
   );
 
+  if (v5) return <V5Home />;
   if (v4) return <V4Home />;
   if (v2)
     return (

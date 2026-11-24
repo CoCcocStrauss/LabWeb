@@ -35,9 +35,11 @@ export async function POST(request: Request) {
     };
     const { db, questionnaireVersion } = await authorizeSessionRecord(identity);
     const { error } = await db.rpc(
-      questionnaireVersion === "2026-11-23-reasons-v1"
-        ? "save_experiment_explanation_v5"
-        : "save_experiment_explanation_v4",
+      questionnaireVersion === "2026-11-24-v4"
+        ? "save_experiment_explanation_v6"
+        : questionnaireVersion === "2026-11-23-reasons-v1"
+          ? "save_experiment_explanation_v5"
+          : "save_experiment_explanation_v4",
       {
         p_uid: b.uid,
         p_session_id: b.sessionId,

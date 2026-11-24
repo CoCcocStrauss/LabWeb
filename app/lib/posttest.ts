@@ -14,7 +14,7 @@ export type RecognitionResponse = {
   version: typeof RECOGNITION_VERSION; type: "content"; status: "pending" | "answered" | "not_applicable";
   options: RecognitionOption[]; targetPostId: string | null; targetPresent: boolean;
   selected: string | null; correct: boolean | null; cannotRemember: boolean;
-  generatedAt: number; presentedAt: number | null; answeredAt: number | null; skipReason: "no_shares" | null;
+  generatedAt: number; presentedAt: number | null; answeredAt: number | null; skipReason: "no_shares" | "insufficient_distractors" | null;
 };
 export type AudioMetadata = {
   recordingId: string; mimeType: string; durationMs: number; byteLength: number; sha256: string | null;

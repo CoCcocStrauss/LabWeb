@@ -44,7 +44,7 @@ export type ActionLog =
     } & PostExperimentAttrs)
   | ({
       interaction?: InteractionContext;
-      type: "unlike";
+      type: "unlike" | "unshare";
       postId: string;
       timestamp: number;
     } & PostExperimentAttrs)
@@ -93,6 +93,10 @@ export type SubmitExperimentDataInput = {
   recognition: RecognitionResponse;
   explanation: ExplanationResponse;
   reasons: ReasonsResponse | null;
+  blindedPostEvaluations?: import("../protocol/v5/lib/blinded").BlindResponse;
+  metShareGoal?: boolean;
+  finalShareCount?: number;
+  unlockShownAtMs?: number | null;
   preReasons?: ReasonResponse;
   postReasons?: ReasonResponse;
   interactionComparison?: InteractionComparison;

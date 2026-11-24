@@ -31,9 +31,12 @@ export async function authorizeSessionRecord(body: {
   if (
     !data ||
     data.session_id !== body.sessionId ||
-    ![QUESTIONNAIRE_VERSION, "2026-11-21-v2", "2026-11-23-reasons-v1"].includes(
-      data.questionnaire_version,
-    ) ||
+    ![
+      QUESTIONNAIRE_VERSION,
+      "2026-11-21-v2",
+      "2026-11-23-reasons-v1",
+      "2026-11-24-v4",
+    ].includes(data.questionnaire_version) ||
     !secretIsValid(expected) ||
     !timingSafeEqual(Buffer.from(expected), Buffer.from(actual))
   )
