@@ -4,7 +4,7 @@ import {
   chooseDisplayedLabel,
   type DisplayedLabelSelection,
 } from "../../../lib/labelSelection";
-import { TUTORIAL_POSTS } from "../../../data/tutorial";
+import { TUTORIAL_POSTS } from "../data/tutorial";
 import type { PostItemWithDisplay } from "../../../lib/enrichPosts";
 import type {
   ActionLog,
@@ -88,7 +88,23 @@ export type DetailInterval = {
   postId: string;
   startedAt: number;
   endedAt: number;
+  /** Unix milliseconds; aliases retain compatibility with existing exports. */
+  startMs?: number;
+  endMs?: number;
+  durationMs?: number;
 };
+export const DETAIL_VISIBILITY_VERSION = "inline-visible-segments-v1";
+export const ATTENTION_VERSION = "reading-visibility-v1";
+function detailInterval(postId: string, startedAt: number, endedAt: number) {
+  return {
+    postId,
+    startedAt,
+    endedAt,
+    startMs: startedAt,
+    endMs: endedAt,
+    durationMs: endedAt - startedAt,
+  };
+}
 export type ReadingAlert = {
   kind: "thirty_seconds" | "three_seconds";
   shownAt: number;
@@ -97,6 +113,11 @@ export type ReadingAlert = {
   completedAt: number | null;
 };
 export type ReadingMetrics = {
+  attentionVersion?: typeof ATTENTION_VERSION;
+  hiddenCount?: number;
+  totalHiddenMs?: number;
+  hiddenAtMs?: number | null;
+  detailVisibilityVersion?: typeof DETAIL_VISIBILITY_VERSION;
   unlockShownAtMs?: number | null;
   packingVersion?: "free-rect-top-first-v1";
   labelSelectionVersion?: typeof LABEL_SELECTION_VERSION;
@@ -119,6 +140,11 @@ export function newReadingMetrics(
   posts: PostItemWithDisplay[],
 ): ReadingMetrics {
   return {
+    attentionVersion: ATTENTION_VERSION,
+    hiddenCount: 0,
+    totalHiddenMs: 0,
+    hiddenAtMs: null,
+    detailVisibilityVersion: DETAIL_VISIBILITY_VERSION,
     version: READING_UI_VERSION,
     packingVersion: "free-rect-top-first-v1",
     labelSelectionVersion: LABEL_SELECTION_VERSION,
@@ -142,12 +168,41 @@ export function newReadingMetrics(
   };
 }
 export type RulesResponse = {
+  presentationVersion?: typeof TUTORIAL_VERSION;
+  activeStep?: TutorialStepId;
   demoLabelSelectionVersion?: typeof LABEL_SELECTION_VERSION;
   demoLabelSelections?: Record<string, DisplayedLabelSelection>;
   startedAt: number;
   completedAt: number | null;
-  items: { id: string; checked: boolean; changedAt: number | null }[];
+  items: {
+    id: string;
+    checked: boolean;
+    changedAt: number | null;
+    enteredAt?: number | null;
+    completedAt?: number | null;
+    demoPostId?: string | null;
+  }[];
 };
+export const TUTORIAL_VERSION = "three-step-demo-v1";
+export const TUTORIAL_STEPS = [
+  {
+    id: "step_1",
+    title: "如何阅读",
+    text: "点击卡片可展开全文，再点一次收起。不需要看完所有帖子，按自己的节奏浏览即可。",
+  },
+  {
+    id: "step_2",
+    title: "如何转发与改选",
+    text: "请至少转发 2 条最认同的内容（可多选，期间可随时取消或更改）。点赞不计入转发数。",
+  },
+  {
+    id: "step_3",
+    title: "时间、专注与激励",
+    text: "完成阅读和转发后可点击底部按钮结束，时间到自动进入后续问题。",
+  },
+] as const;
+export type TutorialStepId = (typeof TUTORIAL_STEPS)[number]["id"];
+// Kept for already-completed sessions using the former checkbox tutorial.
 export const RULES = [
   ["cards", "我会认真阅读帖子，点击卡片可展开全文，再次点击可收起。"],
   [
@@ -164,6 +219,8 @@ export const newRules = (
   now = Date.now(),
   existingDemoLabels?: Record<string, DisplayedLabelSelection>,
 ): RulesResponse => ({
+  presentationVersion: TUTORIAL_VERSION,
+  activeStep: "step_1",
   startedAt: now,
   completedAt: null,
   demoLabelSelectionVersion: LABEL_SELECTION_VERSION,
@@ -172,8 +229,48 @@ export const newRules = (
     Object.fromEntries(
       TUTORIAL_POSTS.map((p) => [p.id, chooseDisplayedLabel(p)]),
     ),
-  items: RULES.map(([id]) => ({ id, checked: false, changedAt: null })),
+  items: TUTORIAL_STEPS.map(({ id }, i) => ({
+    id,
+    checked: false,
+    changedAt: null,
+    enteredAt: i === 0 ? now : null,
+    completedAt: null,
+    demoPostId: i < 2 ? String(TUTORIAL_POSTS[0].id) : null,
+  })),
 });
+export function enterTutorialStep(
+  response: RulesResponse,
+  id: TutorialStepId,
+  now = Date.now(),
+): RulesResponse {
+  return {
+    ...response,
+    activeStep: id,
+    items: response.items.map((item) =>
+      item.id === id ? { ...item, enteredAt: item.enteredAt ?? now } : item,
+    ),
+  };
+}
+export function completeTutorialStep(
+  response: RulesResponse,
+  id: TutorialStepId,
+  now = Date.now(),
+): RulesResponse {
+  return {
+    ...response,
+    items: response.items.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            checked: true,
+            changedAt: item.completedAt ?? now,
+            enteredAt: item.enteredAt ?? now,
+            completedAt: item.completedAt ?? now,
+          }
+        : item,
+    ),
+  };
+}
 export type MicrophonePermission = {
   state:
     | "not_checked"
@@ -204,15 +301,27 @@ export class ReadingTracker {
     { totalVisibleMs: number; firstSeenAt: number | null; enter: number | null }
   >();
   private detailStarts = new Map<string, number>();
+  private hiddenStart: number | null = null;
   constructor(
     posts: PostItemWithDisplay[],
     initial?: {
       metrics?: ReadingMetrics;
       scrollEvents: ScrollEvent[];
       postVisibilitySummary: PostVisibilitySummary;
+      savedAt?: number;
     },
   ) {
     this.metrics = cloneMetrics(initial?.metrics ?? newReadingMetrics(posts));
+    this.metrics.attentionVersion = ATTENTION_VERSION;
+    this.metrics.hiddenCount ??= 0;
+    this.metrics.totalHiddenMs ??= 0;
+    this.metrics.hiddenAtMs ??= null;
+    if (this.metrics.hiddenAtMs !== null)
+      this.hiddenStart = initial?.savedAt ?? this.metrics.hiddenAtMs;
+    this.metrics.detailVisibilityVersion = DETAIL_VISIBILITY_VERSION;
+    this.metrics.detailIntervals = this.metrics.detailIntervals.map((i) =>
+      detailInterval(i.postId, i.startedAt, i.endedAt),
+    );
     this.events = [...(initial?.scrollEvents ?? [])];
     for (const p of posts)
       this.states.set(p.id, {
@@ -226,6 +335,8 @@ export class ReadingTracker {
   setVisible(id: string, visible: boolean, time: number, scrollY: number) {
     const s = this.states.get(id);
     if (!s) return;
+    // An observer callback queued before expansion must not restart preview time.
+    if (this.isOpen(id) || this.hiddenStart !== null) visible = false;
     if (visible && s.enter === null) {
       s.enter = time;
       s.firstSeenAt ??= time;
@@ -262,11 +373,27 @@ export class ReadingTracker {
       this.setVisible(id, false, time, scrollY);
     this.stopDetail(time);
   }
+  hide(time: number, scrollY: number) {
+    if (this.hiddenStart === null) {
+      this.hiddenStart = time;
+      this.metrics.hiddenAtMs = time;
+      this.metrics.hiddenCount = (this.metrics.hiddenCount ?? 0) + 1;
+    }
+    this.suspend(time, scrollY);
+  }
+  show(time: number) {
+    if (this.hiddenStart === null) return false;
+    this.metrics.totalHiddenMs =
+      (this.metrics.totalHiddenMs ?? 0) + Math.max(0, time - this.hiddenStart);
+    this.hiddenStart = null;
+    this.metrics.hiddenAtMs = null;
+    return true;
+  }
   resumeDetail(
     time: number,
     id = this.metrics.openDetailId ?? this.metrics.openDetailIds?.[0],
   ) {
-    if (id && !this.detailStarts.has(id)) {
+    if (id && this.hiddenStart === null && this.isOpen(id) && !this.detailStarts.has(id)) {
       this.detailStarts.set(id, time);
       this.metrics.detailEvents.push({
         postId: id,
@@ -281,14 +408,17 @@ export class ReadingTracker {
       (e) => e.postId === id && e.type === "open",
     ).length;
   }
+  private isOpen(id: string) {
+    return (
+      this.metrics.openDetailId === id ||
+      this.metrics.openDetailIds?.includes(id) === true
+    );
+  }
   stopDetail(time: number, id?: string) {
     for (const [postId, startedAt] of this.detailStarts) {
       if (id && postId !== id) continue;
-      this.metrics.detailIntervals.push({
-        postId,
-        startedAt,
-        endedAt: Math.max(time, startedAt),
-      });
+      if (time > startedAt)
+        this.metrics.detailIntervals.push(detailInterval(postId, startedAt, time));
       this.detailStarts.delete(postId);
     }
   }
@@ -359,12 +489,12 @@ export class ReadingTracker {
         });
     }
     const metrics = cloneMetrics(this.metrics);
+    if (this.hiddenStart !== null)
+      metrics.totalHiddenMs =
+        (metrics.totalHiddenMs ?? 0) + Math.max(0, time - this.hiddenStart);
     for (const [postId, startedAt] of this.detailStarts)
-      metrics.detailIntervals.push({
-        postId,
-        startedAt,
-        endedAt: Math.max(time, startedAt),
-      });
+      if (time > startedAt)
+        metrics.detailIntervals.push(detailInterval(postId, startedAt, time));
     const shares = activeShares(actions).length;
     metrics.taskGoal = {
       requiredShares: 2,

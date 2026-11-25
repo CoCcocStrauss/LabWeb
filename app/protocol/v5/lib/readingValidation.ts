@@ -3,7 +3,7 @@ import {
   LABEL_SELECTION_VERSION,
   validDisplayedLabel,
 } from "../../../lib/labelSelection";
-import { TUTORIAL_POSTS } from "../../../data/tutorial";
+import { TUTORIAL_POSTS } from "../data/tutorial";
 import {
   RULES,
   PREVIEW_VERSION,
@@ -11,7 +11,13 @@ import {
   PANEL_READING_UI_VERSION,
   SINGLE_INLINE_READING_UI_VERSION,
   COVERAGE_RULE,
+  DETAIL_VISIBILITY_VERSION,
+  TUTORIAL_VERSION,
+  TUTORIAL_STEPS,
+  ATTENTION_VERSION,
   previewText,
+  type ReadingMetrics,
+  type RulesResponse,
 } from "./readingProtocol";
 import type { SubmitExperimentDataInput } from "../../../lib/dataSubmit";
 import type { PostItem } from "../../../lib/blockRandomize";
@@ -37,8 +43,8 @@ export function validReadingProtocol(
   posts: Map<string, PostItem>,
 ): boolean {
   const b = raw as SubmitExperimentDataInput,
-    r = b.rules,
-    m = b.readingMetrics;
+    r = b.rules as RulesResponse,
+    m = b.readingMetrics as ReadingMetrics;
   if (
     !obj(r) ||
     !ts(r.startedAt) ||
@@ -47,11 +53,14 @@ export function validReadingProtocol(
     r.completedAt < r.startedAt ||
     r.completedAt > b.comprehension[0].timestamp ||
     !Array.isArray(r.items) ||
-    r.items.length !== RULES.length ||
+    (r.presentationVersion !== undefined &&
+      r.presentationVersion !== TUTORIAL_VERSION) ||
+    r.items.length !==
+      (r.presentationVersion === TUTORIAL_VERSION ? TUTORIAL_STEPS.length : RULES.length) ||
     r.items.some(
       (v, i) =>
         !obj(v) ||
-        v.id !== RULES[i][0] ||
+        v.id !== (r.presentationVersion === TUTORIAL_VERSION ? TUTORIAL_STEPS[i].id : RULES[i][0]) ||
         v.checked !== true ||
         !ts(v.changedAt) ||
         v.changedAt < r.startedAt ||
@@ -59,6 +68,23 @@ export function validReadingProtocol(
     )
   )
     return false;
+  if (r.presentationVersion === TUTORIAL_VERSION) {
+    if (r.activeStep !== "step_3") return false;
+    let previous = r.startedAt;
+    for (let i = 0; i < r.items.length; i++) {
+      const item = r.items[i];
+      if (
+        !ts(item.enteredAt) ||
+        !ts(item.completedAt) ||
+        item.enteredAt < previous ||
+        item.completedAt < item.enteredAt ||
+        item.completedAt > r.completedAt! ||
+        item.changedAt !== item.completedAt ||
+        item.demoPostId !== (i < 2 ? String(TUTORIAL_POSTS[0].id) : null)
+      ) return false;
+      previous = item.completedAt;
+    }
+  }
   if (
     !validPermission(b.microphonePermission) ||
     b.microphonePermission.requestedAt! > b.pretest.startedAt ||
@@ -69,6 +95,16 @@ export function validReadingProtocol(
   const within = (t: unknown) => ts(t) && t >= b.startTime && t <= b.endTime;
   if (
     !obj(m) ||
+    (m.attentionVersion !== undefined &&
+      (m.attentionVersion !== ATTENTION_VERSION ||
+        !Number.isSafeInteger(m.hiddenCount) ||
+        m.hiddenCount! < 0 ||
+        !Number.isSafeInteger(m.totalHiddenMs) ||
+        m.totalHiddenMs! < 0 ||
+        m.totalHiddenMs! > b.endTime - b.startTime ||
+        m.hiddenAtMs !== null)) ||
+    (m.detailVisibilityVersion !== undefined &&
+      m.detailVisibilityVersion !== DETAIL_VISIBILITY_VERSION) ||
     ![
       READING_UI_VERSION,
       PANEL_READING_UI_VERSION,
@@ -190,11 +226,17 @@ export function validReadingProtocol(
   )
     return false;
   const qualifies = new Set<string>(),
-    enters = new Map<string, number>();
+    enters = new Map<string, number>(),
+    previewRanges = new Map<string, { start: number; end: number }[]>();
   for (const e of b.scrollEvents) {
     if (e.action === "enter_viewport") enters.set(e.postId, e.timestamp);
     else {
       const start = enters.get(e.postId);
+      if (start !== undefined)
+        previewRanges.set(e.postId, [
+          ...(previewRanges.get(e.postId) ?? []),
+          { start, end: e.timestamp },
+        ]);
       if (
         start !== undefined &&
         e.timestamp - start >= COVERAGE_RULE.continuousMs
@@ -250,6 +292,20 @@ export function validReadingProtocol(
       !within(interval.endedAt) ||
       interval.endedAt < interval.startedAt ||
       interval.startedAt < (previousEnds.get(interval.postId) ?? b.startTime) ||
+      ((m.detailVisibilityVersion === DETAIL_VISIBILITY_VERSION ||
+        interval.startMs !== undefined ||
+        interval.endMs !== undefined ||
+        interval.durationMs !== undefined) &&
+        (interval.startMs !== interval.startedAt ||
+          interval.endMs !== interval.endedAt ||
+          interval.durationMs !== interval.endedAt - interval.startedAt ||
+          interval.durationMs <= 0)) ||
+      (m.detailVisibilityVersion === DETAIL_VISIBILITY_VERSION &&
+        previewRanges
+          .get(interval.postId)
+          ?.some(
+            (r) => interval.startedAt < r.end && interval.endedAt > r.start,
+          )) ||
       !ranges
         .get(interval.postId)
         ?.some(

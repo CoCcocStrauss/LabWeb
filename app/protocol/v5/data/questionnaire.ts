@@ -1,6 +1,6 @@
 import type { TopicKey } from "../../../data/topics";
 
-export const QUESTIONNAIRE_VERSION = "2026-11-24-v4";
+export const QUESTIONNAIRE_VERSION = "2026-11-25-v5";
 export type QuestionnaireStage = "pretest" | "posttest";
 export type Question = {
   id: string;
@@ -56,21 +56,21 @@ export const QUESTIONNAIRES: Record<
 > = {
   ai: {
     scenario:
-      "设想未来几年，以 AI 为代表的新工具逐渐进入更多工作场景，各行各业的工作方式也在发生变化。",
+      "未来几年，很多医院开始用 AI 帮医生看病：医生问诊、看检查片子时，AI 会帮忙核对症状、提示容易漏掉的风险，并给出诊断参考。",
     questions: [
       {
         id: "job_opportunities",
-        text: "在这样的情况下，普通人可以获得的工作机会会怎样变化？",
+        text: "在这样的情况下，普通人看病被误诊、漏诊的情况会怎样变化？",
         options: change,
       },
       {
         id: "employee_demand",
-        text: "你预计，企业对员工的总体需求会怎样变化？",
+        text: "你预计，医院用 AI 帮医生看病后，误诊、漏诊的情况会怎样变化？",
         options: change,
       },
       {
         id: "job_search",
-        text: "对于正在找工作或准备换工作的人，找到工作的难易程度会怎样变化？",
+        text: "对于普通人，获得准确诊断的难易程度会怎样变化？",
         options: [
           "明显更难",
           "有所变难",
@@ -81,11 +81,11 @@ export const QUESTIONNAIRES: Record<
       },
       confidence,
     ],
-    statement: "未来几年，AI的发展总体上会让普通人可以获得的工作机会增加。",
+    statement: "医院普遍用 AI 帮医生看病后，普通人看病被误诊、漏诊的情况会明显减少。",
   },
   fertility: {
     scenario:
-      "设想政府向有孩子的家庭发放育儿补贴：每个孩子从出生起每月领取2000元，直到18岁。一些家庭正在考虑要不要孩子，也有一些家庭正在考虑要不要再生一个。",
+      "假如政府向有孩子的家庭发放育儿补贴：每个孩子从出生起每月领 800 元，一直领到 18 岁。一些家庭正在考虑要不要孩子，也有一些家庭正在考虑要不要再生一个。",
     questions: [
       {
         id: "fertility_effect",
@@ -117,7 +117,7 @@ export const QUESTIONNAIRES: Record<
       confidence,
     ],
     statement:
-      "如果每个孩子从出生起每月领取2000元育儿补贴、直到18岁，中国的生育率会因此明显提升。",
+      "如果每个孩子从出生起每月领 800 元育儿补贴、直到 18 岁，中国的生育率会明显提升。",
   },
 };
 
@@ -126,8 +126,8 @@ export function coreQuestion(topic: TopicKey): Question {
     id: "core_outcome",
     text:
       topic === "ai"
-        ? "未来几年，你认为 AI 的发展总体上会让普通人可以获得的工作机会增加吗？"
-        : "如果每个孩子从出生起每月领取 2000 元育儿补贴、直到 18 岁，你认为中国的生育率会因此明显提升吗？",
+        ? "如果以后医院普遍用 AI 帮医生看病，你认为普通人看病被误诊、漏诊的情况会明显减少吗？"
+        : "如果每个孩子从出生起每月领 800 元育儿补贴、直到 18 岁，你认为中国的生育率会明显提升吗？",
     options: ["完全不会", "应该不会", "说不准", "应该会", "一定会"],
     context: "scenario",
   };

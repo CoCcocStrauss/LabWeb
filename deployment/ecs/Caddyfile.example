@@ -1,0 +1,5 @@
+# Set only a dedicated QA hostname after its DNS points to the premium EIP.
+hkqa.myexperiment.cn {
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:3000
+}

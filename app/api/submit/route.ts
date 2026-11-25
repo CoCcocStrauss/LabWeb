@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   try {
     const { data, error } = await getSupabaseAdmin().rpc(
       latest
-        ? "submit_experiment_v6"
+        ? "submit_experiment_v7"
         : v4
           ? "submit_experiment_v5"
           : legacy

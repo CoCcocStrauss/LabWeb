@@ -1,9 +1,20 @@
 "use client";
-import { useRef, useState, type ReactNode } from "react";
-import { RULES, type RulesResponse } from "../lib/readingProtocol";
-import { SpanningMasonryFeed } from "../../../components/SpanningMasonryFeed";
+import { useEffect, useState, type ReactNode } from "react";
+import {
+  TUTORIAL_STEPS,
+  enterTutorialStep,
+  completeTutorialStep,
+  type RulesResponse,
+} from "../lib/readingProtocol";
 import { CompactPostCard } from "../../../components/CompactPostCard";
-import { TUTORIAL_POSTS } from "../../../data/tutorial";
+import { TUTORIAL_POSTS } from "../data/tutorial";
+
+type DemoState = {
+  paused: boolean;
+  expanded: boolean;
+  shared: boolean;
+  liked: boolean;
+};
 export function TutorialPage({
   response,
   onChange,
@@ -17,118 +28,116 @@ export function TutorialPage({
   canContinue?: boolean;
   saveStatus?: ReactNode;
 }) {
-  const [liked, setLiked] = useState<Record<string, boolean>>({}),
-    [shared, setShared] = useState<Record<string, boolean>>({}),
-    [opened, setOpened] = useState<string[]>([]);
-  const scroller = useRef<HTMLElement>(null),
-    anchor = useRef<{ id: string; offset: number } | null>(null);
-  const toggle = (id: string, expanded: boolean) => {
-    const root = scroller.current,
-      card = root?.querySelector(`[data-post-id="${id}"]`);
-    if (root && card)
-      anchor.current = {
-        id,
-        offset: Math.max(
-          0,
-          card.getBoundingClientRect().top - root.getBoundingClientRect().top,
-        ),
-      };
-    setOpened((v) => (expanded ? [...v, id] : v.filter((item) => item !== id)));
+  const stepIndex = Math.max(
+    0,
+    TUTORIAL_STEPS.findIndex((s) => s.id === response.activeStep),
+  );
+  const step = TUTORIAL_STEPS[stepIndex];
+  const [phase, setPhase] = useState(0);
+  const [manual, setManual] = useState<Record<string, DemoState>>({});
+  const paused = manual[step.id]?.paused ?? false;
+  useEffect(() => {
+    setPhase(0);
+    if (
+      stepIndex === 2 ||
+      paused ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    )
+      return;
+    const timer = setInterval(() => setPhase((p) => (p + 1) % 4), 625);
+    return () => clearInterval(timer);
+  }, [stepIndex, paused]);
+  const demo = {
+    expanded: stepIndex === 0 && (phase === 1 || phase === 2),
+    shared: stepIndex === 1 && (phase === 1 || phase === 2),
+    liked: false,
+    ...(paused ? manual[step.id] : {}),
   };
-  const demos = TUTORIAL_POSTS.map((p) => ({
-    ...p,
-    ...response.demoLabelSelections?.[String(p.id)],
-  }));
-  const actions = (id: string) => ({
-    onLike: () => setLiked((v) => ({ ...v, [id]: !v[id] })),
-    onShare: () => setShared((v) => ({ ...v, [id]: !v[id] })),
-  });
+  const interact = (change: Partial<DemoState>) =>
+    setManual((current) => ({
+      ...current,
+      [step.id]: { ...demo, ...change, paused: true },
+    }));
+  const post = {
+    ...TUTORIAL_POSTS[0],
+    ...response.demoLabelSelections?.[String(TUTORIAL_POSTS[0].id)],
+  };
+  const next = () => {
+    const time = Date.now();
+    let updated = completeTutorialStep(response, step.id, time);
+    if (stepIndex < 2)
+      updated = enterTutorialStep(updated, TUTORIAL_STEPS[stepIndex + 1].id, time);
+    onChange(updated);
+    if (stepIndex === 2) onStart();
+  };
   return (
     <div className="study-shell study-screen tutorial-screen">
-      <main ref={scroller} className="study-scroll study-pad py-5">
-        <h1 className="study-title">任务说明</h1>
-        <p className="study-copy mt-3">
-          接下来你会看到一组关于刚才话题的讨论帖子，请认真阅读并比较不同观点，选出最认同的内容转发。
+      <main className="study-scroll study-pad py-5" key={step.id}>
+        <p className="study-meta" aria-label="步骤进度">
+          {stepIndex + 1} / 3
         </p>
-        <p className="study-copy mt-3">
-          浏览结束后需要简要说明你的想法，
-          <strong>认真阅读并清晰说明理由的参与者，将获得额外红包奖励。</strong>
-        </p>
-        <div className="demo-grid-wrap mt-4">
-          <SpanningMasonryFeed
-            onLayout={() => {
-              const root = scroller.current,
-                saved = anchor.current;
-              if (!root || !saved) return;
-              const card = root.querySelector(`[data-post-id="${saved.id}"]`);
-              if (card)
-                root.scrollTop +=
-                  card.getBoundingClientRect().top -
-                  root.getBoundingClientRect().top -
-                  saved.offset;
-              anchor.current = null;
-            }}
-            items={demos.map((p) => ({
-              id: String(p.id),
-              expanded: opened.includes(String(p.id)),
-              node: (
-                <CompactPostCard
-                  post={p}
-                  liked={!!liked[p.id]}
-                  shared={!!shared[p.id]}
-                  shareDisabled={false}
-                  expanded={opened.includes(String(p.id))}
-                  onOpen={() => toggle(String(p.id), true)}
-                  onCollapse={() => toggle(String(p.id), false)}
-                  {...actions(String(p.id))}
-                />
-              ),
-            }))}
-          />
-        </div>
-        <p className="study-copy tutorial-check-intro mt-6">
-          请逐条勾选确认你已明白规则，全部勾选后即可继续。
-        </p>
-        <div className="mt-4 space-y-3">
-          {RULES.map(([id, text], i) => (
-            <label
-              key={id}
-              className="study-control flex cursor-pointer items-start gap-3 rounded-lg border border-neutral-200 p-3"
-            >
-              <input
-                type="checkbox"
-                checked={response.items[i].checked}
-                className="mt-1 h-5 w-5 shrink-0 accent-[#0084ff]"
-                onChange={(e) =>
-                  onChange({
-                    ...response,
-                    items: response.items.map((item) =>
-                      item.id === id
-                        ? {
-                            ...item,
-                            checked: e.target.checked,
-                            changedAt: Date.now(),
-                          }
-                        : item,
-                    ),
-                  })
-                }
-              />
-              <span>{text}</span>
-            </label>
-          ))}
-        </div>
+        <h1 className="study-title mt-3">{step.title}</h1>
+        <p className="study-copy mt-4">{step.text}</p>
+        {stepIndex < 2 ? (
+          <div
+            className={`tutorial-demo mt-5 max-w-md ${!paused && (phase === 0 || phase === 2) ? "is-tapping" : ""}`}
+            data-demo-step={step.id}
+            data-manual={paused}
+          >
+            <span
+              aria-hidden="true"
+              className={`tutorial-tap ${stepIndex === 0 ? "at-content" : "at-share"}`}
+            />
+            <CompactPostCard
+              post={post}
+              liked={demo.liked}
+              shared={demo.shared}
+              shareDisabled={false}
+              expanded={demo.expanded}
+              onOpen={() => interact({ expanded: true })}
+              onCollapse={() => interact({ expanded: false })}
+              onLike={() => interact({ liked: !demo.liked })}
+              onShare={() => interact({ shared: !demo.shared })}
+            />
+          </div>
+        ) : (
+          <>
+            <p className="study-copy mt-4">
+              认真阅读并清晰说明理由的参与者，将获得额外红包奖励。
+            </p>
+            <p className="tutorial-focus-note study-copy mt-5">
+              请勿切屏或离开页面，频繁离开可能导致无法通过审核。
+            </p>
+            <div className="tutorial-status-preview mt-5" aria-label="阅读页顶部状态栏示意">
+              <span>剩余时间 <strong>01:30</strong></span>
+              <span>已转发数量 <strong>2 条</strong></span>
+            </div>
+          </>
+        )}
       </main>
       <footer className="study-footer study-pad border-t border-neutral-200">
         {saveStatus}
-        <button
-          type="button"
-          disabled={!canContinue || !response.items.every((i) => i.checked)}
-          onClick={onStart}
-          className="study-control w-full rounded-full bg-[#0084ff] px-4 py-3 text-white disabled:bg-neutral-200 disabled:text-neutral-400"
-        >
-          下一步
-        </button>
+        <div className="flex items-center gap-4">
+          {stepIndex > 0 ? (
+            <button
+              type="button"
+              className="study-control shrink-0 py-3 text-[#0875ca]"
+              onClick={() =>
+                onChange(enterTutorialStep(response, TUTORIAL_STEPS[stepIndex - 1].id))
+              }
+            >
+              上一步
+            </button>
+          ) : null}
+          <button
+            type="button"
+            disabled={!canContinue}
+            onClick={next}
+            className="study-control w-full rounded-full bg-[#0084ff] px-4 py-3 text-white disabled:bg-neutral-200 disabled:text-neutral-400"
+          >
+            下一步
+          </button>
+        </div>
       </footer>
     </div>
   );

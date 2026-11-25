@@ -10,7 +10,7 @@ import {
   useState,
   type MouseEvent,
 } from "react";
-import type { TopicKey } from "../../../data/topics";
+import { TOPIC_LABELS, type TopicKey } from "../../../data/topics";
 import type { ActionLog, EndReason } from "../../../lib/dataSubmit";
 import {
   ReadingTracker,
@@ -74,7 +74,11 @@ export function ExperimentPage({
     surface: "preview" | "detail";
   } | null>(null);
   const [borderAlert, setBorderAlert] = useState(false);
+  const [returnNotice, setReturnNotice] = useState(false);
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ended = useRef(false),
+    pageActive = useRef(true),
+    observationGeneration = useRef(0),
     scroller = useRef<HTMLElement | null>(null),
     elements = useRef(new Map<string, HTMLElement>()),
     observer = useRef<IntersectionObserver | null>(null),
@@ -112,11 +116,52 @@ export function ExperimentPage({
   const checkpoint = useCallback(() => {
     if (!ended.current) onSnapshot(capture());
   }, [capture, onSnapshot]);
+  const syncDetailVisibility = useCallback(() => {
+    if (!inline) return;
+    const root = scroller.current,
+      time = now(),
+      active =
+        !!root &&
+        pageActive.current &&
+        !ended.current &&
+        document.visibilityState === "visible" &&
+        Date.now() < initial.deadline,
+      bounds = root?.getBoundingClientRect(),
+      ids = spanning
+        ? expandedRef.current
+        : openedRef.current
+          ? [openedRef.current]
+          : [];
+    for (const id of ids) {
+      const text = elements.current
+          .get(id)
+          ?.querySelector<HTMLElement>(".feed-fulltext"),
+        rect = text?.getBoundingClientRect();
+      // Count only the full text intersecting the scroll viewport, not an
+      // offscreen expanded card or its hidden sizing copy.
+      const visible =
+        active &&
+        bounds &&
+        rect &&
+        rect.width > 0 &&
+        rect.height > 0 &&
+        Math.min(rect.right, bounds.right, window.innerWidth) >
+          Math.max(rect.left, bounds.left, 0) &&
+        Math.min(rect.bottom, bounds.bottom, window.innerHeight) >
+          Math.max(rect.top, bounds.top, 0);
+      if (visible) tracker.resumeDetail(time, id);
+      else tracker.stopDetail(time, id);
+    }
+  }, [initial.deadline, inline, spanning, now, tracker]);
   const observe = useCallback(() => {
     observer.current?.disconnect();
     detailObserver.current?.disconnect();
+    const generation = ++observationGeneration.current;
+    syncDetailVisibility();
     if (
       !scroller.current ||
+      !pageActive.current ||
+      ended.current ||
       (openedRef.current && !inline) ||
       document.visibilityState === "hidden" ||
       Date.now() >= initial.deadline
@@ -125,6 +170,10 @@ export function ExperimentPage({
     observer.current = new IntersectionObserver(
       (entries) => {
         if (
+          generation !== observationGeneration.current ||
+          !pageActive.current ||
+          ended.current ||
+          Date.now() >= initial.deadline ||
           (openedRef.current && !inline) ||
           document.visibilityState === "hidden" ||
           Date.now() < stableAt.current
@@ -159,33 +208,28 @@ export function ExperimentPage({
         : [];
     if (inline && expandedIds.length) {
       detailObserver.current = new IntersectionObserver(
-        (entries) => {
-          if (document.visibilityState === "hidden") return;
-          for (const e of entries) {
-            const id = (
-              e.target.closest("../../../components/.feed-card") as HTMLElement
-            ).dataset.postId!;
-            if (
-              !(spanning
-                ? expandedRef.current.includes(id)
-                : openedRef.current === id)
-            )
-              continue;
-            if (e.isIntersecting && e.intersectionRect.height > 0)
-              tracker.resumeDetail(now(), id);
-            else tracker.stopDetail(now(), id);
-          }
+        () => {
+          if (generation === observationGeneration.current)
+            syncDetailVisibility();
         },
         { root: scroller.current, threshold: 0 },
       );
       for (const id of expandedIds) {
         const text = elements.current
           .get(id)
-          ?.querySelector("../../../components/.feed-fulltext");
+          ?.querySelector(".feed-fulltext");
         if (text) detailObserver.current.observe(text);
       }
     }
-  }, [initial.deadline, inline, spanning, now, scrollY, tracker]);
+  }, [
+    initial.deadline,
+    inline,
+    spanning,
+    now,
+    scrollY,
+    tracker,
+    syncDetailVisibility,
+  ]);
   const register = useCallback((id: string) => {
     if (!refs.current.has(id))
       refs.current.set(id, (el) => {
@@ -278,6 +322,7 @@ export function ExperimentPage({
       if (!layoutReady.current) return;
       tracker.close(now());
       tracker.suspend(now(), scrollY());
+      tracker.show(now());
       observer.current?.disconnect();
       detailObserver.current?.disconnect();
       const reading = capture();
@@ -312,6 +357,13 @@ export function ExperimentPage({
   useEffect(() => {
     if (!inline && openedRef.current && document.visibilityState === "visible")
       tracker.resumeDetail(now());
+    const returned = () => {
+      const didReturn = tracker.show(now());
+      if (!didReturn || ended.current || Date.now() >= initial.deadline) return;
+      setReturnNotice(true);
+      if (noticeTimer.current) clearTimeout(noticeTimer.current);
+      noticeTimer.current = setTimeout(() => setReturnNotice(false), 3000);
+    };
     const alert = (kind: ReadingAlert["kind"], remainingMs: number) => {
       if (
         tracker.metrics.alerts.some((a) => a.kind === kind) ||
@@ -332,6 +384,7 @@ export function ExperimentPage({
     };
     const tick = () => {
       if (ended.current) return;
+      syncDetailVisibility();
       const left = remainingReadingMs(initial);
       setRemaining(left);
       if (left <= 0) {
@@ -346,37 +399,65 @@ export function ExperimentPage({
     };
     const visibility = () => {
       if (document.visibilityState === "hidden") {
-        tracker.suspend(now(), scrollY());
+        tracker.hide(now(), scrollY());
         observer.current?.disconnect();
         detailObserver.current?.disconnect();
         checkpoint();
       } else {
+        returned();
         if (openedRef.current && !inline) tracker.resumeDetail(now());
         else observe();
         tick();
+        checkpoint();
       }
     };
     const pagehide = () => {
+      pageActive.current = false;
+      observationGeneration.current++;
       tracker.suspend(now(), scrollY());
+      observer.current?.disconnect();
+      detailObserver.current?.disconnect();
       checkpoint();
+    };
+    const pageshow = () => {
+      pageActive.current = true;
+      if (document.visibilityState === "visible") returned();
+      observe();
+      tick();
     };
     const onScroll = () => {
       maxScroll.current = Math.max(maxScroll.current, scrollY());
+      syncDetailVisibility();
     };
+    if (document.visibilityState === "hidden") tracker.hide(now(), scrollY());
+    else returned();
     tick();
     const timer = setInterval(tick, 200);
     document.addEventListener("visibilitychange", visibility);
     window.addEventListener("pagehide", pagehide);
+    window.addEventListener("pageshow", pageshow);
     scroller.current?.addEventListener("scroll", onScroll, { passive: true });
     const el = scroller.current;
     return () => {
       clearInterval(timer);
+      if (noticeTimer.current) clearTimeout(noticeTimer.current);
       document.removeEventListener("visibilitychange", visibility);
       window.removeEventListener("pagehide", pagehide);
+      window.removeEventListener("pageshow", pageshow);
       el?.removeEventListener("scroll", onScroll);
       tracker.suspend(now(), scrollY());
     };
-  }, [checkpoint, finalize, initial, inline, now, observe, scrollY, tracker]);
+  }, [
+    checkpoint,
+    finalize,
+    initial,
+    inline,
+    now,
+    observe,
+    scrollY,
+    tracker,
+    syncDetailVisibility,
+  ]);
   const canAct = () => {
     if (ended.current) return false;
     if (Date.now() >= initial.deadline) {
@@ -527,7 +608,13 @@ export function ExperimentPage({
         remainingMs={remaining}
         shares={shares}
         title={materials.topic}
+        topicLabel={TOPIC_LABELS[topic]}
       />
+      {returnNotice ? (
+        <p className="reading-return-notice" role="status">
+          检测到你刚才离开了页面，请保持专注，以免影响审核。
+        </p>
+      ) : null}
       <div className="reading-stage">
         <main
           ref={scroller}
@@ -666,8 +753,7 @@ export function ExperimentPage({
             </button>
           ) : (
             <p className="study-meta">
-              已转发 {shares}{" "}
-              条，请继续浏览与比较，稍后将出现「完成浏览」按钮（期间可随时更改）
+              已转发 {shares} 条，请继续浏览
             </p>
           )}
         </footer>

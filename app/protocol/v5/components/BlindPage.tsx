@@ -70,7 +70,7 @@ export function BlindPage({
       </header>
       <main className="study-scroll study-pad py-5" key={a.postId}>
         <article className="rounded-xl border p-4">
-          <PostAuthor post={item} compact />
+          <PostAuthor post={item} compact hideCertification />
           <p className="study-copy mt-4 whitespace-pre-wrap">{item.content}</p>
         </article>
         {(

@@ -103,7 +103,15 @@ export function ComprehensionPage({
           role="status"
           className={`study-copy mt-5 ${attempt.correct ? "text-green-700" : "text-red-700"}`}
         >
-          {attempt.correct ? "回答正确" : "回答错误"}
+          {attempt.correct ? "回答正确" : "回答错误"}，
+          {Math.ceil(
+            Math.max(
+              0,
+              (attempt.correct ? 3000 : 5000) -
+                (attempt.feedbackVisibleMs ?? 0),
+            ) / 1000,
+          )}
+          秒后进入正式作答
         </p>
       ) : null}
     </main>

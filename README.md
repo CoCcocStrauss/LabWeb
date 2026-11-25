@@ -1,5 +1,9 @@
 # LabWeb
 
+新版语料本地已实现（2026-11-25）：两议题各48条，育儿补贴每月800元、AI帮医生看病；会话版本为 `2026-11-25-v5`，使用独立v7保存接口。上线前须执行 [增量SQL](supabase/release-materials-20261125.sql)，再运行 [只读核验](supabase/check-materials-20261125.sql)。完整实现与验收见 [新版语料记录](docs/materials-2026-11-25.md)。
+
+本地待发布（2026-11-25）：三步动效教程、防切屏轻提示、全文可见区间修复及网络加载兜底已完成验收，按用户要求暂不上线；细则与核验SQL见 [实现记录](docs/blinded-protocol-2026-11-24.md)。
+
 2026-11-25：150秒阅读、可取消转发与四帖盲评已上线，正式站完整流程、数据库与私有录音保存验收通过；48条QA及发布证据见 [发布记录](docs/release-blinded-2026-11-25.md)。
 
 2026-11-23：共用理由库、全部理由比较与实际互动内容比较已完成本机实现和隔离验证；使用独立新版本，旧会话保留。用户已执行增量SQL，新版已由GitHub main → Netlify正式发布并通过真实保存验收；见 [发布记录](docs/release-reasons-2026-11-23.md) 和 [实现验收](docs/reasons-protocol-2026-11-23.md)。
@@ -85,3 +89,7 @@ GitHub 仓库为 `https://github.com/CoCcocStrauss/LabWeb`，所属账号为 `Co
 
 Netlify 发布状态变为 Published 后，再测试阅读、转发、数据提交，并核对后台完成码。
 `package.json` 中的 Netlify CLI 命令仅为本地手动部署的备用方式，GitHub 自动部署不使用它们。
+
+### 阿里云香港独立测试部署（尚未开通）
+
+部署配置与验收步骤见 [deployment/ecs/README.md](deployment/ecs/README.md)，已核对的 ECS、精品 EIP 报价及本地验证结果见 [费用记录](deployment/ecs/quote-2026-11-25.md)。执行 `node scripts/package-ecs.cjs` 可生成不含密钥和原始研究文档的源码包；在 Linux 服务器重新安装依赖并构建。只有设置 `LABWEB_DEPLOY_TARGET=ecs` 才生成 standalone，默认 Netlify 构建保持原样。当前未创建收费资源或修改正式域名，本次部署准备无需 SQL。

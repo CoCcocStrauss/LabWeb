@@ -2,6 +2,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { PageLoading as LoadingScreen } from "../../components/PageLoading";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ErrorPage } from "../../components/ErrorPage";
@@ -14,17 +15,17 @@ import { createSession, loadSession, saveSession, storageKey, LegacySessionError
 import { createRecognition, newExplanation, newReasons } from "../../lib/posttest";
 import { getMaterialsForTopic } from "../../lib/materialsRegistry";
 
-const TutorialPage = dynamic(() => import("./components/TutorialPage").then(m => m.TutorialPage), { ssr: false });
-const ExperimentPage = dynamic(() => import("./components/ExperimentPage").then(m => m.ExperimentPage), { ssr: false });
-const EndPage = dynamic(() => import("./components/EndPage").then(m => m.EndPage), { ssr: false });
-const CompletePage = dynamic(() => import("./components/EndPage").then(m => m.CompletePage), { ssr: false });
-const QuestionnairePage = dynamic(() => import("./components/QuestionnairePage").then(m => m.QuestionnairePage), { ssr: false });
-const ComprehensionPage = dynamic(() => import("./components/ComprehensionPage").then(m => m.ComprehensionPage), { ssr: false });
-const ReadyPage = dynamic(() => import("./components/ReadyPage").then(m => m.ReadyPage), { ssr: false });
-const RecognitionPage = dynamic(() => import("../../components/RecognitionPage").then(m => m.RecognitionPage), { ssr: false });
-const ExplanationPage = dynamic(() => import("./components/ExplanationPage").then(m => m.ExplanationPage), { ssr: false });
-const ReasonsPage = dynamic(() => import("../../components/ReasonsPage").then(m => m.ReasonsPage), { ssr: false });
-const LegacyHome = dynamic(() => import("../../legacy/LegacyFlow"), { ssr: false });
+const TutorialPage = dynamic(() => import("./components/TutorialPage").then(m => m.TutorialPage), { ssr: false, loading: LoadingScreen });
+const ExperimentPage = dynamic(() => import("./components/ExperimentPage").then(m => m.ExperimentPage), { ssr: false, loading: LoadingScreen });
+const EndPage = dynamic(() => import("./components/EndPage").then(m => m.EndPage), { ssr: false, loading: LoadingScreen });
+const CompletePage = dynamic(() => import("./components/EndPage").then(m => m.CompletePage), { ssr: false, loading: LoadingScreen });
+const QuestionnairePage = dynamic(() => import("./components/QuestionnairePage").then(m => m.QuestionnairePage), { ssr: false, loading: LoadingScreen });
+const ComprehensionPage = dynamic(() => import("./components/ComprehensionPage").then(m => m.ComprehensionPage), { ssr: false, loading: LoadingScreen });
+const ReadyPage = dynamic(() => import("./components/ReadyPage").then(m => m.ReadyPage), { ssr: false, loading: LoadingScreen });
+const RecognitionPage = dynamic(() => import("../../components/RecognitionPage").then(m => m.RecognitionPage), { ssr: false, loading: LoadingScreen });
+const ExplanationPage = dynamic(() => import("./components/ExplanationPage").then(m => m.ExplanationPage), { ssr: false, loading: LoadingScreen });
+const ReasonsPage = dynamic(() => import("../../components/ReasonsPage").then(m => m.ReasonsPage), { ssr: false, loading: LoadingScreen });
+const LegacyHome = dynamic(() => import("../../legacy/LegacyFlow"), { ssr: false, loading: LoadingScreen });
 
 function sanitizeReturnUrl(raw: string | null): string | null {
   if (!raw) return null;
@@ -43,9 +44,6 @@ function parseParams(searchParams: URLSearchParams) {
   return { uid, ...assigned, returnUrl: sanitizeReturnUrl(searchParams.get("returnUrl")), manual };
 }
 
-function LoadingScreen() {
-  return <div className="study-shell study-page flex items-center justify-center text-neutral-500">加载中…</div>;
-}
 
 function SessionFlow({ params }: { params: NonNullable<ReturnType<typeof parseParams>> }) {
   const [session, setSession] = useState<ExperimentSession | null>(null);

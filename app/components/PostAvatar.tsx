@@ -10,6 +10,7 @@ export type PostAvatarProps = {
   displayName: string;
   avatarFile?: string;
   postId: string | number;
+  hideCertification?: boolean;
 };
 
 export function PostAvatar({
@@ -17,6 +18,7 @@ export function PostAvatar({
   displayName,
   avatarFile,
   postId,
+  hideCertification = false,
 }: PostAvatarProps) {
   const [imgFailed, setImgFailed] = useState(false);
 
@@ -29,7 +31,7 @@ export function PostAvatar({
 
   // 认证用户加细金色描边，非认证无描边
   const ringClass =
-    sourceLevel === "high"
+    sourceLevel === "high" && !hideCertification
       ? "ring-[1.5px] ring-amber-400 ring-offset-[2px]"
       : "";
 

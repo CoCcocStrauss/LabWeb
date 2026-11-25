@@ -182,4 +182,50 @@ test("理由新版拒绝前测理由覆盖、缺少新模块与未提前保存�
  }finally{await db.close();}
 });
 
-test('盲评增量迁移保留旧16条数据，24条与新版完成字段、取消转发可存储',async()=>{const db=await database();try{const old=fixture('ai',16,'test_old16_before_blind');await pretest(db,old);await submit(db,old);const before=(await db.query('select * from experiments where uid=$1',[old.uid])).rows[0];await db.exec(readFileSync(`${root}/supabase/release-blinded-20261124.sql`,'utf8'));assert.deepEqual((await db.query('select * from experiments where uid=$1',[old.uid])).rows[0],before);const {blindFixture}=require('./test-blinded-support.cjs'),f=blindFixture('fertility',24,'test_db_blind24',4);await db.query('select save_experiment_pretest_v6($1,$2,$3,$4,$5,$6::jsonb,$7,$8::jsonb)',[f.uid,f.sessionId,f.conditionN,f.topicKey,f.questionnaireVersion,JSON.stringify(f.pretest),secretHash(f),JSON.stringify(f.microphonePermission)]);await db.query('select save_experiment_explanation_v6($1,$2,$3,$4::jsonb)',[f.uid,f.sessionId,secretHash(f),JSON.stringify(f.explanation)]);const {sessionSecret,...payload}=f,args=[JSON.stringify(payload),createHash('sha256').update(canonicalJson(payload)).digest('hex'),'ABCDEF',secretHash(f)];await db.query('select submit_experiment_v6($1::jsonb,$2,$3,$4)',args);await db.query('select submit_experiment_v6($1::jsonb,$2,$3,$4)',args);const saved=(await db.query('select * from experiment_sessions where uid=$1',[f.uid])).rows[0];assert.deepEqual(saved.blinded_post_evaluations,f.blindedPostEvaluations);assert.ok(saved.completed_at);const exp=(await db.query('select * from experiments where uid=$1',[f.uid])).rows[0];assert.equal(exp.condition_n,24);assert.equal(exp.final_share_count,4);assert.equal(exp.met_share_goal,true);}finally{await db.close();}});
+test('盲评增量迁移保留旧16条数据，24条与新版完成字段、取消转发可存储',async()=>{const db=await database();try{const old=fixture('ai',16,'test_old16_before_blind');await pretest(db,old);await submit(db,old);const before=(await db.query('select * from experiments where uid=$1',[old.uid])).rows[0];await db.exec(readFileSync(`${root}/supabase/release-blinded-20261124.sql`,'utf8'));assert.deepEqual((await db.query('select * from experiments where uid=$1',[old.uid])).rows[0],before);const {blindFixture}=require('./test-blinded-support.cjs'),f=blindFixture('fertility',24,'test_db_blind24',4);await db.query('select save_experiment_pretest_v7($1,$2,$3,$4,$5,$6::jsonb,$7,$8::jsonb)',[f.uid,f.sessionId,f.conditionN,f.topicKey,f.questionnaireVersion,JSON.stringify(f.pretest),secretHash(f),JSON.stringify(f.microphonePermission)]);await db.query('select save_experiment_explanation_v7($1,$2,$3,$4::jsonb)',[f.uid,f.sessionId,secretHash(f),JSON.stringify(f.explanation)]);const {sessionSecret,...payload}=f,args=[JSON.stringify(payload),createHash('sha256').update(canonicalJson(payload)).digest('hex'),'ABCDEF',secretHash(f)];await db.query('select submit_experiment_v7($1::jsonb,$2,$3,$4)',args);await db.query('select submit_experiment_v7($1::jsonb,$2,$3,$4)',args);const saved=(await db.query('select * from experiment_sessions where uid=$1',[f.uid])).rows[0];assert.deepEqual(saved.blinded_post_evaluations,f.blindedPostEvaluations);assert.ok(saved.completed_at);const exp=(await db.query('select * from experiments where uid=$1',[f.uid])).rows[0];assert.equal(exp.condition_n,24);assert.equal(exp.final_share_count,4);assert.equal(exp.met_share_goal,true);}finally{await db.close();}});
+
+test('全文可见分段JSON与短卡曝光各自入库，重试不重复累计',async()=>{
+ const db=await database();try{
+  const {trackedBlindFixture}=require('./test-blinded-support.cjs'),f=trackedBlindFixture('fertility',48,'test_db_detail_intervals');
+  await db.query('select save_experiment_pretest_v7($1,$2,$3,$4,$5,$6::jsonb,$7,$8::jsonb)',[f.uid,f.sessionId,f.conditionN,f.topicKey,f.questionnaireVersion,JSON.stringify(f.pretest),secretHash(f),JSON.stringify(f.microphonePermission)]);
+  await db.query('select save_experiment_explanation_v7($1,$2,$3,$4::jsonb)',[f.uid,f.sessionId,secretHash(f),JSON.stringify(f.explanation)]);
+  const {sessionSecret,...payload}=f,args=[JSON.stringify(payload),createHash('sha256').update(canonicalJson(payload)).digest('hex'),'ABCDEF',secretHash(f)];
+  await db.query('select submit_experiment_v7($1::jsonb,$2,$3,$4)',args);await db.query('select submit_experiment_v7($1::jsonb,$2,$3,$4)',args);
+  const saved=(await db.query('select reading_metrics from experiment_sessions where uid=$1',[f.uid])).rows[0];
+  assert.deepEqual(saved.reading_metrics.detailIntervals,f.readingMetrics.detailIntervals);
+  assert.equal(saved.reading_metrics.detailIntervals.reduce((sum,i)=>sum+i.durationMs,0),2500);
+  const exposure=(await db.query('select total_visible_ms from post_visibility where uid=$1 and post_id=$2',[f.uid,f.postOrder[0]])).rows;
+  assert.equal(exposure.length,1);assert.equal(exposure[0].total_visible_ms,1000);
+ }finally{await db.close();}
+});
+
+test('三步规则与切屏汇总沿用JSONB，核验SQL只读且不改写旧数据',async()=>{
+ const db=await database();try{
+  const {trackedBlindFixture}=require('./test-blinded-support.cjs'),f=trackedBlindFixture('ai',24,'test_tutorial_20261125_24_01');
+  Object.assign(f.readingMetrics,{attentionVersion:'reading-visibility-v1',hiddenCount:1,totalHiddenMs:3000,hiddenAtMs:null});
+  await db.query('select save_experiment_pretest_v7($1,$2,$3,$4,$5,$6::jsonb,$7,$8::jsonb)',[f.uid,f.sessionId,f.conditionN,f.topicKey,f.questionnaireVersion,JSON.stringify(f.pretest),secretHash(f),JSON.stringify(f.microphonePermission)]);
+  await db.query('select save_experiment_explanation_v7($1,$2,$3,$4::jsonb)',[f.uid,f.sessionId,secretHash(f),JSON.stringify(f.explanation)]);
+  const {sessionSecret,...payload}=f;await db.query('select submit_experiment_v7($1::jsonb,$2,$3,$4)',[JSON.stringify(payload),createHash('sha256').update(canonicalJson(payload)).digest('hex'),'ABCDEF',secretHash(f)]);
+  const before=(await db.query('select rules,reading_metrics from experiment_sessions where uid=$1',[f.uid])).rows[0];
+  assert.deepEqual(before.rules,f.rules);assert.equal(before.rules.items.length,3);assert.equal(before.reading_metrics.totalHiddenMs,3000);
+  await db.exec(readFileSync(`${root}/supabase/check-tutorial-attention-20261125.sql`,'utf8'));
+  assert.deepEqual((await db.query('select rules,reading_metrics from experiment_sessions where uid=$1',[f.uid])).rows[0],before);
+ }finally{await db.close();}
+});
+
+test('新版语料增量SQL可重跑、旧v6数据不变、v7严格隔离版本并完整入库',async()=>{
+ const db=await database();try{
+  const {blindFixture}=require('./test-blinded-support.cjs'),f=blindFixture('ai',24,'test_materials_v5_sql'),old={...f,sessionId:require('node:crypto').randomUUID(),uid:'test_materials_old_v6_sql',questionnaireVersion:'2026-11-24-v4'};
+  const args=x=>[x.uid,x.sessionId,x.conditionN,x.topicKey,x.questionnaireVersion,JSON.stringify(x.pretest),secretHash(x),JSON.stringify(x.microphonePermission)];
+  await db.query('select save_experiment_pretest_v6($1,$2,$3,$4,$5,$6::jsonb,$7,$8::jsonb)',args(old));
+  const before=(await db.query('select * from experiment_sessions where uid=$1',[old.uid])).rows[0];
+  const sql=readFileSync(`${root}/supabase/release-materials-20261125.sql`,'utf8');await db.exec(sql);await db.exec(sql);
+  assert.deepEqual((await db.query('select * from experiment_sessions where uid=$1',[old.uid])).rows[0],before);
+  await assert.rejects(db.query('select save_experiment_pretest_v7($1,$2,$3,$4,$5,$6::jsonb,$7,$8::jsonb)',args(old)),/Invalid session/);
+  await assert.rejects(db.query('select save_experiment_pretest_v6($1,$2,$3,$4,$5,$6::jsonb,$7,$8::jsonb)',args(f)),/Invalid session/);
+  await db.query('select save_experiment_pretest_v7($1,$2,$3,$4,$5,$6::jsonb,$7,$8::jsonb)',args(f));
+  await db.query('select save_experiment_explanation_v7($1,$2,$3,$4::jsonb)',[f.uid,f.sessionId,secretHash(f),JSON.stringify(f.explanation)]);
+  const {sessionSecret,...payload}=f;await db.query('select submit_experiment_v7($1::jsonb,$2,$3,$4)',[JSON.stringify(payload),createHash('sha256').update(canonicalJson(payload)).digest('hex'),'ABCDEF',secretHash(f)]);
+  const s=(await db.query('select * from experiment_sessions where uid=$1',[f.uid])).rows[0];assert.equal(s.questionnaire_version,'2026-11-25-v5');assert.equal(s.topic_key,'ai');assert.deepEqual(s.reading_metrics,f.readingMetrics);assert.deepEqual(s.blinded_post_evaluations,f.blindedPostEvaluations);assert.ok(s.completed_at);
+ }finally{await db.close();}
+});

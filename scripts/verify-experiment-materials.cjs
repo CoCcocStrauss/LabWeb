@@ -19,7 +19,7 @@ function load(relative) {
   return module.exports;
 }
 const { TOPIC_KEYS, isTopicKey } = load("app/data/topics.ts");
-const { assignCondition } = load("app/lib/conditionAssignment.ts");
+const { assignCondition } = load("app/protocol/v5/lib/conditionAssignment.ts");
 const { blockRandomize } = load("app/lib/blockRandomize.ts");
 const { enrichPostsForDisplay } = load("app/lib/enrichPosts.ts");
 const { validDisplayedLabel } = load("app/lib/labelSelection.ts");
@@ -30,7 +30,7 @@ for (let i = 0; i < 10000; i++) {
   const uid = `material-check-${i}`;
   const assigned = assignCondition(uid);
   assert.deepEqual(assigned, assignCondition(uid));
-  assert.ok([8, 16, 48].includes(assigned.conditionN));
+  assert.ok([8, 24, 48].includes(assigned.conditionN));
   assert.ok(TOPIC_KEYS.includes(assigned.topic));
   const key = `${assigned.topic}/${assigned.conditionN}`;
   assignments.set(key, (assignments.get(key) || 0) + 1);
@@ -43,7 +43,7 @@ for (const topic of TOPIC_KEYS) {
     assert.equal(posts.length, 6);
     for (const post of posts) assert.equal(`${post.stance}_${post.sourceLevel}_${post.quality}`, cell);
   }
-  for (const n of [8, 16, 48]) for (let trial = 0; trial < 20; trial++) {
+  for (const n of [8, 24, 48]) for (let trial = 0; trial < 20; trial++) {
     const posts = blockRandomize(data.materials, n);
     assert.equal(posts.length, n);
     assert.equal(new Set(posts.map(p => p.id)).size, n);
@@ -73,8 +73,13 @@ for (const topic of TOPIC_KEYS) {
       assert.equal(p.content, row["语料内容"]);
       assert.equal(p.identityLabel, row["身份类标签"] || null);
       assert.equal(p.platformLabel, row["平台类标签"] || null);
+      if (p.sourceLevel === "high") {
+        const split = value => String(value || "").split(" / ").map(s => s.trim()).filter(Boolean);
+        const names = split(row["候选昵称"]), avatars = split(row["候选头像文件"]);
+        assert.deepEqual(p.sourceCandidates, names.map((displayName, i) => ({ displayName, avatarFile: avatars[i] })));
+      }
     }
-    console.log(`${topic}: 48 reviewed workbook posts match; 8/16/48 sampling and source presentation verified`);
+    console.log(`${topic}: 48 reviewed workbook posts, labels and author pairs match; 8/24/48 sampling verified`);
   }
 }
 console.log("6 conditions are deterministic and reachable; no eldercare assignment");

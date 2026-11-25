@@ -9,7 +9,7 @@ const root = path.resolve(__dirname, "..");
 const directory = path.resolve(process.argv[2] || path.join(root, ".."));
 const topics = [
   { key: "fertility", file: "语料信息表_育儿补贴议题.xlsx", tags: ["育儿补贴", "生育"] },
-  { key: "ai", file: "语料信息表_AI就业议题.xlsx", tags: ["人工智能", "就业"] },
+  { key: "ai", file: "语料信息表_AI就业议题.xlsx", tags: ["人工智能", "医疗"] },
 ];
 const cells = ["support_high_high", "support_high_low", "support_low_high", "support_low_low", "oppose_high_high", "oppose_high_low", "oppose_low_high", "oppose_low_low"];
 const splitCandidates = value => String(value || "").split(" / ").map(s => s.trim()).filter(Boolean);
@@ -19,7 +19,9 @@ for (const topic of topics) {
   const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
   const notes = Object.fromEntries(XLSX.utils.sheet_to_json(workbook.Sheets["质检与说明"], { header: 1 }).map(row => [row[0], row[1]]));
   assert.equal(rows.length, 48, `${topic.key}: expected 48 posts`);
-  assert.ok(notes["议题"] && notes["议题补充"], `${topic.key}: missing topic text`);
+  const title = notes["议题核心命题"] || notes["议题"];
+  const description = notes["议题固定情境"] || notes["议题补充"];
+  assert.ok(title && description, `${topic.key}: missing topic text`);
   const materials = Object.fromEntries(cells.map(cell => [cell, []]));
   const ids = new Set();
   for (const row of rows) {
@@ -50,7 +52,7 @@ for (const topic of topics) {
     materials[cell].push(post);
   }
   for (const cell of cells) assert.equal(materials[cell].length, 6, `${topic.key}/${cell}: expected 6 posts`);
-  const output = { topic: notes["议题"], topicDescription: notes["议题补充"], tags: topic.tags, materials };
+  const output = { topic: title, topicDescription: description, tags: topic.tags, materials };
   fs.writeFileSync(path.join(root, "app", "data", "materials", `${topic.key}.json`), JSON.stringify(output, null, 2) + "\n");
   console.log(`${topic.key}: imported ${ids.size} posts from ${topic.file}`);
 }

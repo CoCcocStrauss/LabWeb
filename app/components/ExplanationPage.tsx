@@ -14,12 +14,14 @@ import { VoiceRecorder } from "./VoiceRecorder";
 
 export function ExplanationPage({
   topic,
+  reference,
   identity,
   response,
   onChange,
   onContinue,
 }: {
   topic: TopicKey;
+  reference?: string;
   identity: { uid: string; sessionId: string; sessionSecret: string };
   response: ExplanationResponse;
   onChange: (value: ExplanationResponse) => void;
@@ -102,7 +104,7 @@ export function ExplanationPage({
   return (
     <PostTaskFrame
       title="说说你的想法"
-      reference={QUESTIONNAIRES[topic].statement}
+      reference={reference ?? QUESTIONNAIRES[topic].statement}
       footer={
         <div>
           {error ? (

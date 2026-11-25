@@ -3,6 +3,7 @@ import { newBlind } from "./lib/blinded";
 import { BlindPage } from "./components/BlindPage";
 
 import dynamic from "next/dynamic";
+import { PageLoading as LoadingScreen } from "../../components/PageLoading";
 import {
   Suspense,
   useCallback,
@@ -14,7 +15,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { ErrorPage } from "../../components/ErrorPage";
 import { PretestSync } from "../../components/PretestSync";
-import { emptyResponse } from "./data/questionnaire";
+import { emptyResponse, QUESTIONNAIRES } from "./data/questionnaire";
 import { isTopicKey } from "../../data/topics";
 import { blockRandomize } from "../../lib/blockRandomize";
 import { assignCondition, type ConditionN } from "./lib/conditionAssignment";
@@ -35,58 +36,60 @@ import { createRecognition, newExplanation, newReasons } from "./lib/posttest";
 import {
   newReadingMetrics,
   newRules,
+  TUTORIAL_VERSION,
   type MicrophonePermission,
 } from "./lib/readingProtocol";
 import { getMaterialsForTopic } from "../../lib/materialsRegistry";
 
 const TutorialPage = dynamic(
   () => import("./components/TutorialPage").then((m) => m.TutorialPage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
 const ExperimentPage = dynamic(
   () => import("./components/ExperimentPage").then((m) => m.ExperimentPage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
 const EndPage = dynamic(
   () => import("./components/EndPage").then((m) => m.EndPage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
 const CompletePage = dynamic(
   () => import("./components/EndPage").then((m) => m.CompletePage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
 const QuestionnairePage = dynamic(
   () =>
     import("./components/QuestionnairePage").then((m) => m.QuestionnairePage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
 const ComprehensionPage = dynamic(
   () =>
     import("./components/ComprehensionPage").then((m) => m.ComprehensionPage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
 const ReadyPage = dynamic(
   () => import("../../components/ReadyPage").then((m) => m.ReadyPage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
 const RecognitionPage = dynamic(
   () =>
     import("../../components/RecognitionPage").then((m) => m.RecognitionPage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
 const ExplanationPage = dynamic(
   () =>
     import("../../components/ExplanationPage").then((m) => m.ExplanationPage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
 const ReasonsPage = dynamic(
   () => import("../../components/ReasonsPage").then((m) => m.ReasonsPage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
-const V4Home = dynamic(() => import("../v4/Flow"), { ssr: false });
-const V2Home = dynamic(() => import("../../compat/v2/Flow"), { ssr: false });
+const V4Home = dynamic(() => import("../v4/Flow"), { ssr: false, loading: LoadingScreen });
+const V2Home = dynamic(() => import("../../compat/v2/Flow"), { ssr: false, loading: LoadingScreen });
 const LegacyHome = dynamic(() => import("../../legacy/LegacyFlow"), {
   ssr: false,
+  loading: LoadingScreen,
 });
 
 function sanitizeReturnUrl(raw: string | null): string | null {
@@ -124,13 +127,6 @@ function parseParams(searchParams: URLSearchParams) {
   };
 }
 
-function LoadingScreen() {
-  return (
-    <div className="study-shell study-page flex items-center justify-center text-neutral-500">
-      加载中…
-    </div>
-  );
-}
 
 function SessionFlow({
   params,
@@ -173,8 +169,9 @@ function SessionFlow({
           timestamp: Date.now(),
         });
       if (
-        initial.phase === "pretest_save" &&
-        initial.rules.startedAt < initial.pretest.completedAt!
+        ["pretest_save", "tutorial"].includes(initial.phase) &&
+        (initial.rules.presentationVersion !== TUTORIAL_VERSION ||
+          initial.rules.startedAt < initial.pretest.completedAt!)
       )
         initial.rules = newRules(Date.now(), initial.rules.demoLabelSelections);
       saveSession(initial);
@@ -553,6 +550,7 @@ function SessionFlow({
       content = (
         <ExplanationPage
           topic={session.topicKey}
+          reference={QUESTIONNAIRES[session.topicKey].statement}
           identity={session}
           response={session.explanation!}
           onChange={(explanation) => update((s) => ({ ...s, explanation }))}

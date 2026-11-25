@@ -3,10 +3,12 @@ export function ReadingStatus({
   remainingMs,
   shares,
   title,
+  topicLabel,
 }: {
   remainingMs: number;
   shares: number;
   title: string;
+  topicLabel?: string;
 }) {
   const seconds = Math.ceil(remainingMs / 1000),
     time = `${Math.floor(seconds / 60)
@@ -14,6 +16,7 @@ export function ReadingStatus({
       .padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
   return (
     <header className="reading-status" aria-label="阅读任务进度">
+      {topicLabel ? <p className="study-meta mb-1 text-neutral-500">{topicLabel}</p> : null}
       <h1 className="reading-topic">{title}</h1>
       <div className="reading-status-line">
         <span className="reading-clock">

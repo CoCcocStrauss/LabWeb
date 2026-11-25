@@ -4,6 +4,7 @@ import { newInteractionComparison } from "./lib/interactionComparison";
 import { InteractionComparisonPage } from "./components/InteractionComparisonPage";
 
 import dynamic from "next/dynamic";
+import { PageLoading as LoadingScreen } from "../../components/PageLoading";
 import {
   Suspense,
   useCallback,
@@ -45,53 +46,54 @@ import { getMaterialsForTopic } from "../../lib/materialsRegistry";
 
 const TutorialPage = dynamic(
   () => import("../../components/TutorialPage").then((m) => m.TutorialPage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
 const ExperimentPage = dynamic(
   () => import("../../components/ExperimentPage").then((m) => m.ExperimentPage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
 const EndPage = dynamic(
   () => import("./components/EndPage").then((m) => m.EndPage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
 const CompletePage = dynamic(
   () => import("./components/EndPage").then((m) => m.CompletePage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
 const QuestionnairePage = dynamic(
   () =>
     import("./components/QuestionnairePage").then((m) => m.QuestionnairePage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
 const ComprehensionPage = dynamic(
   () =>
     import("../../components/ComprehensionPage").then(
       (m) => m.ComprehensionPage,
     ),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
 const ReadyPage = dynamic(
   () => import("../../components/ReadyPage").then((m) => m.ReadyPage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
 const RecognitionPage = dynamic(
   () =>
     import("../../components/RecognitionPage").then((m) => m.RecognitionPage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
 const ExplanationPage = dynamic(
   () =>
     import("../../components/ExplanationPage").then((m) => m.ExplanationPage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
 const ReasonsPage = dynamic(
   () => import("./components/ReasonsPage").then((m) => m.ReasonsPage),
-  { ssr: false },
+  { ssr: false, loading: LoadingScreen },
 );
-const V2Home = dynamic(() => import("../../compat/v2/Flow"), { ssr: false });
+const V2Home = dynamic(() => import("../../compat/v2/Flow"), { ssr: false, loading: LoadingScreen });
 const LegacyHome = dynamic(() => import("../../legacy/LegacyFlow"), {
   ssr: false,
+  loading: LoadingScreen,
 });
 
 function sanitizeReturnUrl(raw: string | null): string | null {
@@ -129,13 +131,6 @@ function parseParams(searchParams: URLSearchParams) {
   };
 }
 
-function LoadingScreen() {
-  return (
-    <div className="study-shell study-page flex items-center justify-center text-neutral-500">
-      加载中…
-    </div>
-  );
-}
 
 function SessionFlow({
   params,

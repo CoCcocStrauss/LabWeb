@@ -9,12 +9,14 @@ import { previewText, type Preview } from "../lib/readingProtocol";
 export function PostAuthor({
   post,
   compact = false,
+  hideCertification = false,
 }: {
   post: PostCardData;
   compact?: boolean;
+  hideCertification?: boolean;
 }) {
   const labels =
-    post.sourceLevel !== "high"
+    hideCertification || post.sourceLevel !== "high"
       ? []
       : post.labelSelectionVersion === LABEL_SELECTION_VERSION
         ? post.displayedLabelText
@@ -25,7 +27,7 @@ export function PostAuthor({
     <div className={compact ? "feed-author" : "detail-author"}>
       <div className="feed-author-row">
         <div className={compact ? "feed-avatar" : "detail-avatar"}>
-          <PostAvatar {...post} postId={post.id} />
+          <PostAvatar {...post} postId={post.id} hideCertification={hideCertification} />
         </div>
         <div className="feed-author-text">
           <div className="feed-name-row">
@@ -35,7 +37,7 @@ export function PostAuthor({
             >
               {post.displayName}
             </span>
-            {post.sourceLevel === "high" ? <GoldVBadge /> : null}
+            {post.sourceLevel === "high" && !hideCertification ? <GoldVBadge /> : null}
           </div>
           {labels.length ? (
             <div

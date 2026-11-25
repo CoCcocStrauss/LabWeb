@@ -220,6 +220,8 @@ export function loadSession(uid: string): ExperimentSession | null {
   } catch {
     throw invalid();
   }
+  if (s && s.questionnaireVersion !== QUESTIONNAIRE_VERSION)
+    throw new Error("此进度使用旧版实验材料，已保留原始进度。请联系实验员获取新版链接，不要清除浏览器数据。");
   if (
     !s ||
     s.schemaVersion !== 5 ||

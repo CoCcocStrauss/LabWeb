@@ -1,0 +1,27 @@
+[Unit]
+Description=LabWeb Next.js application
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=labweb
+Group=labweb
+WorkingDirectory=/srv/labweb/current
+Environment=NODE_ENV=production
+Environment=HOSTNAME=127.0.0.1
+Environment=PORT=3000
+Environment=NEXT_TELEMETRY_DISABLED=1
+EnvironmentFile=/etc/labweb/runtime.env
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=5
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/srv/labweb
+
+[Install]
+WantedBy=multi-user.target

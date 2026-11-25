@@ -15,7 +15,7 @@ export function ErrorPage() {
         <code className="rounded bg-neutral-100 px-1.5 py-0.5 study-meta">
           n
         </code>{" "}
-        （8、16 或 48）与{" "}
+        （8、24 或 48）与{" "}
         <code className="rounded bg-neutral-100 px-1.5 py-0.5 study-meta">
           topic
         </code>{" "}
@@ -24,7 +24,7 @@ export function ErrorPage() {
       <p className="mt-4 study-meta text-neutral-500">
         自动分组示例：/?uid=credamo_12345
         <br />
-        QA 指定示例：/?uid=credamo_12345&amp;n=16&amp;topic=fertility
+        QA 指定示例：/?uid=test_materials_review_01&amp;n=24&amp;topic=fertility
       </p>
     </div>
   );
