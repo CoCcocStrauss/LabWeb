@@ -32,3 +32,5 @@
 - ai：test_materials_live_ai_1795624132583，完整保存和回读通过。
 
 正式浏览器截图及结果在系统临时目录labweb-dual-zone-live-20261126；仅操作这些新test_ UID，不改历史记录。48条人工QA使用/?uid=test_dualzone_fertility_48_01&n=48&topic=fertility和/?uid=test_dualzone_ai_48_01&n=48&topic=ai。重新从头测试请换UID。
+
+后续双卡行组隔离、首帧视口锁定与150秒准备文案修正已发布，见 docs/pair-rows-2026-11-26.md。
