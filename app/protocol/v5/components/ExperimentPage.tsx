@@ -29,6 +29,7 @@ import {
 import { getMaterialsForTopic } from "../../../lib/materialsRegistry";
 import { MasonryFeed } from "../../../components/MasonryFeed";
 import { SpanningMasonryFeed } from "../../../components/SpanningMasonryFeed";
+import { pinCardToViewport } from "../../../lib/scrollPinning";
 import { DualZoneFeed } from "../../../components/DualZoneFeed";
 import { CompactPostCard } from "../../../components/CompactPostCard";
 import { PostDetail } from "../../../components/PostDetail";
@@ -86,7 +87,7 @@ export function ExperimentPage({
     elements = useRef(new Map<string, HTMLElement>()),
     observer = useRef<IntersectionObserver | null>(null),
     detailObserver = useRef<IntersectionObserver | null>(null),
-    anchor = useRef<{ id: string; offset: number } | null>(null),
+    anchor = useRef<{ id: string; top: number } | null>(null),
     refs = useRef(new Map<string, (el: HTMLElement | null) => void>());
   const maxScroll = useRef(initial.maxScrollY),
     lastSave = useRef(0),
@@ -518,10 +519,7 @@ export function ExperimentPage({
     if (inline && el && root)
       anchor.current = {
         id,
-        offset: Math.max(
-          0,
-          el.getBoundingClientRect().top - root.getBoundingClientRect().top,
-        ),
+        top: el.getBoundingClientRect().top,
       };
     if (!spanning && openedRef.current) tracker.close(now());
     tracker.open(id, now(), scrollY(), inline);
@@ -544,10 +542,7 @@ export function ExperimentPage({
       if (inline && id && root && el)
         anchor.current = {
           id,
-          offset: Math.max(
-            0,
-            el.getBoundingClientRect().top - root.getBoundingClientRect().top,
-          ),
+          top: el.getBoundingClientRect().top,
         };
       tracker.close(now(), spanning ? (id ?? undefined) : undefined);
       if (spanning) {
@@ -564,14 +559,10 @@ export function ExperimentPage({
   );
   useLayoutEffect(() => {
     if (spanning || !inline || !anchor.current || !scroller.current) return;
-    const { id, offset } = anchor.current,
+    const { id, top } = anchor.current,
       el = elements.current.get(id),
       root = scroller.current;
-    if (el)
-      root.scrollTop +=
-        el.getBoundingClientRect().top -
-        root.getBoundingClientRect().top -
-        offset;
+    if (el) pinCardToViewport(el, top, root);
     anchor.current = null;
     measure();
   }, [opened, inline, spanning, measure]);
@@ -659,11 +650,7 @@ export function ExperimentPage({
               if (spanning && anchor.current && scroller.current) {
                 const el = elements.current.get(anchor.current.id),
                   root = scroller.current;
-                if (el)
-                  root.scrollTop +=
-                    el.getBoundingClientRect().top -
-                    root.getBoundingClientRect().top -
-                    anchor.current.offset;
+                if (el) pinCardToViewport(el, anchor.current.top, root);
                 anchor.current = null;
               }
               measure();
@@ -673,6 +660,8 @@ export function ExperimentPage({
               .flatMap((post, index) => {
                 const item = {
                   id: post.id,
+                  pinned: anchor.current?.id === post.id,
+                  expandedOrder: expanded.indexOf(post.id),
                   expanded: spanning ? expanded.includes(post.id) : false,
                   node: (
                     <CompactPostCard

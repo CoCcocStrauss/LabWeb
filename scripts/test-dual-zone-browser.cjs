@@ -8,20 +8,34 @@ const out=path.join(require('node:os').tmpdir(),'labweb-dual-zone-20261126');fs.
   for(const n of [8,24,48]){
    const context=await browser.newContext({viewport:{width:1440,height:800}});page=await context.newPage();page.setDefaultTimeout(20000);
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
+   await page.addInitScript(()=>{
+    window.__pairPins=[];
+    document.addEventListener('click',event=>{
+     const card=event.target.closest?.('main.reading-feed .feed-card');
+     if(!card||card.classList.contains('is-expanded')||event.target.closest('.feed-actions'))return;
+     const entry={id:card.dataset.postId,top:card.getBoundingClientRect().top,frames:[]};
+     window.__pairPins.push(entry);
+     const sample=()=>{entry.frames.push(card.getBoundingClientRect().top);if(entry.frames.length<16)requestAnimationFrame(sample)};
+     requestAnimationFrame(sample);
+    },true);
+   });
    const uid='test_dual_zone_'+n+'_'+Date.now(),key='labweb:session:v5:'+uid;
    const read=()=>page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
    await page.goto('http://127.0.0.1:3210/?uid='+uid+'&n='+n+'&topic=fertility');
    await page.getByRole('button',{name:'进入实验',exact:true}).click();
    for(let i=0;i<5;i++){await page.getByRole('radio').nth(2).check();await page.getByRole('button',{name:'下一步',exact:true}).click();}
    for(let i=0;i<3;i++)await page.getByRole('button',{name:'下一步',exact:true}).click();
-   await page.getByRole('button',{name:/^A\./}).click();await page.getByRole('button',{name:'开始实验',exact:true}).click();
+   await page.getByRole('button',{name:/^A\./}).click();await page.getByText('点击下方按钮后开始 150 秒阅读。',{exact:true}).waitFor();await page.getByRole('button',{name:'开始实验',exact:true}).click();
    const grid=page.locator('main.reading-feed .dual-zone-feed');await grid.waitFor();await page.waitForTimeout(400);
    assert.equal(await grid.getAttribute('data-columns'),'4');
+   assert.equal(await page.locator('main.reading-feed').evaluate(el=>getComputedStyle(el).overflowAnchor),'none');
    const state=await read(),ids=state.reading.posts.map(p=>p.id);
    assert.equal(state.reading.metrics.packingVersion,'dual-zone-grid-v1');
    for(const [i,id]of ids.entries()){
     const item=grid.locator('[data-post-key="'+id+'"]');
     assert.equal(Number(await item.getAttribute('data-zone')),Math.floor(i/2)%2);
+    const members=await item.locator('..').locator(':scope > .dual-zone-item').evaluateAll(nodes=>nodes.map(el=>el.dataset.postKey));
+    assert.deepEqual(members,ids.slice(Math.floor(i/2)*2,Math.floor(i/2)*2+2),'fixed pair members cannot backfill another pair');
    }
    const geometry=zone=>grid.locator('.dual-zone-half[data-zone-index="'+zone+'"] .feed-card').evaluateAll(nodes=>{
     const root=nodes[0].closest('.dual-zone-feed').getBoundingClientRect();
@@ -35,6 +49,9 @@ const out=path.join(require('node:os').tmpdir(),'labweb-dual-zone-20261126');fs.
     await page.waitForTimeout(110);assert.deepEqual(await geometry(1-zone),opposite,'opposite half stays still during animation');
     await page.waitForTimeout(220);assert.deepEqual(await geometry(1-zone),opposite,'opposite half stays still after expansion');
     assert.equal(await card.locator('..').getAttribute('data-column-span'),'2');
+    const pin=await page.evaluate(id=>window.__pairPins.filter(x=>x.id===id).at(-1),id);
+    assert.ok(pin.frames.length>=2);
+    assert.ok(pin.frames.every(y=>Math.abs(y-pin.top)<=4),'clicked card stays pinned from first animation frame: '+JSON.stringify(pin));
     await card.getByRole('button',{name:'收起',exact:true}).click();await page.waitForTimeout(330);
     assert.deepEqual(await geometry(1-zone),opposite,'opposite half stays still after collapse');
     assert.ok((await card.getAttribute('class')).includes('is-read'));
@@ -54,8 +71,8 @@ const out=path.join(require('node:os').tmpdir(),'labweb-dual-zone-20261126');fs.
    assert.equal(await grid.locator('.dual-zone-half').count(),1);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
    assert.deepEqual(errors,[]);
-   fs.writeFileSync(path.join(out,'result-'+n+'.json'),JSON.stringify({uid,n,passed:true,cardsTested:ids.length,oppositeHalfDisplacement:0,errors},null,2));
-   console.log('PASS n='+n+': every card locks its half, opposite half 0px in/after animation, read state, multi-open/reload, 4/2-column resize');
+   fs.writeFileSync(path.join(out,'result-'+n+'.json'),JSON.stringify({uid,n,passed:true,cardsTested:ids.length,oppositeHalfDisplacement:0,pairIsolation:true,firstFramePinTolerance:4,errors},null,2));
+   console.log('PASS n='+n+': every card locks its half, isolated pairs, clicked card <=4px from first frame, opposite half 0px, read state, multi-open/reload, 4/2-column resize');
    await context.close();
   }
  }catch(e){if(page){await page.screenshot({path:path.join(out,'failure.png')}).catch(()=>{});fs.writeFileSync(path.join(out,'failure.txt'),await page.locator('body').innerText().catch(()=>''));}throw e;}

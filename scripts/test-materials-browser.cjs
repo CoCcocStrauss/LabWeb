@@ -78,6 +78,7 @@ fs.mkdirSync(out, { recursive: true });
     await page.getByRole('button',{name:'下一步',exact:true}).click();
    }
    await page.getByRole('button',{name:/^A\./}).click();
+   await page.getByText('点击下方按钮后开始 150 秒阅读。',{exact:true}).waitFor();
    await page.getByRole('button',{name:'开始实验',exact:true}).click();
    await page.locator('.feed-card').nth(23).waitFor();
    await page.getByText(topic==='ai'?'AI 帮医生看病':'育儿补贴',{exact:true}).waitFor();

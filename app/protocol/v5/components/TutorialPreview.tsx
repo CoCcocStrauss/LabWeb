@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { CompactPostCard } from "../../../components/CompactPostCard";
+import { pinCardToViewport } from "../../../lib/scrollPinning";
 import { DualZoneFeed } from "../../../components/DualZoneFeed";
 import type { RulesResponse } from "../lib/readingProtocol";
 import { TUTORIAL_POSTS } from "../data/tutorial";
@@ -132,12 +133,12 @@ export function TutorialPreview({ stepIndex, selections }: {
               const saved = anchor.current, scroller = viewport.current;
               if (!saved || !scroller) return;
               const card = root.current?.querySelector(`[data-post-id="${saved.id}"]`);
-              if (card) scroller.scrollTop += card.getBoundingClientRect().top - saved.top;
+              if (card) pinCardToViewport(card as HTMLElement, saved.top, scroller);
               anchor.current = null;
             }}
             items={POSTS.map((original) => {
               const id = String(original.id), post = { ...original, ...selections?.[id] };
-              return { id, expanded: expanded.includes(id), node:
+              return { id, pinned: anchor.current?.id === id, expandedOrder: expanded.indexOf(id), expanded: expanded.includes(id), node:
                 <CompactPostCard post={post} expanded={expanded.includes(id)} read={read.includes(id)}
                   liked={liked.includes(id)} shared={shared.includes(id)} shareDisabled={false}
                   onOpen={() => toggleExpanded(id)} onCollapse={() => toggleExpanded(id)}

@@ -1,10 +1,10 @@
 "use client";
-export function ReadyPage({ onStart }: { onStart: () => void }) {
+export function ReadyPage({ onStart, durationSeconds = 90 }: { onStart: () => void; durationSeconds?: number }) {
   return (
     <main className="study-shell study-page flex flex-col items-center justify-center text-center">
       <h1 className="study-title">准备开始</h1>
       <p className="study-copy mt-4 text-neutral-600">
-        点击下方按钮后开始90秒阅读。
+        点击下方按钮后开始 {durationSeconds} 秒阅读。
       </p>
       <button
         type="button"

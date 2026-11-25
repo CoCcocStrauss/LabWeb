@@ -1,7 +1,7 @@
 "use client";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
-type Item = { id: string; expanded: boolean; node: ReactNode };
+type Item = { id: string; expanded: boolean; node: ReactNode; pinned?: boolean; expandedOrder?: number };
 type Box = { left: number; top: number; width: number; height: number };
 function columnCount() {
   return typeof window !== "undefined" &&
@@ -35,20 +35,28 @@ export function DualZoneFeed({ items, onLayout }: {
         prior.current.width === root.clientWidth &&
         !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       for (const item of latest.current.items) {
-        const node = nodes.current.get(item.id), half = node?.parentElement;
-        if (!node || !half) return;
-        const gap = parseFloat(getComputedStyle(half).columnGap) || 10;
-        const localColumn = Math.round(node.offsetLeft / ((half.clientWidth + gap) / 2));
+        const node = nodes.current.get(item.id), pair = node?.parentElement;
+        const half = pair?.parentElement;
+        if (!node || !pair || !half) return;
+        const gap = parseFloat(getComputedStyle(pair).columnGap) || 10;
+        const localColumn = Math.round(node.offsetLeft / ((pair.clientWidth + gap) / 2));
         assignments[item.id] = Number(half.dataset.zoneIndex) * 2 + localColumn;
         spans[item.id] = item.expanded ? 2 : 1;
-        const box = { left: half.offsetLeft + node.offsetLeft, top: node.offsetTop,
+        const box = { left: half.offsetLeft + pair.offsetLeft + node.offsetLeft,
+          top: half.offsetTop + pair.offsetTop + node.offsetTop,
           width: node.offsetWidth, height: node.offsetHeight };
         boxes.set(item.id, box);
+      }
+      // Notify against final layout BEFORE FLIP transforms. Scroll pinning runs
+      // synchronously in this layout effect, rather than after the 230ms animation.
+      if (animate || !animations.current.size) latest.current.onLayout?.(columns, assignments, spans);
+      for (const item of latest.current.items) {
+        const node = nodes.current.get(item.id)!, box = boxes.get(item.id)!;
         const old = prior.current?.boxes.get(item.id);
         if (canAnimate && old && (old.left !== box.left || old.top !== box.top || old.width !== box.width || old.height !== box.height)) {
           animations.current.get(item.id)?.cancel();
           const animation = node.animate([
-            { transform: `translate(${old.left - box.left}px, ${old.top - box.top}px) scale(${old.width / box.width}, ${old.height / box.height})` },
+            { transform: `translate(${old.left - box.left}px, ${item.pinned ? 0 : old.top - box.top}px) scale(${old.width / box.width}, ${old.height / box.height})` },
             { transform: "none" },
           ], { duration: 230, easing: "cubic-bezier(.2,.7,.2,1)" });
           animations.current.set(item.id, animation);
@@ -56,7 +64,6 @@ export function DualZoneFeed({ items, onLayout }: {
         }
       }
       prior.current = { columns, width: root.clientWidth, boxes };
-      if (!animations.current.size) latest.current.onLayout?.(columns, assignments, spans);
     };
     const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(() => measure()); };
     const resize = () => { setColumns(columnCount()); schedule(); };
@@ -81,16 +88,18 @@ export function DualZoneFeed({ items, onLayout }: {
     <div ref={grid} className="dual-zone-feed" data-columns={columns} aria-label="阅读内容">
       {zones.map((zone, zoneIndex) => (
         <div className="dual-zone-half" data-zone-index={zoneIndex} key={zoneIndex}>
-          {zone.map((item, index) => {
-            const partner = zone[index % 2 === 0 ? index + 1 : index - 1];
-            // An expanded card leads its pair so a right-hand card opens at its row.
-            const order = Math.floor(index / 2) * 2 +
-              (item.expanded && !partner?.expanded ? 0 : !item.expanded && partner?.expanded ? 1 : index % 2);
-            return <div key={item.id} className="dual-zone-item" data-zone={zoneIndex}
+          {Array.from({ length: Math.ceil(zone.length / 2) }, (_, pairIndex) => {
+            const pair = zone.slice(pairIndex * 2, pairIndex * 2 + 2);
+            // If both are open, keep the earlier expansion first; neither closes.
+            const leader = pair.filter((item) => item.expanded)
+              .sort((a, b) => (a.expandedOrder ?? 0) - (b.expandedOrder ?? 0))[0];
+            return <div className="dual-zone-pair" data-pair-index={pairIndex} key={pair[0].id}>
+            {pair.map((item) => <div key={item.id} className="dual-zone-item" data-zone={zoneIndex}
               data-column-span={item.expanded ? 2 : 1} data-post-key={item.id}
-              style={{ gridColumn: item.expanded ? "span 2" : undefined, order }}
+              style={{ gridColumn: item.expanded ? "span 2" : undefined, order: item === leader ? -1 : 0 }}
               ref={(node) => { if (node) nodes.current.set(item.id, node); else nodes.current.delete(item.id); }}>
               {item.node}
+            </div>)}
             </div>;
           })}
         </div>

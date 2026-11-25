@@ -429,6 +429,7 @@ function SessionFlow({
     case "ready":
       content = (
         <ReadyPage
+          durationSeconds={READING_DURATION_MS / 1000}
           onStart={() => {
             const materials = getMaterialsForTopic(session.topicKey);
             const posts = enrichPostsForDisplay(
