@@ -1,6 +1,6 @@
 # 新版语料与议题同步（2026-11-25）
 
-依据 `labweb修改交接_2026_11_25.md`，使用 `/Users/jiayi/Desktop/Project/` 下两份已审核Excel。未修改原始工作簿。本机实现与验证完成；用户已执行配套SQL，并通过只读OpenAPI确认3个v7函数已存在，下一步通过GitHub自动发布。未切换DNS或部署到ECS。
+依据 `labweb修改交接_2026_11_25.md`，使用 `/Users/jiayi/Desktop/Project/` 下两份已审核Excel。未修改原始工作簿。本机实现与验证完成；用户已执行配套SQL，并通过只读OpenAPI确认3个v7函数已存在，已通过GitHub自动发布，正式站两个议题完整流程及数据库回读通过。未切换DNS或部署到ECS。
 
 ## 材料与文案
 
@@ -40,3 +40,13 @@
 2. 发布前只提交授权的应用、测试与说明文件；保留用户其他研究文件和删除操作，不使用 `git add .`。尤其不发布 `public/prompt_2026_11_25.md`。
 3. 推送触发Netlify发布后，使用新 `test_` UID分别抽测两议题并核对正式数据库。未完成该步骤前不将清单标为线上通过。
 4. 香港ECS与精品EIP仍待资源信息和绑定核验；先做独立QA域名、HTTPS及真实网络验收，再考虑主域切换。不要重复购买。
+
+## 正式发布与验收证据
+
+- 应用提交：fe6b764（GitHub main），已成功推送，既有Netlify自动部署生效。真实浏览器直接读取正式站新会话的 questionnaireVersion=2026-11-25-v5。
+- 正式站：https://myexperiment.cn 。Netlify登录/连接授权页曾出现invalid URL，本次通过已有GitHub连续部署完成发布，没有改动Netlify账号、域名或保护设置。
+- 桌面育儿补贴24条：test_materials_live_fertility_1795602924793，完整流程通过；正式库回读确认完成、版本、topic、3条转发、4帖盲评及正时长的全文阅读区间。
+- 手机AI医疗24条：test_materials_live_ai_1795602949176，同样完整通过并回读确认。浏览器无页面异常，只操作新建test_ UID，不修改已有被试数据。
+- 正式浏览器截图和结果保存在系统临时目录 labweb-materials-live-20261125。
+- 48条人工QA：/?uid=test_materials_v5_fertility_48_01&n=48&topic=fertility；/?uid=test_materials_v5_ai_48_01&n=48&topic=ai。每轮从头测试需更换test_ UID，避免恢复上一轮进度。
+- 阿里云控制台已核对两个EIP：均为香港、20Mbps、精品、按流量/CDT计费且未绑定、扣费中。用户确认尚未购买ECS；未代购、释放或绑定任何资源，未切换正式DNS。后续需购买一台ECS并选择一个EIP，多余EIP释放须另行确认。
