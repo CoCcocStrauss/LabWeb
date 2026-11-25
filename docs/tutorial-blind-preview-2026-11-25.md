@@ -1,4 +1,4 @@
-# 双区阅读、真实教程与盲评布局（2026-11-26，待发布）
+# 双区阅读、真实教程与盲评布局（2026-11-26，已发布）
 
 依据 labweb交接_2026_11_25.md；保留用户随后明确的奖励句标题，不再重复显示这句正文。手机按此前确认的双列保留，展开占满两列；文档“手机1列保持原有”与当前状态不符，已在会话询问，尚未收到更改为单列的指示。
 
@@ -22,4 +22,13 @@
 - 可复现命令：npm test、npm run build、npm run test:browser:zones、npm run test:browser:materials、npm run test:browser:detail。浏览器需要Playwright；全流程须使用本机隔离QA服务。
 - 证据目录：系统临时目录下labweb-dual-zone-20261126、labweb-materials-20261125、labweb-detail-visibility-qa。
 
-无数据库表结构、权限或RPC变更，本次无需新增SQL；既有v7保存函数继续使用。待GitHub/Netlify发布后，另用新test_ UID核对正式库。阿里云部署继续暂缓。
+无数据库表结构、权限或RPC变更，本次无需新增SQL；既有v7保存函数继续使用。应用提交c716dcb已推送GitHub main，Netlify自动部署已在正式站生效。阿里云部署继续暂缓。
+
+## 正式站验收
+
+正式站https://myexperiment.cn。桌面1280×720育儿补贴与手机390×844 AI医疗各完成一轮，Supabase回读确认questionnaire_version=2026-11-25-v5、packingVersion=dual-zone-grid-v1、完成状态、3条转发、4帖盲评，以及左/右半区各一帖的正时长detailIntervals。练习标签保持固定，教程8条、奖励句标题、动态状态栏及盲评并排均已在正式浏览器验证。
+
+- fertility：test_materials_live_fertility_1795624084219，完整保存和回读通过。
+- ai：test_materials_live_ai_1795624132583，完整保存和回读通过。
+
+正式浏览器截图及结果在系统临时目录labweb-dual-zone-live-20261126；仅操作这些新test_ UID，不改历史记录。48条人工QA使用/?uid=test_dualzone_fertility_48_01&n=48&topic=fertility和/?uid=test_dualzone_ai_48_01&n=48&topic=ai。重新从头测试请换UID。
