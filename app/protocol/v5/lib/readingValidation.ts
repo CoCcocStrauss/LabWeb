@@ -144,7 +144,7 @@ export function validReadingProtocol(
     return false;
   if (
     m.packingVersion !== undefined &&
-    m.packingVersion !== "free-rect-top-first-v1"
+    !["free-rect-top-first-v1", "dual-zone-grid-v1"].includes(m.packingVersion)
   )
     return false;
   for (let i = 0; i < m.cards.length; i++) {
@@ -159,6 +159,9 @@ export function validReadingProtocol(
       (m.version === READING_UI_VERSION &&
         (![1, 2].includes(c.columnSpan!) ||
           c.column + c.columnSpan! > m.columns)) ||
+      (m.packingVersion === "dual-zone-grid-v1" && m.columns === 4 &&
+        (Math.floor(c.column / 2) !== Math.floor(i / 2) % 2 ||
+          c.column % 2 + (c.columnSpan ?? 1) > 2)) ||
       !obj(c.preview) ||
       c.preview.ruleVersion !== PREVIEW_VERSION
     )
@@ -191,6 +194,9 @@ export function validReadingProtocol(
         (m.version === READING_UI_VERSION &&
           (![1, 2].includes(p.columnSpan!) ||
             p.column + p.columnSpan! > p.columns)) ||
+        (m.packingVersion === "dual-zone-grid-v1" && p.columns === 4 &&
+          (Math.floor(p.column / 2) !== Math.floor(i / 2) % 2 ||
+            p.column % 2 + (p.columnSpan ?? 1) > 2)) ||
         p.timestamp < prev ||
         !(["left", "top"] as const).every(
           (k) =>

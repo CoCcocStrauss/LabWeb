@@ -13,6 +13,7 @@
     "test:browser:detail": "node scripts/test-detail-visibility-browser.cjs",
     "test:browser:loading": "node scripts/test-network-loading-browser.cjs",
     "test:browser:materials": "node scripts/test-materials-browser.cjs",
+    "test:browser:zones": "node scripts/test-dual-zone-browser.cjs",
     "qa:database": "node scripts/qa-server.cjs",
     "qa:app": "node scripts/qa-app.cjs",
     "materials:import": "node scripts/import-materials-table.cjs",

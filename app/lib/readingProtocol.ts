@@ -97,7 +97,7 @@ export type ReadingAlert = {
 };
 export type ReadingMetrics = {
   unlockShownAtMs?: number | null;
-  packingVersion?: "free-rect-top-first-v1";
+  packingVersion?: "free-rect-top-first-v1" | "dual-zone-grid-v1";
   labelSelectionVersion?: typeof LABEL_SELECTION_VERSION;
   version:
     | typeof READING_UI_VERSION

@@ -15,6 +15,7 @@ export function BlindPage({
     a = r.answers[index],
     latest = useRef(r),
     change = useRef(onChange);
+  const secondQuestion = useRef<HTMLFieldSetElement>(null);
   latest.current = r;
   change.current = onChange;
   useEffect(() => {
@@ -53,26 +54,40 @@ export function BlindPage({
   const choose = (
     field: "endorsementScore" | "argumentQualityScore",
     score: number,
-  ) =>
+  ) => {
     onChange({
       ...r,
       answers: r.answers.map((x, i) =>
         i === index ? { ...x, [field]: score } : x,
       ),
     });
+    if (field === "endorsementScore" && a.endorsementScore === null &&
+      window.matchMedia("(max-width: 767px)").matches) {
+      requestAnimationFrame(() => {
+        const question = secondQuestion.current;
+        const scroller = question?.closest(".study-scroll");
+        if (!question || !scroller) return;
+        const rect = question.getBoundingClientRect(), viewport = scroller.getBoundingClientRect();
+        if (rect.bottom > viewport.bottom || rect.top < viewport.top)
+          question.scrollIntoView({ block: "nearest", behavior:
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+      });
+    }
+  };
   return (
-    <div className="study-shell study-screen">
+    <div className="study-shell study-screen blind-screen">
       <header className="study-header study-pad border-b">
         <h1 className="study-title">内容评价（{index + 1} / 4）</h1>
         <p className="study-copy mt-3">
           请阅读下面这条讨论内容，并回答两道问题：
         </p>
       </header>
-      <main className="study-scroll study-pad py-5" key={a.postId}>
-        <article className="rounded-xl border p-4">
+      <main className="study-scroll study-pad blind-body" key={a.postId}>
+        <article className="blind-post rounded-xl border">
           <PostAuthor post={item} compact hideCertification />
-          <p className="study-copy mt-4 whitespace-pre-wrap">{item.content}</p>
+          <p className="study-copy whitespace-pre-wrap">{item.content}</p>
         </article>
+        <div className="blind-scales">
         {(
           [
             {
@@ -99,11 +114,11 @@ export function BlindPage({
             },
           ] as const
         ).map((q) => (
-          <fieldset key={q.field} className="mt-6">
+          <fieldset key={q.field} ref={q.field === "argumentQualityScore" ? secondQuestion : undefined}>
             <legend className="study-copy font-medium">{q.text}</legend>
             <div className="questionnaire-options">
               {q.options.map((text, i) => (
-                <label key={text} className="reason-choice study-control">
+                <label key={text} className={`reason-choice study-control${a[q.field] === i + 1 ? " is-chosen" : ""}`}>
                   <input
                     type="radio"
                     name={q.field}
@@ -116,6 +131,7 @@ export function BlindPage({
             </div>
           </fieldset>
         ))}
+        </div>
       </main>
       <footer className="study-footer study-pad border-t">
         <button

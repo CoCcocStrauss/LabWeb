@@ -1,0 +1,63 @@
+// Start isolated qa-server.cjs and qa-app.cjs. No production data is used.
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const out=path.join(require('node:os').tmpdir(),'labweb-dual-zone-20261126');fs.mkdirSync(out,{recursive:true});
+(async()=>{
+ const browser=await chromium.launch({channel:'chrome',headless:true});let page;
+ try{
+  for(const n of [8,24,48]){
+   const context=await browser.newContext({viewport:{width:1440,height:800}});page=await context.newPage();page.setDefaultTimeout(20000);
+   const errors=[];page.on('pageerror',e=>errors.push(e.message));
+   const uid='test_dual_zone_'+n+'_'+Date.now(),key='labweb:session:v5:'+uid;
+   const read=()=>page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
+   await page.goto('http://127.0.0.1:3210/?uid='+uid+'&n='+n+'&topic=fertility');
+   await page.getByRole('button',{name:'进入实验',exact:true}).click();
+   for(let i=0;i<5;i++){await page.getByRole('radio').nth(2).check();await page.getByRole('button',{name:'下一步',exact:true}).click();}
+   for(let i=0;i<3;i++)await page.getByRole('button',{name:'下一步',exact:true}).click();
+   await page.getByRole('button',{name:/^A\./}).click();await page.getByRole('button',{name:'开始实验',exact:true}).click();
+   const grid=page.locator('main.reading-feed .dual-zone-feed');await grid.waitFor();await page.waitForTimeout(400);
+   assert.equal(await grid.getAttribute('data-columns'),'4');
+   const state=await read(),ids=state.reading.posts.map(p=>p.id);
+   assert.equal(state.reading.metrics.packingVersion,'dual-zone-grid-v1');
+   for(const [i,id]of ids.entries()){
+    const item=grid.locator('[data-post-key="'+id+'"]');
+    assert.equal(Number(await item.getAttribute('data-zone')),Math.floor(i/2)%2);
+   }
+   const geometry=zone=>grid.locator('.dual-zone-half[data-zone-index="'+zone+'"] .feed-card').evaluateAll(nodes=>{
+    const root=nodes[0].closest('.dual-zone-feed').getBoundingClientRect();
+    return nodes.map(el=>{const r=el.getBoundingClientRect();return {id:el.dataset.postId,x:r.x-root.x,y:r.y-root.y,w:r.width,h:r.height}});
+   });
+   for(const [i,id]of ids.entries()){
+    const card=grid.locator('.feed-card[data-post-id="'+id+'"]'),zone=Math.floor(i/2)%2;
+    await card.scrollIntoViewIfNeeded();await page.waitForTimeout(50);
+    const opposite=await geometry(1-zone);
+    await card.locator('.feed-content-button').click();
+    await page.waitForTimeout(110);assert.deepEqual(await geometry(1-zone),opposite,'opposite half stays still during animation');
+    await page.waitForTimeout(220);assert.deepEqual(await geometry(1-zone),opposite,'opposite half stays still after expansion');
+    assert.equal(await card.locator('..').getAttribute('data-column-span'),'2');
+    await card.getByRole('button',{name:'收起',exact:true}).click();await page.waitForTimeout(330);
+    assert.deepEqual(await geometry(1-zone),opposite,'opposite half stays still after collapse');
+    assert.ok((await card.getAttribute('class')).includes('is-read'));
+   }
+   // Independent simultaneous expansion in both halves; a reload preserves both.
+   for(const id of [ids[0],ids[2]]){await grid.locator('.feed-card[data-post-id="'+id+'"] .feed-content-button').click();await page.waitForTimeout(350);}
+   assert.equal(await grid.locator('.is-expanded').count(),2);
+   await page.reload();await grid.locator('.is-expanded').nth(1).waitFor();await page.waitForTimeout(400);
+   assert.equal((await read()).reading.metrics.openDetailIds.length,2);
+   for(const size of [{width:1280,height:720},{width:1440,height:800}]){
+    await page.setViewportSize(size);await page.waitForTimeout(400);
+    assert.equal(await grid.getAttribute('data-columns'),'4');
+   }
+   await page.screenshot({path:path.join(out,'desktop-'+n+'.png')});
+   await page.setViewportSize({width:768,height:1024});await page.waitForTimeout(400);
+   assert.equal(await grid.getAttribute('data-columns'),'2');
+   assert.equal(await grid.locator('.dual-zone-half').count(),1);
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+   assert.deepEqual(errors,[]);
+   fs.writeFileSync(path.join(out,'result-'+n+'.json'),JSON.stringify({uid,n,passed:true,cardsTested:ids.length,oppositeHalfDisplacement:0,errors},null,2));
+   console.log('PASS n='+n+': every card locks its half, opposite half 0px in/after animation, read state, multi-open/reload, 4/2-column resize');
+   await context.close();
+  }
+ }catch(e){if(page){await page.screenshot({path:path.join(out,'failure.png')}).catch(()=>{});fs.writeFileSync(path.join(out,'failure.txt'),await page.locator('body').innerText().catch(()=>''));}throw e;}
+ finally{await browser.close()}
+})().catch(e=>{console.error(e);process.exitCode=1});

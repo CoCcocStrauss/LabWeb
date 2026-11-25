@@ -97,3 +97,19 @@ test('旧材料进度拒绝静默升版，原始存储保持不变',()=>{
  const previous=global.localStorage;global.localStorage={getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)};
  try{storage.set(key,raw);assert.throws(()=>s.loadSession('test_old_material_draft'),/旧版实验材料/);assert.equal(storage.get(key),raw);}finally{global.localStorage=previous;}
 });
+
+test('双区布局与旧布局均可保存，双区帖子换半区或跨中线展开被拒绝',()=>{
+ const f=blindFixture('fertility',24,'test_dual_zone_validation');
+ assert.ok(v.validSubmission(f));
+ f.readingMetrics.packingVersion='dual-zone-grid-v1';f.readingMetrics.columns=4;
+ for(const [i,c] of f.readingMetrics.cards.entries()){
+  c.column=i%4;c.columnSpan=1;
+  for(const p of c.layouts){p.columns=4;p.column=c.column;p.columnSpan=1;}
+ }
+ assert.ok(v.validSubmission(f));
+ const moved=structuredClone(f),c=moved.readingMetrics.cards[0];c.column=2;c.layouts.at(-1).column=2;
+ assert.equal(v.validSubmission(moved),false);
+ const crossing=structuredClone(f),d=crossing.readingMetrics.cards[1];d.columnSpan=2;d.layouts.at(-1).columnSpan=2;
+ assert.equal(v.validSubmission(crossing),false);
+ const invalid=structuredClone(f);invalid.readingMetrics.packingVersion='unknown';assert.equal(v.validSubmission(invalid),false);
+});

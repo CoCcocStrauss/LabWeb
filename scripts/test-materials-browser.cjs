@@ -7,7 +7,7 @@ fs.mkdirSync(out, { recursive: true });
  const browser = await chromium.launch({ channel: 'chrome', headless: true });
  let page;
  try {
-  for (const [width, height, topic] of [[1440,900,'fertility'],[390,844,'ai']]) {
+  for (const [width, height, topic] of [[1280,720,'fertility'],[390,844,'ai']]) {
    const context = await browser.newContext({ viewport:{width,height},isMobile:width<500,hasTouch:width<500 });
    page = await context.newPage();page.setDefaultTimeout(15000);
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -23,8 +23,58 @@ fs.mkdirSync(out, { recursive: true });
    assert.ok(!/2000|工作机会|就业/.test(await page.locator('body').innerText()));
    await page.screenshot({path:path.join(out,`${topic}-pretest.png`)});
    for(let i=0;i<5;i++){await page.getByRole('radio').nth(2).check();await page.getByRole('button',{name:'下一步',exact:true}).click();}
-   for(const heading of ['如何阅读','如何转发与改选','时间、专注与激励']){
+   for(const [i,heading] of ['如何阅读','如何转发与改选','认真阅读并清晰说明理由的参与者，将获得额外红包奖励。'].entries()){
     await page.getByRole('heading',{name:heading,exact:true}).waitFor();
+    const demo=page.locator('.tutorial-demo'), cards=demo.locator('.feed-card');
+    assert.equal(await cards.count(),8);
+    assert.equal(await demo.locator('.dual-zone-feed').getAttribute('data-columns'),width>=1024?'4':'2');
+    const footer=await page.getByRole('button',{name:'下一步',exact:true}).boundingBox();
+    assert.ok(footer.y>=0&&footer.y+footer.height<=height,'tutorial next button remains on screen');
+    if(i<2){
+     await demo.locator(i===0?'.feed-card.is-expanded':'button[aria-pressed="true"]').first().waitFor();
+     await page.screenshot({path:path.join(out,topic+'-tutorial-auto-'+(i+1)+'.png')});
+     if(i===1) await demo.getByText('已转发 1 条（至少 2 条）',{exact:true}).waitFor();
+     await page.waitForFunction(()=>document.querySelector('.tutorial-demo')?.dataset.manual==='true');
+     assert.equal(await demo.locator('.is-expanded').count(),0);
+     await demo.getByText('已转发 0 条（至少 2 条）',{exact:true}).waitFor();
+     await page.waitForTimeout(1000);
+     assert.equal(await demo.locator('.is-expanded').count(),0,'automatic round does not repeat');
+     if(width>=768){
+      const replayBox=await page.getByRole('button',{name:'重播演示',exact:true}).boundingBox();
+      assert.ok(replayBox.y+replayBox.height<=footer.y,'replay control remains above the footer');
+     }
+     await page.screenshot({path:path.join(out,topic+'-tutorial-ready-'+(i+1)+'.png')});
+     await cards.first().locator('.feed-content-button').click();
+     await demo.locator('.feed-card.is-expanded').waitFor();
+     await cards.nth(1).locator('.feed-content-button').click();
+     assert.equal(await demo.locator('.feed-card.is-expanded').count(),2,'manual expansions remain independent');
+     await cards.first().getByRole('button',{name:'收起',exact:true}).click();
+     await cards.first().getByRole('button',{name:'转发',exact:true}).click();
+     await demo.getByText('已转发 1 条（至少 2 条）',{exact:true}).waitFor();
+     await cards.first().getByRole('button',{name:'已转发',exact:true}).click();
+     await demo.getByText('已转发 0 条（至少 2 条）',{exact:true}).waitFor();
+     if(i===1){
+      await page.getByRole('button',{name:'重播演示',exact:true}).click();
+      await demo.getByText('已转发 1 条（至少 2 条）',{exact:true}).waitFor();
+      await page.waitForFunction(()=>document.querySelector('.tutorial-demo')?.dataset.manual==='true');
+      await demo.getByText('已转发 0 条（至少 2 条）',{exact:true}).waitFor();
+     }
+    }else{
+     assert.equal(await page.getByText(heading,{exact:true}).count(),1,'reward sentence appears only as the heading');
+     await cards.first().locator('.feed-content-button').click();
+     await demo.locator('.feed-card.is-expanded').waitFor();
+     await cards.first().getByRole('button',{name:'收起',exact:true}).click();
+     await cards.first().getByRole('button',{name:'转发',exact:true}).click();
+     await demo.getByText('已转发 1 条（至少 2 条）',{exact:true}).waitFor();
+     const before=Number(await demo.getByRole('progressbar').getAttribute('aria-valuenow'));
+     await page.waitForTimeout(1200);
+     const after=Number(await demo.getByRole('progressbar').getAttribute('aria-valuenow'));
+     assert.ok(after<before,'real countdown and meter move');
+     await page.waitForFunction(()=>document.querySelector('.tutorial-demo [role="progressbar"]')?.getAttribute('aria-valuenow')==='140',{},{timeout:12000});
+     await page.waitForFunction(()=>document.querySelector('.tutorial-demo [role="progressbar"]')?.getAttribute('aria-valuenow')==='150',{},{timeout:3000});
+     assert.ok(!(await page.locator('body').innerText()).includes('100 秒'));
+    }
+    await page.screenshot({path:path.join(out,topic+'-tutorial-'+(i+1)+'.png')});
     await page.getByRole('button',{name:'下一步',exact:true}).click();
    }
    await page.getByRole('button',{name:/^A\./}).click();
@@ -58,6 +108,28 @@ fs.mkdirSync(out, { recursive: true });
     assert.equal(await page.locator('.feed-identities,.feed-actions').count(),0);
     assert.equal(await page.locator('[aria-label="高信源认证"],.ring-amber-400').count(),0);
     await page.screenshot({path:path.join(out,`${topic}-blind.png`)});
+    if(i===0){
+     // Stress the desktop viewport with the longest actual material, then restore it.
+     const text=page.locator('.blind-post > p'), original=await text.innerText();
+     const longest=Object.values(data.materials).flat().sort((a,b)=>b.content.length-a.content.length)[0].content;
+     await text.evaluate((el,value)=>el.textContent=value,longest);
+     if(width>=768){
+      for(const [w,h] of [[1280,720],[1366,768],[1440,800]]){
+       await page.setViewportSize({width:w,height:h});
+       assert.equal(await page.locator('.blind-body').evaluate(el=>el.scrollHeight>el.clientHeight+2),false,'both desktop scales and longest post fit first screen');
+       const [a,b]=await page.locator('.blind-scales fieldset').evaluateAll(els=>els.map(el=>({x:el.getBoundingClientRect().x,y:el.getBoundingClientRect().y})));
+       assert.ok(b.x>a.x&&Math.abs(a.y-b.y)<2);
+      }
+      await page.setViewportSize({width,height});
+     }
+     await page.screenshot({path:path.join(out,topic+'-blind-longest.png')});
+     await text.evaluate((el,value)=>el.textContent=value,original);
+    }
+    await page.locator('input[name="endorsementScore"]').nth(1).check();
+    await page.locator('input[name="argumentQualityScore"]').nth(3).check();
+    await page.getByRole('heading',{name:'内容评价（'+(i+1)+' / 4）',exact:true}).waitFor();
+    await page.locator('input[name="endorsementScore"]').nth(2).check();
+    assert.ok(await page.locator('input[name="argumentQualityScore"]').nth(3).isChecked(),'changing first score preserves second');
     await page.locator('input[name="endorsementScore"]').nth(2).check();await page.locator('input[name="argumentQualityScore"]').nth(3).check();
     await page.getByRole('button',{name:i===3?'继续':'下一条',exact:true}).click();
    }

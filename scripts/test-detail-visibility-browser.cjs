@@ -27,22 +27,26 @@ fs.mkdirSync(out, { recursive: true });
             await p.getByRole('heading',{name:'如何阅读',exact:true}).waitFor();
             assert.equal(await p.getByRole('checkbox').count(),0);
             await p.locator('.tutorial-demo .feed-card.is-expanded').waitFor();
+            await p.waitForFunction(()=>document.querySelector('.tutorial-demo')?.dataset.manual==='true');
+            await p.locator('.tutorial-demo .feed-card').first().locator('.feed-content-button').click();
             await p.getByRole('button',{name:'收起',exact:true}).click();
             assert.equal(await p.locator('.tutorial-demo').getAttribute('data-manual'),'true');
             await p.waitForTimeout(2700);assert.equal(await p.locator('.tutorial-demo .feed-card.is-expanded').count(),0);
             await p.screenshot({path:out+'/tutorial-step1-'+width+'.png'});
             await p.getByRole('button',{name:'下一步',exact:true}).click();
             await p.getByRole('heading',{name:'如何转发与改选',exact:true}).waitFor();
+            await p.waitForFunction(()=>document.querySelector('.tutorial-demo')?.dataset.manual==='true');
+            await p.locator('.tutorial-demo .feed-card').first().getByRole('button',{name:'转发',exact:true}).click();
             await p.getByRole('button',{name:'已转发',exact:true}).click();
             await p.waitForTimeout(2700);assert.equal(await p.getByRole('button',{name:'已转发',exact:true}).count(),0);
             await p.screenshot({path:out+'/tutorial-step2-'+width+'.png'});
             const labels=(await read()).rules.demoLabelSelections;
             await p.getByRole('button',{name:'下一步',exact:true}).click();
-            await p.getByRole('heading',{name:'时间、专注与激励',exact:true}).waitFor();
+            await p.getByRole('heading',{name:'认真阅读并清晰说明理由的参与者，将获得额外红包奖励。',exact:true}).waitFor();
             assert.ok(!(await p.locator('body').innerText()).includes('100'));
             await p.getByRole('button',{name:'上一步',exact:true}).click();
             await p.getByRole('button',{name:'下一步',exact:true}).click();
-            await p.reload();await p.getByRole('heading',{name:'时间、专注与激励',exact:true}).waitFor();
+            await p.reload();await p.getByRole('heading',{name:'认真阅读并清晰说明理由的参与者，将获得额外红包奖励。',exact:true}).waitFor();
             assert.deepEqual((await read()).rules.demoLabelSelections,labels);
             assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
             await p.screenshot({path:out+'/tutorial-step3-'+width+'.png'});
@@ -61,7 +65,8 @@ fs.mkdirSync(out, { recursive: true });
             assert.equal(left.timestamp, opened.timestamp);
             const previewAtOpen = s.reading.postVisibilitySummary[id].totalVisibleMs;
             if (width > 500) {
-                await p.locator('.feed-card').nth(1).locator('.feed-content-button').click();
+                const rightId=(await read()).reading.posts[2].id;
+                await p.locator('.feed-card[data-post-id="'+rightId+'"] .feed-content-button').click();
                 await p.waitForTimeout(1200);
                 assert.equal((await read()).reading.metrics.openDetailIds.length, 2);
             }
@@ -109,10 +114,14 @@ fs.mkdirSync(out, { recursive: true });
             assert.equal(total(await read(), id), afterClose);
             assert.ok((await read()).reading.postVisibilitySummary[id].totalVisibleMs > previewAtOpen);
             await first.locator('.feed-content-button').click();
-            for (let i = 0; i < 3; i++) {
-                await p.locator('.feed-card').nth(i).getByRole('button', { name: '转发', exact: true }).click();
+            const shareIds=(await read()).reading.posts.filter((_,i)=>[0,2,4].includes(i)).map(post=>post.id);
+            for (const shareId of shareIds) {
+                await p.locator('.feed-card[data-post-id="'+shareId+'"]').getByRole('button', { name: '转发', exact: true }).click();
                 await p.getByRole('button', { name: '确认', exact: true }).click();
             }
+            const rightAction=p.locator('.feed-card[data-post-id="'+shareIds[1]+'"]');
+            await rightAction.getByRole('button',{name:'点赞',exact:true}).click();
+            await rightAction.getByRole('button',{name:'已赞',exact:true}).click();
             await first.getByRole('button',{name:'已转发',exact:true}).click();
             await first.locator('.feed-fulltext').scrollIntoViewIfNeeded();
             await p.waitForTimeout(400);
@@ -133,6 +142,10 @@ fs.mkdirSync(out, { recursive: true });
             assert.ok(s.endData.actions.some(a=>a.type==='unshare'&&a.postId===id));
             const intervals = s.endData.readingMetrics.detailIntervals;
             assert.ok(intervals.length >= 4);
+            if(width>500) assert.ok(intervals.some(i=>i.postId===shareIds[1]&&i.durationMs>0),'right half full-text intervals saved');
+            assert.ok(s.endData.actions.some(a=>a.postId===shareIds[1]&&a.type==='share'));
+            assert.ok(s.endData.actions.some(a=>a.postId===shareIds[1]&&a.type==='like'));
+            assert.ok(s.endData.actions.some(a=>a.postId===shareIds[1]&&a.type==='unlike'));
             assert.ok(intervals.some(i => i.postId === id && i.endMs >= s.endData.endTime - 20));
             for (const i of intervals) {
                 assert.equal(i.startMs, i.startedAt);

@@ -114,6 +114,7 @@ export function CompactPostCard({
   onCollapse,
   expanded = false,
   presentation = "inline",
+  read = false,
   onLike,
   onShare,
 }: {
@@ -128,6 +129,7 @@ export function CompactPostCard({
   onCollapse?: () => void;
   expanded?: boolean;
   presentation?: "inline" | "panel";
+  read?: boolean;
   onLike: (e: MouseEvent<HTMLButtonElement>) => void;
   onShare: (e: MouseEvent<HTMLButtonElement>) => void;
 }) {
@@ -140,7 +142,7 @@ export function CompactPostCard({
   return (
     <article
       ref={rootRef}
-      className={`feed-card${!disabled ? " is-interactive" : ""}${expanded ? " is-expanded" : ""}`}
+      className={`feed-card${!disabled ? " is-interactive" : ""}${expanded ? " is-expanded" : ""}${read && !expanded ? " is-read" : ""}`}
       data-post-id={post.id}
       onPointerDown={(event) => {
         gesture.current = {

@@ -17,6 +17,7 @@ import {
   READING_UI_VERSION,
   PANEL_READING_UI_VERSION,
   COVERAGE_RULE,
+  DUAL_ZONE_PACKING_VERSION,
   type ReadingAlert,
 } from "../lib/readingProtocol";
 import {
@@ -28,6 +29,7 @@ import {
 import { getMaterialsForTopic } from "../../../lib/materialsRegistry";
 import { MasonryFeed } from "../../../components/MasonryFeed";
 import { SpanningMasonryFeed } from "../../../components/SpanningMasonryFeed";
+import { DualZoneFeed } from "../../../components/DualZoneFeed";
 import { CompactPostCard } from "../../../components/CompactPostCard";
 import { PostDetail } from "../../../components/PostDetail";
 import { ReadingStatus } from "./ReadingStatus";
@@ -51,6 +53,7 @@ export function ExperimentPage({
   const initial = useRef(initialReading).current,
     posts = initial.posts;
   const spanning = initial.metrics?.version === READING_UI_VERSION;
+  const dualZone = spanning && initial.metrics?.packingVersion === DUAL_ZONE_PACKING_VERSION;
   const inline = initial.metrics?.version !== PANEL_READING_UI_VERSION;
   const alertFlashTarget = inline ? 5 : 2;
   const materials = useMemo(() => getMaterialsForTopic(topic), [topic]);
@@ -601,7 +604,7 @@ export function ExperimentPage({
       <span className="study-meta text-green-700">已发布</span>
     </article>
   ) : null;
-  const Feed = spanning ? SpanningMasonryFeed : MasonryFeed;
+  const Feed = dualZone ? DualZoneFeed : spanning ? SpanningMasonryFeed : MasonryFeed;
   return (
     <div className="study-shell study-screen experiment-shell">
       <ReadingStatus
@@ -674,6 +677,7 @@ export function ExperimentPage({
                   node: (
                     <CompactPostCard
                       post={post}
+                      read={dualZone && tracker.metrics.detailEvents.some((event) => event.postId === post.id && event.type === "close")}
                       preview={tracker.metrics.cards[index].preview}
                       liked={liked(post.id)}
                       shared={shared(post.id)}

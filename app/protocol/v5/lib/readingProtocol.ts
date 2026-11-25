@@ -15,6 +15,7 @@ import type {
 export const PANEL_READING_UI_VERSION = "responsive-masonry-preview-v1";
 export const SINGLE_INLINE_READING_UI_VERSION = "inline-masonry-preview-v1";
 export const READING_UI_VERSION = "spanning-inline-masonry-v1";
+export const DUAL_ZONE_PACKING_VERSION = "dual-zone-grid-v1";
 export const PREVIEW_VERSION = "opening-before-punctuation-20-v1";
 export const COVERAGE_RULE = { minimumRatio: 0.5, continuousMs: 250 } as const;
 const cloneMetrics = (value: ReadingMetrics): ReadingMetrics =>
@@ -119,7 +120,7 @@ export type ReadingMetrics = {
   hiddenAtMs?: number | null;
   detailVisibilityVersion?: typeof DETAIL_VISIBILITY_VERSION;
   unlockShownAtMs?: number | null;
-  packingVersion?: "free-rect-top-first-v1";
+  packingVersion?: "free-rect-top-first-v1" | typeof DUAL_ZONE_PACKING_VERSION;
   labelSelectionVersion?: typeof LABEL_SELECTION_VERSION;
   version:
     | typeof READING_UI_VERSION
@@ -146,7 +147,7 @@ export function newReadingMetrics(
     hiddenAtMs: null,
     detailVisibilityVersion: DETAIL_VISIBILITY_VERSION,
     version: READING_UI_VERSION,
-    packingVersion: "free-rect-top-first-v1",
+    packingVersion: DUAL_ZONE_PACKING_VERSION,
     labelSelectionVersion: LABEL_SELECTION_VERSION,
     coverageRule: { ...COVERAGE_RULE },
     columns: 2,
@@ -197,7 +198,7 @@ export const TUTORIAL_STEPS = [
   },
   {
     id: "step_3",
-    title: "时间、专注与激励",
+    title: "认真阅读并清晰说明理由的参与者，将获得额外红包奖励。",
     text: "完成阅读和转发后可点击底部按钮结束，时间到自动进入后续问题。",
   },
 ] as const;

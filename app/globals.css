@@ -310,6 +310,10 @@ body {
 .reading-feed {
   padding: 0 12px max(12px, env(safe-area-inset-bottom));
 }
+.experiment-shell .reading-feed { scrollbar-gutter: stable; }
+@supports not (scrollbar-gutter: stable) {
+  .experiment-shell .reading-feed { overflow-y: scroll; }
+}
 .reading-scenario {
   margin: 12px 0 14px;
   color: #555;
@@ -732,19 +736,6 @@ body {
 .feed-card.is-expanded .feed-name {
   white-space: normal;
 }
-.tutorial-screen .feed-card {
-  padding: 12px;
-}
-.tutorial-screen .feed-identities {
-  margin-top: 8px;
-  line-height: 1.6;
-}
-.tutorial-screen .feed-content-button {
-  margin-top: 14px;
-}
-.tutorial-screen .feed-actions {
-  margin-top: 8px;
-}
 .tutorial-check-intro {
   line-height: 1.7;
 }
@@ -783,6 +774,33 @@ body {
 }
 .feed-card-sizing .feed-name {
   white-space: nowrap !important;
+}
+.dual-zone-feed {
+  --feed-gap: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--feed-gap);
+  align-items: start;
+  position: relative;
+  overflow-anchor: none;
+}
+.dual-zone-feed[data-columns="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dual-zone-half {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: row dense;
+  align-items: start;
+  gap: var(--feed-gap);
+  position: relative;
+  min-width: 0;
+  --feed-column-width: calc((100% - var(--feed-gap)) / 2);
+}
+.dual-zone-item { position: relative; min-width: 0; transform-origin: top left; }
+.dual-zone-item:has(.is-expanded) { z-index: 1; }
+.dual-zone-feed .feed-card { position: relative; }
+.feed-card.is-read { background: #fafafa; }
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  .dual-zone-feed { --feed-gap: 12px; }
 }
 @media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
   .spanning-feed {
@@ -838,57 +856,104 @@ body {
  .review-posts { grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; }
 }
 
-/* Three short tutorial steps; demo animation never enters the reading tracker. */
+/* Tutorial uses the production cards, packing and status, isolated from research metrics. */
+.tutorial-screen > main { padding-block: 8px; }
+.tutorial-screen > main > .study-title { margin-top: 0; }
+.tutorial-screen > main > .study-copy { margin-top: 8px; }
+.tutorial-practice { margin: 12px auto 0; }
 .tutorial-demo {
   position: relative;
+  overflow: hidden;
+  border: 1px solid #d4d4d4;
+  border-radius: 12px;
+  background: #f5f5f5;
 }
+.tutorial-preview-feed {
+  padding-top: 12px;
+  max-height: var(--tutorial-preview-max-height, min(440px, calc(var(--study-height, 100dvh) - 340px)));
+  min-height: 180px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.tutorial-demo .spanning-feed-item { transition: width 220ms ease, left 220ms ease, top 220ms ease; }
 .tutorial-demo .feed-content {
-  animation: tutorial-reveal 180ms ease-out;
+  animation: tutorial-reveal 220ms ease-out;
+  interpolate-size: allow-keywords;
+  overflow: hidden;
 }
-.tutorial-tap {
+.tutorial-cursor {
   position: absolute;
-  z-index: 2;
-  width: 36px;
-  height: 36px;
-  border: 2px solid #1684e8;
-  border-radius: 50%;
-  background: rgb(0 132 255 / 10%);
+  z-index: 40;
   pointer-events: none;
   opacity: 0;
-  transform: translate(-50%, -50%);
+  transition: left 480ms ease-in-out, top 480ms ease-in-out, opacity 250ms ease;
+  filter: drop-shadow(0 2px 3px rgb(0 80 160 / 25%));
 }
-.tutorial-tap.at-content {
-  left: 50%;
-  top: 112px;
+.tutorial-cursor.is-visible { opacity: 1; }
+.tutorial-click-ripple {
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  left: -16px;
+  top: -16px;
+  border: 2px solid #0084ff;
+  border-radius: 50%;
+  background: rgb(0 132 255 / 14%);
+  animation: tutorial-tap 480ms ease-out both;
 }
-.tutorial-tap.at-share {
-  left: 75%;
-  bottom: 16px;
+.tutorial-demo-caption {
+  min-height: 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  color: #666;
+  font-size: 14px;
 }
-.is-tapping .tutorial-tap {
-  animation: tutorial-tap 625ms ease-out;
-}
+.tutorial-demo-caption button { color: #0875ca; padding: 8px 0 8px 12px; min-height: 40px; }
+.tutorial-demo-caption button:disabled { color: #999; }
+.tutorial-replay { position: absolute; top: 8px; right: 12px; z-index: 41; padding: 6px; color: #0875ca; font-size: 12px; min-height: 32px; }
+.tutorial-replay:disabled { color: #999; }
+.tutorial-status-label { display: block; color: #0875ca; font-size: 12px; line-height: 1.5; }
+.tutorial-focus-notes { margin-top: 12px; font-size: var(--study-body); line-height: 1.6; }
 .tutorial-focus-note {
-  border-radius: 12px;
-  padding: 14px 16px;
+  margin-top: 8px;
+  border-radius: 8px;
+  padding: 8px 12px;
   color: #725315;
   background: #fff7e6;
   border: 1px solid #f4e2b7;
 }
-.tutorial-status-preview {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  padding: 18px 12px;
-  border: 1px solid #e5e5e5;
-  border-radius: 12px;
-  background: #fafafa;
+.reading-count-change { animation: reading-count-change 260ms ease-out; }
+.time-meter span { transition: width 100ms linear; }
+@keyframes reading-count-change {
+  45% { transform: translateY(-3px); color: #0084ff; }
 }
-.tutorial-status-preview > span {
-  padding: 8px 12px;
-  border: 2px solid #63a5df;
-  border-radius: 999px;
-  font-size: 14px;
+
+/* Both judgments remain editable on the same screen, with an explicit next button. */
+.blind-screen .study-header { padding-top: max(14px, env(safe-area-inset-top)); padding-bottom: 12px; }
+.blind-screen .study-header p { margin-top: 6px; }
+.blind-body { padding-block: 12px; }
+.blind-post { padding: 12px; }
+.blind-post > p { margin-top: 10px; line-height: 1.6; }
+.blind-scales { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; margin-top: 16px; }
+.blind-scales legend { line-height: 1.5; font-weight: 600; }
+.blind-scales .questionnaire-options { margin-top: 10px; gap: 6px; }
+.blind-scales .reason-choice { min-height: 44px; padding: 7px 10px; gap: 10px; line-height: 1.45; align-items: center; }
+.blind-scales input { margin-top: 0; }
+@media (min-width: 768px) {
+  .blind-scales { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 14px; }
+  .blind-scales legend { min-height: 3em; }
+  .blind-scales .questionnaire-options { gap: 5px; margin-top: 6px; }
+  .blind-scales .reason-choice { min-height: 40px; padding-block: 6px; }
+  .blind-screen .study-footer { padding-block: 10px; }
+}
+@media (min-width: 1200px) {
+  .blind-scales legend { min-height: 1.5em; }
+}
+@media (max-height: 600px) {
+  .tutorial-preview-feed { max-height: 230px; }
 }
 .reading-return-notice {
   flex: none;
@@ -904,8 +969,8 @@ body {
   to { opacity: 0; scale: 1.3; }
 }
 @keyframes tutorial-reveal {
-  from { opacity: 0.6; }
-  to { opacity: 1; }
+  from { height: 0; opacity: 0.6; transform: translateY(4px); }
+  to { height: auto; opacity: 1; transform: translateY(0); }
 }
 /* A CSS delay keeps the retry available even when boot JavaScript never runs. */
 .page-load-help {
@@ -917,7 +982,9 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .tutorial-demo .feed-content,
-  .is-tapping .tutorial-tap {
+  .tutorial-click-ripple,
+  .reading-count-change {
     animation: none;
   }
+  .tutorial-cursor, .tutorial-demo .spanning-feed-item, .time-meter span { transition: none; }
 }
