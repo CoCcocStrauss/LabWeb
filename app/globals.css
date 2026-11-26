@@ -1000,3 +1000,11 @@ body {
   }
   .tutorial-cursor, .tutorial-demo .spanning-feed-item, .time-meter span { transition: none; }
 }
+
+/* A short overview introduces the two parts before the existing tutorial. */
+.overview-steps { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; margin-top: 28px; }
+.overview-step { padding: 22px; border: 1px solid #e5e5e5; border-radius: 12px; }
+.overview-step-heading { display: flex; align-items: baseline; gap: 10px; }
+.overview-step-number { color: #0875ca; font-weight: 600; }
+.tutorial-banner { color: #555; font-weight: 600; }
+@media (min-width: 768px) { .overview-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

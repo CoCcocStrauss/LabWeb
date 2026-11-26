@@ -172,7 +172,9 @@ export function newReadingMetrics(
   };
 }
 export type RulesResponse = {
-  presentationVersion?: typeof TUTORIAL_VERSION;
+  presentationVersion?: typeof TUTORIAL_VERSION | typeof LEGACY_TUTORIAL_VERSION;
+  overviewEnteredAt?: number | null;
+  overviewCompletedAt?: number | null;
   activeStep?: TutorialStepId;
   demoLabelSelectionVersion?: typeof LABEL_SELECTION_VERSION;
   demoLabelSelections?: Record<string, DisplayedLabelSelection>;
@@ -187,22 +189,23 @@ export type RulesResponse = {
     demoPostId?: string | null;
   }[];
 };
-export const TUTORIAL_VERSION = "three-step-demo-v1";
+export const LEGACY_TUTORIAL_VERSION = "three-step-demo-v1";
+export const TUTORIAL_VERSION = "three-step-overview-v2";
 export const TUTORIAL_STEPS = [
   {
     id: "step_1",
-    title: "如何阅读",
-    text: "点击卡片可展开全文，再点一次收起。不需要看完所有帖子，按自己的节奏浏览即可。",
+    title: "点击卡片，展开查看完整帖子",
+    text: "画面上默认只显示开头一小段，点击任意卡片就能展开看全文；点开另一张时，上一张会自动收起。",
   },
   {
     id: "step_2",
-    title: "如何转发与改选",
-    text: "请至少转发 2 条最认同的内容（可多选，期间可随时取消或更改）。点赞不计入转发数。",
+    title: "点击「转发」按钮，至少转发 2 条",
+    text: "再次点击可取消；点赞不计入转发数。",
   },
   {
     id: "step_3",
-    title: "认真阅读并清晰说明理由的参与者，将获得额外红包奖励。",
-    text: "完成阅读和转发后可点击底部按钮结束，时间到自动进入后续问题。",
+    title: "留意剩余时间，浏览期间请勿切屏",
+    text: "时间到后会自动进入后续问题。",
   },
 ] as const;
 export type TutorialStepId = (typeof TUTORIAL_STEPS)[number]["id"];
@@ -224,6 +227,8 @@ export const newRules = (
   existingDemoLabels?: Record<string, DisplayedLabelSelection>,
 ): RulesResponse => ({
   presentationVersion: TUTORIAL_VERSION,
+  overviewEnteredAt: null,
+  overviewCompletedAt: null,
   activeStep: "step_1",
   startedAt: now,
   completedAt: null,
@@ -237,7 +242,7 @@ export const newRules = (
     id,
     checked: false,
     changedAt: null,
-    enteredAt: i === 0 ? now : null,
+    enteredAt: null,
     completedAt: null,
     demoPostId: i < 2 ? String(TUTORIAL_POSTS[0].id) : null,
   })),

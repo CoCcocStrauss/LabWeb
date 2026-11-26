@@ -10,7 +10,8 @@ const out=path.join(require('node:os').tmpdir(),'labweb-comparison-edge-20261126
   await page.goto('http://127.0.0.1:3210/?uid='+uid+'&n=8&topic=ai');
   await page.getByRole('button',{name:'进入实验',exact:true}).click();
   for(let i=0;i<5;i++){await page.getByRole('radio').nth(2).check();await page.getByRole('button',{name:'下一步',exact:true}).click();}
-  for(let i=0;i<3;i++)await page.getByRole('button',{name:'下一步',exact:true}).click();
+  await page.getByRole('button',{name:'开始操作教程',exact:true}).click();
+  for(let i=0;i<3;i++){await page.waitForFunction(()=>document.querySelector('.tutorial-demo')?.dataset.manual==='true');await page.getByRole('button',{name:'下一步',exact:true}).click();}
   await page.getByRole('button',{name:/^A\./}).click();await page.getByRole('button',{name:'开始实验',exact:true}).click();await page.locator('.feed-card').nth(7).waitFor();
   if(k){await page.locator('.feed-card').first().getByRole('button',{name:'转发',exact:true}).click();await page.getByRole('button',{name:'确认',exact:true}).click();}
   await page.evaluate(key=>{const s=JSON.parse(localStorage.getItem(key)),real=Date.now()-Number(sessionStorage.getItem('qa_clock_offset')||0);sessionStorage.setItem('qa_clock_offset',String(s.reading.startTime+150100-real));},key);

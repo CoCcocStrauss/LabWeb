@@ -244,6 +244,7 @@ function validInterruptions(
         "entry",
         "pretest",
         "pretest_save",
+        "overview",
         "tutorial",
         "comprehension",
         "ready",

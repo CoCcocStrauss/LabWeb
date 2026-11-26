@@ -16,15 +16,26 @@ fs.mkdirSync(out, { recursive: true });
     const real=Date.now;Date.now=()=>real()+Number(sessionStorage.getItem('qa_clock_offset')||0);
     Object.defineProperty(navigator.mediaDevices,'getUserMedia',{value:()=>Promise.reject(new DOMException('QA denied','NotAllowedError'))});
    });
-   await page.goto(`http://127.0.0.1:3210/?uid=${uid}&n=24&topic=${topic}`);
+   await page.goto(`http://127.0.0.1:3210/?uid=${uid}&n=48&topic=${topic}`);
    await page.getByRole('button',{name:'进入实验',exact:true}).click();
    const core=topic==='fertility'?'如果每个孩子从出生起每月领 800 元育儿补贴、直到 18 岁，你认为中国的生育率会明显提升吗？':'如果以后医院普遍用 AI 帮医生看病，你认为普通人看病被误诊、漏诊的情况会明显减少吗？';
    await page.getByText(core,{exact:true}).waitFor();
    assert.ok(!/2000|工作机会|就业/.test(await page.locator('body').innerText()));
    await page.screenshot({path:path.join(out,`${topic}-pretest.png`)});
    for(let i=0;i<5;i++){await page.getByRole('radio').nth(2).check();await page.getByRole('button',{name:'下一步',exact:true}).click();}
-   for(const [i,heading] of ['如何阅读','如何转发与改选','认真阅读并清晰说明理由的参与者，将获得额外红包奖励。'].entries()){
+
+   await page.getByRole('heading',{name:'接下来的实验流程',exact:true}).waitFor();
+   assert.equal(await page.locator('.overview-step').count(),2);
+   const overviewBefore=await page.evaluate(k=>JSON.parse(localStorage.getItem(k)).rules,key);
+   assert.ok(overviewBefore.overviewEnteredAt);assert.equal(overviewBefore.overviewCompletedAt,null);
+   await page.reload();await page.getByRole('heading',{name:'接下来的实验流程',exact:true}).waitFor();
+   assert.equal((await page.evaluate(k=>JSON.parse(localStorage.getItem(k)).rules,key)).overviewEnteredAt,overviewBefore.overviewEnteredAt);
+   await page.screenshot({path:path.join(out,topic+'-overview.png')});
+   await page.getByRole('button',{name:'开始操作教程',exact:true}).click();
+   for(const [i,heading] of ['点击卡片，展开查看完整帖子','点击「转发」按钮，至少转发 2 条','留意剩余时间，浏览期间请勿切屏'].entries()){
+
     await page.getByRole('heading',{name:heading,exact:true}).waitFor();
+    await page.getByText('操作教程 · '+(i+1)+' / 3',{exact:true}).waitFor();
     const demo=page.locator('.tutorial-demo'), cards=demo.locator('.feed-card');
     assert.equal(await cards.count(),8);
     assert.equal(await demo.locator('.dual-zone-feed').getAttribute('data-columns'),width>=1024?'4':'2');
@@ -35,10 +46,12 @@ fs.mkdirSync(out, { recursive: true });
      await page.screenshot({path:path.join(out,topic+'-tutorial-auto-'+(i+1)+'.png')});
      if(i===1) await demo.getByText('已转发 1 条（至少 2 条）',{exact:true}).waitFor();
      await page.waitForFunction(()=>document.querySelector('.tutorial-demo')?.dataset.manual==='true');
-     assert.equal(await demo.locator('.is-expanded').count(),0);
+     assert.ok(await page.getByRole('button',{name:'下一步',exact:true}).isEnabled(),'demo completion unlocks next without hands-on');
+     assert.equal(await demo.locator('.is-expanded').count(),i===0?1:0);
      await demo.getByText('已转发 0 条（至少 2 条）',{exact:true}).waitFor();
      await page.waitForTimeout(1000);
-     assert.equal(await demo.locator('.is-expanded').count(),0,'automatic round does not repeat');
+     assert.equal(await demo.locator('.is-expanded').count(),i===0?1:0,'automatic round does not repeat');
+     if(i===0){assert.equal(await demo.locator('.is-expanded').getAttribute('data-post-id'),width>=1024?'practice-c':'practice-b');await demo.getByRole('button',{name:'收起',exact:true}).click();}
      if(width>=768){
       const replayBox=await page.getByRole('button',{name:'重播演示',exact:true}).boundingBox();
       assert.ok(replayBox.y+replayBox.height<=footer.y,'replay control remains above the footer');
@@ -61,7 +74,7 @@ fs.mkdirSync(out, { recursive: true });
       await demo.getByText('已转发 0 条（至少 2 条）',{exact:true}).waitFor();
      }
     }else{
-     assert.equal(await page.getByText(heading,{exact:true}).count(),1,'reward sentence appears only as the heading');
+     assert.equal(await page.getByText(heading,{exact:true}).count(),1);
      await cards.first().locator('.feed-content-button').click();
      await demo.locator('.feed-card.is-expanded').waitFor();
      await cards.first().getByRole('button',{name:'收起',exact:true}).click();
@@ -81,7 +94,7 @@ fs.mkdirSync(out, { recursive: true });
    await page.getByRole('button',{name:/^A\./}).click();
    await page.getByText('点击下方按钮后开始 150 秒阅读。',{exact:true}).waitFor();
    await page.getByRole('button',{name:'开始实验',exact:true}).click();
-   await page.locator('.feed-card').nth(23).waitFor();
+   await page.locator('.feed-card').nth(47).waitFor();
    await page.getByText(topic==='ai'?'AI 帮医生看病':'育儿补贴',{exact:true}).waitFor();
    const labelSelections=await page.evaluate(k=>JSON.parse(localStorage.getItem(k)).reading.posts.map(p=>[p.id,p.displayedLabelType,p.displayedLabelText]),key);
    const data=JSON.parse(fs.readFileSync(path.join(__dirname,'../app/data/materials',topic+'.json'))),posts=new Map(Object.values(data.materials).flat().map(p=>[p.id,p]));
@@ -101,7 +114,7 @@ fs.mkdirSync(out, { recursive: true });
    const sharedIds=await page.evaluate(k=>JSON.parse(localStorage.getItem(k)).reading.actions.filter(a=>a.type==='share').map(a=>a.postId),key);
    const likedId=labelSelections.find(([id])=>!sharedIds.includes(id))[0];
    await page.locator('.feed-card[data-post-id="'+likedId+'"]').getByRole('button',{name:'点赞',exact:true}).click();
-   await page.reload();await page.locator('.feed-card').nth(23).waitFor();
+   await page.reload();await page.locator('.feed-card').nth(47).waitFor();
    assert.deepEqual(await page.evaluate(k=>JSON.parse(localStorage.getItem(k)).reading.posts.map(p=>[p.id,p.displayedLabelType,p.displayedLabelText]),key),labelSelections);
    await page.evaluate(k=>{const s=JSON.parse(localStorage.getItem(k)),real=Date.now()-Number(sessionStorage.getItem('qa_clock_offset')||0);sessionStorage.setItem('qa_clock_offset',String(s.reading.startTime+100100-real));},key);
    await page.getByRole('button',{name:'完成浏览',exact:true}).click();
@@ -170,13 +183,17 @@ await page.locator('#explanation-text').waitFor();assert.ok(!/2000|工作机会|
    await page.getByRole('radio').nth(1).check();await page.getByRole('button',{name:'提交',exact:true}).click();
    await page.getByRole('heading',{name:'本部分已完成',exact:true}).waitFor();
    const saved=await(await fetch('http://127.0.0.1:3211/_qa/state?uid='+uid)).json();
+   assert.equal(saved.session.rules.presentationVersion,'three-step-overview-v2');
+   assert.equal(saved.session.rules.overviewEnteredAt,overviewBefore.overviewEnteredAt);
+   assert.ok(saved.session.rules.overviewCompletedAt>=saved.session.rules.overviewEnteredAt);
+   assert.ok(saved.session.rules.items[0].enteredAt>=saved.session.rules.overviewCompletedAt);
    assert.equal(saved.session.questionnaire_version,'2026-11-25-v5');assert.equal(saved.session.topic_key,topic);assert.ok(saved.session.completed_at);
    assert.equal(saved.session.blinded_post_evaluations.answers.length,4);assert.equal(saved.counts.actions,4);
    const comparison=saved.session.posttest.bestWorstComparison;assert.equal(comparison.candidateIds.length,5);assert.ok(Object.values(comparison.candidateSources).includes('liked_only'));assert.ok(comparison.durationMs>0);assert.ok(comparison.answeredAt);
    assert.ok(saved.session.reading_metrics.detailIntervals.some(v=>v.postId===firstId&&v.durationMs>0));
    assert.deepEqual(errors,[]);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
    fs.writeFileSync(path.join(out,`${topic}-result.json`),JSON.stringify({uid,passed:true,version:saved.session.questionnaire_version,counts:saved.counts,labels:labelSelections},null,2));
-   console.log(`PASS ${topic}: n=24, ${width}px, complete saved with v5 labels/reading/actions/blind data`);
+   console.log(`PASS ${topic}: n=48, ${width}px, complete saved with v5 labels/reading/actions/blind data`);
    await context.close();
   }
  }catch(e){if(page){await page.screenshot({path:path.join(out,'failure.png')}).catch(()=>{});fs.writeFileSync(path.join(out,'failure.txt'),await page.locator('body').innerText().catch(()=>''));}throw e;}

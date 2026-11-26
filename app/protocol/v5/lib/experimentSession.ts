@@ -77,6 +77,7 @@ export type ReadingEndData = Pick<
 export type Phase =
   | "entry"
   | "pretest"
+  | "overview"
   | "pretest_save"
   | "tutorial"
   | "comprehension"
@@ -240,6 +241,7 @@ export function loadSession(uid: string): ExperimentSession | null {
       "entry",
       "pretest",
       "pretest_save",
+      "overview",
       "tutorial",
       "comprehension",
       "ready",

@@ -24,7 +24,8 @@ const out=path.join(require('node:os').tmpdir(),'labweb-dual-zone-20261126');fs.
    await page.goto('http://127.0.0.1:3210/?uid='+uid+'&n='+n+'&topic=fertility');
    await page.getByRole('button',{name:'进入实验',exact:true}).click();
    for(let i=0;i<5;i++){await page.getByRole('radio').nth(2).check();await page.getByRole('button',{name:'下一步',exact:true}).click();}
-   for(let i=0;i<3;i++)await page.getByRole('button',{name:'下一步',exact:true}).click();
+   await page.getByRole('button',{name:'开始操作教程',exact:true}).click();
+  for(let i=0;i<3;i++){await page.waitForFunction(()=>document.querySelector('.tutorial-demo')?.dataset.manual==='true');await page.getByRole('button',{name:'下一步',exact:true}).click();}
    await page.getByRole('button',{name:/^A\./}).click();await page.getByText('点击下方按钮后开始 150 秒阅读。',{exact:true}).waitFor();await page.getByRole('button',{name:'开始实验',exact:true}).click();
    const grid=page.locator('main.reading-feed .dual-zone-feed');await grid.waitFor();await page.waitForTimeout(400);
    assert.equal(await grid.getAttribute('data-columns'),'4');

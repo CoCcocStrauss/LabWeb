@@ -51,6 +51,9 @@ test('三步教程使用交接原文，无复选框，步骤及标签选择刷�
 
 test('新三步时间戳校验与旧四条规则均可提交，漏步骤及倒置时间被拒绝',()=>{
  const f=blindFixture(),legacy=load('app/protocol/v5/lib/readingProtocol.ts');assert.ok(v.validSubmission(f));assert.equal(f.rules.items.length,3);
+ for(const mutate of [g=>g.rules.overviewEnteredAt=null,g=>g.rules.overviewCompletedAt=null,g=>g.rules.overviewCompletedAt=g.rules.items[0].enteredAt+1,g=>g.rules.overviewEnteredAt=g.rules.startedAt-1]){const g=structuredClone(f);mutate(g);assert.equal(v.validSubmission(g),false);}
+ const old=structuredClone(f);old.rules.presentationVersion=legacy.LEGACY_TUTORIAL_VERSION;delete old.rules.overviewEnteredAt;delete old.rules.overviewCompletedAt;assert.ok(v.validSubmission(old),'in-flight v1 tutorial still saves');
+
  for(const mutate of [g=>g.rules.items.pop(),g=>g.rules.items[1].enteredAt=null,g=>g.rules.items[2].completedAt=g.rules.startedAt,g=>g.rules.activeStep='step_1']){const g=structuredClone(f);mutate(g);assert.equal(v.validSubmission(g),false);}
  f.rules=legacy.newRules(f.pretest.completedAt+1);delete f.rules.presentationVersion;delete f.rules.activeStep;f.rules.items=legacy.RULES.map(([id],i)=>({id,checked:true,changedAt:f.rules.startedAt+i+1}));f.rules.completedAt=f.rules.startedAt+10;assert.ok(v.validSubmission(f));
 });

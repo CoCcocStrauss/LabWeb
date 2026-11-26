@@ -1,5 +1,5 @@
 "use client";
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   TUTORIAL_STEPS,
   enterTutorialStep,
@@ -26,7 +26,10 @@ export function TutorialPage({
     TUTORIAL_STEPS.findIndex((s) => s.id === response.activeStep),
   );
   const step = TUTORIAL_STEPS[stepIndex];
+  const [demoState, setDemoState] = useState({ step: response.activeStep, running: stepIndex < 2 });
+  const running = stepIndex < 2 && (demoState.step !== step.id || demoState.running);
   const next = () => {
+    if (!canContinue || running) return;
     const time = Date.now();
     let updated = completeTutorialStep(response, step.id, time);
     if (stepIndex < 2)
@@ -36,10 +39,8 @@ export function TutorialPage({
   };
   return (
     <div className="study-shell study-screen tutorial-screen">
+      <header className="study-header study-pad border-b tutorial-banner" aria-label="步骤进度">操作教程 · {stepIndex + 1} / 3</header>
       <main className="study-scroll study-pad py-5" key={step.id}>
-        <p className="study-meta" aria-label="步骤进度">
-          {stepIndex + 1} / 3
-        </p>
         <h1 className="study-title mt-1">{step.title}</h1>
         <p className="study-copy mt-3">{step.text}</p>
         {stepIndex === 2 ? (
@@ -47,7 +48,7 @@ export function TutorialPage({
             <p className="tutorial-focus-note">请勿切屏或离开页面，频繁离开可能导致无法通过审核。</p>
           </div>
         ) : null}
-        <TutorialPreview key={step.id} stepIndex={stepIndex} selections={response.demoLabelSelections} />
+        <TutorialPreview key={step.id} stepIndex={stepIndex} onRunningChange={(running) => setDemoState({ step: step.id, running })} selections={response.demoLabelSelections} />
       </main>
       <footer className="study-footer study-pad border-t border-neutral-200">
         {saveStatus}
@@ -65,7 +66,7 @@ export function TutorialPage({
           ) : null}
           <button
             type="button"
-            disabled={!canContinue}
+            disabled={!canContinue || running}
             onClick={next}
             className="study-control w-full rounded-full bg-[#0084ff] px-4 py-3 text-white disabled:bg-neutral-200 disabled:text-neutral-400"
           >

@@ -27,10 +27,13 @@ const POSTS = [
     content: "附近的小菜市场值得逛一逛。看看当季的水果，和摊主聊两句，再决定今天晚饭做什么。" },
 ];
 
-export function TutorialPreview({ stepIndex, selections }: {
+export function TutorialPreview({ stepIndex, selections, onRunningChange }: {
   stepIndex: number;
+  onRunningChange?: (running: boolean) => void;
   selections: RulesResponse["demoLabelSelections"];
 }) {
+  const runningCallback = useRef(onRunningChange);
+  runningCallback.current = onRunningChange;
   const [replay, setReplay] = useState(0);
   const [running, setRunning] = useState(stepIndex < 2);
   const [expanded, setExpanded] = useState<string[]>([]);
@@ -78,39 +81,46 @@ export function TutorialPreview({ stepIndex, selections }: {
   useEffect(() => {
     if (stepIndex === 2) return;
     setRunning(true);
+    runningCallback.current?.(true);
     setExpanded([]);
     setShared([]);
     setLiked([]);
     setRead([]);
     if (viewport.current) viewport.current.scrollTop = 0;
     setCursor({ x: 16, y: 24, visible: true, ripple: 0 });
-    const target = () => root.current?.querySelector<HTMLElement>(
-      stepIndex === 1
-        ? '.feed-card > .feed-actions button:last-child'
-        : '.feed-card > .feed-content-button, .feed-card > .feed-content',
+    const secondId = () => root.current?.querySelector('.dual-zone-feed[data-columns="4"]') ? "practice-c" : "practice-b";
+    const target = (second = false) => root.current?.querySelector<HTMLElement>(
+      stepIndex === 1 ? '.feed-card > .feed-actions button:last-child'
+        : `[data-post-id="${second ? secondId() : POSTS[0].id}"] .feed-content-button`,
     );
-    const move = () => {
-      const el = target(), box = root.current?.getBoundingClientRect();
+    const move = (second = false) => {
+      const el = target(second), box = root.current?.getBoundingClientRect();
       if (!el || !box) return;
+      // Keep the next target inside the preview, including two-column touch tablets.
+      const scroller = viewport.current;
+      if (scroller) {
+        const bounds = scroller.getBoundingClientRect(), rect = el.getBoundingClientRect();
+        if (rect.top < bounds.top + 8) scroller.scrollTop -= bounds.top + 8 - rect.top;
+        else if (rect.bottom > bounds.bottom - 8) scroller.scrollTop += rect.bottom - bounds.bottom + 8;
+      }
       const rect = el.getBoundingClientRect();
       setCursor((old) => ({ ...old,
-        x: rect.left - box.left + (stepIndex === 1 ? rect.width / 2 : Math.min(60, rect.width / 2)),
+        x: rect.left - box.left + Math.min(60, rect.width / 2),
         y: rect.top - box.top + Math.min(20, rect.height / 2),
       }));
     };
-    const tap = () => {
-      move();
+    const tap = (second = false) => {
+      move(second);
       setCursor((old) => ({ ...old, ripple: old.ripple + 1 }));
-      target()?.click();
+      target(second)?.click();
     };
-    // A single round: move, tap, allow 1.2s of full-text reading, tap, fade.
     const timers = [
-      setTimeout(move, 180),
-      setTimeout(tap, 850),
-      setTimeout(move, 2050),
-      setTimeout(tap, 2300),
-      setTimeout(() => setCursor((old) => ({ ...old, visible: false })), 2700),
-      setTimeout(() => setRunning(false), 3000),
+      setTimeout(() => move(), 180),
+      setTimeout(() => tap(), 850),
+      setTimeout(() => move(true), 2050),
+      setTimeout(() => tap(true), 2300),
+      setTimeout(() => setCursor((old) => ({ ...old, visible: false })), 3100),
+      setTimeout(() => { setRunning(false); runningCallback.current?.(false); }, 3400),
     ];
     return () => timers.forEach(clearTimeout);
   }, [stepIndex, replay]);
@@ -155,7 +165,7 @@ export function TutorialPreview({ stepIndex, selections }: {
         </div> : null}
       </div>
       <div className="tutorial-demo-caption">
-        <span role="status">{running ? "蓝色光标正在演示" : "现在你可以自由点击卡片试试看"}</span>
+        <span role="status">{running ? "正在演示，请稍候…" : "现在你可以自由点击卡片试试看"}</span>
       </div>
     </section>
   );

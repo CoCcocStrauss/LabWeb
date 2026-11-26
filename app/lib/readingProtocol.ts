@@ -142,6 +142,8 @@ export function newReadingMetrics(
   };
 }
 export type RulesResponse = {
+  overviewEnteredAt?: number | null;
+  overviewCompletedAt?: number | null;
   demoLabelSelectionVersion?: typeof LABEL_SELECTION_VERSION;
   demoLabelSelections?: Record<string, DisplayedLabelSelection>;
   startedAt: number;

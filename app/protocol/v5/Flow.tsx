@@ -1,6 +1,7 @@
 "use client";
 import { newBlind } from "./lib/blinded";
 import { BlindPage } from "./components/BlindPage";
+import { OverviewPage } from "./components/OverviewPage";
 import { BestWorstPage } from "./components/BestWorstPage";
 import { newComparison } from "./lib/bestWorstComparison";
 
@@ -38,7 +39,7 @@ import { createRecognition, newExplanation, newReasons } from "./lib/posttest";
 import {
   newReadingMetrics,
   newRules,
-  TUTORIAL_VERSION,
+  enterTutorialStep,
   type MicrophonePermission,
 } from "./lib/readingProtocol";
 import { getMaterialsForTopic } from "../../lib/materialsRegistry";
@@ -70,7 +71,7 @@ const ComprehensionPage = dynamic(
   { ssr: false, loading: LoadingScreen },
 );
 const ReadyPage = dynamic(
-  () => import("../../components/ReadyPage").then((m) => m.ReadyPage),
+  () => import("./components/ReadyPage").then((m) => m.ReadyPage),
   { ssr: false, loading: LoadingScreen },
 );
 const RecognitionPage = dynamic(
@@ -170,12 +171,12 @@ function SessionFlow({
           type: "reload",
           timestamp: Date.now(),
         });
-      if (
-        ["pretest_save", "tutorial"].includes(initial.phase) &&
-        (initial.rules.presentationVersion !== TUTORIAL_VERSION ||
-          initial.rules.startedAt < initial.pretest.completedAt!)
-      )
-        initial.rules = newRules(Date.now(), initial.rules.demoLabelSelections);
+      // Preserve in-flight three-step tutorials. Older checkbox drafts start the new introduction.
+      if (initial.phase === "tutorial" && !initial.rules.presentationVersion) initial.phase = "pretest_save";
+      if (["pretest_save", "overview"].includes(initial.phase) && !initial.rules.overviewEnteredAt) {
+        const now = Date.now();
+        initial.rules = { ...newRules(now, initial.rules.demoLabelSelections), overviewEnteredAt: now };
+      }
       saveSession(initial);
       sessionRef.current = initial;
       setSession(initial);
@@ -375,7 +376,7 @@ function SessionFlow({
               ...s,
               pretest,
               rules: done
-                ? newRules(Date.now(), s.rules.demoLabelSelections)
+                ? (() => { const now = Date.now(); return { ...newRules(now, s.rules.demoLabelSelections), overviewEnteredAt: now }; })()
                 : s.rules,
               phase: done ? "pretest_save" : "pretest",
             }))
@@ -384,38 +385,27 @@ function SessionFlow({
       );
       break;
     case "pretest_save":
+    case "overview":
+      content = <OverviewPage
+        canContinue={session.phase === "overview"}
+        saveStatus={session.phase === "pretest_save" ? <PretestSync input={{
+          uid: session.uid, sessionId: session.sessionId, sessionSecret: session.sessionSecret,
+          conditionN: session.conditionN, topicKey: session.topicKey,
+          questionnaireVersion: session.questionnaireVersion, pretest: session.pretest,
+          microphonePermission: session.microphonePermission,
+        }} onSaved={() => update((s) => ({ ...s, phase: "overview" }))} /> : null}
+        onContinue={() => update((s) => {
+          if (s.phase !== "overview") return s;
+          const now = Date.now();
+          return { ...s, rules: enterTutorialStep({ ...s.rules, overviewCompletedAt: s.rules.overviewCompletedAt ?? now }, "step_1", now), phase: "tutorial" };
+        })}
+      />;
+      break;
     case "tutorial":
-      content = (
-        <TutorialPage
-          canContinue={session.phase === "tutorial"}
-          saveStatus={
-            session.phase === "pretest_save" ? (
-              <PretestSync
-                input={{
-                  uid: session.uid,
-                  sessionId: session.sessionId,
-                  sessionSecret: session.sessionSecret,
-                  conditionN: session.conditionN,
-                  topicKey: session.topicKey,
-                  questionnaireVersion: session.questionnaireVersion,
-                  pretest: session.pretest,
-                  microphonePermission: session.microphonePermission,
-                }}
-                onSaved={() => update((s) => ({ ...s, phase: "tutorial" }))}
-              />
-            ) : null
-          }
-          response={session.rules}
-          onChange={(rules) => update((s) => ({ ...s, rules }))}
-          onStart={() =>
-            update((s) => ({
-              ...s,
-              rules: { ...s.rules, completedAt: Date.now() },
-              phase: "comprehension",
-            }))
-          }
-        />
-      );
+      content = <TutorialPage response={session.rules}
+        onChange={(rules) => update((s) => ({ ...s, rules }))}
+        onStart={() => update((s) => ({ ...s, rules: { ...s.rules, completedAt: Date.now() }, phase: "comprehension" }))}
+      />;
       break;
     case "comprehension":
       content = (

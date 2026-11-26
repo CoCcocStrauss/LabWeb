@@ -13,6 +13,7 @@ import {
   COVERAGE_RULE,
   DETAIL_VISIBILITY_VERSION,
   TUTORIAL_VERSION,
+  LEGACY_TUTORIAL_VERSION,
   TUTORIAL_STEPS,
   ATTENTION_VERSION,
   SINGLE_OPEN_COMPARISON_VERSION,
@@ -46,6 +47,7 @@ export function validReadingProtocol(
   const b = raw as SubmitExperimentDataInput,
     r = b.rules as RulesResponse,
     m = b.readingMetrics as ReadingMetrics;
+  const threeStep = [TUTORIAL_VERSION, LEGACY_TUTORIAL_VERSION].includes(r?.presentationVersion as typeof TUTORIAL_VERSION);
   if (m?.interactionVersion !== undefined && m.interactionVersion !== SINGLE_OPEN_COMPARISON_VERSION) return false;
   if (
     !obj(r) ||
@@ -56,13 +58,13 @@ export function validReadingProtocol(
     r.completedAt > b.comprehension[0].timestamp ||
     !Array.isArray(r.items) ||
     (r.presentationVersion !== undefined &&
-      r.presentationVersion !== TUTORIAL_VERSION) ||
+      !threeStep) ||
     r.items.length !==
-      (r.presentationVersion === TUTORIAL_VERSION ? TUTORIAL_STEPS.length : RULES.length) ||
+      (threeStep ? TUTORIAL_STEPS.length : RULES.length) ||
     r.items.some(
       (v, i) =>
         !obj(v) ||
-        v.id !== (r.presentationVersion === TUTORIAL_VERSION ? TUTORIAL_STEPS[i].id : RULES[i][0]) ||
+        v.id !== (threeStep ? TUTORIAL_STEPS[i].id : RULES[i][0]) ||
         v.checked !== true ||
         !ts(v.changedAt) ||
         v.changedAt < r.startedAt ||
@@ -70,9 +72,15 @@ export function validReadingProtocol(
     )
   )
     return false;
-  if (r.presentationVersion === TUTORIAL_VERSION) {
+  if (threeStep) {
     if (r.activeStep !== "step_3") return false;
     let previous = r.startedAt;
+    if (r.presentationVersion === TUTORIAL_VERSION) {
+      if (!ts(r.overviewEnteredAt) || !ts(r.overviewCompletedAt) ||
+        r.overviewEnteredAt < r.startedAt || r.overviewCompletedAt < r.overviewEnteredAt ||
+        r.overviewCompletedAt > r.completedAt!) return false;
+      previous = r.overviewCompletedAt;
+    }
     for (let i = 0; i < r.items.length; i++) {
       const item = r.items[i];
       if (
