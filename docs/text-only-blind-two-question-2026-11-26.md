@@ -1,4 +1,4 @@
-# 仅正文盲评与两道比较题（2026-11-26，待发布）
+# 仅正文盲评与两道比较题（2026-11-26，已发布）
 
 依据用户最新反馈，覆盖上一版“盲评保留头像昵称”和“同卡两个选择按钮”的呈现方式。
 
@@ -11,4 +11,11 @@
 
 测试脚本更新：test-materials-browser.cjs、test-comparison-browser.cjs；相同新交互同步进阅读时长回归脚本test-detail-visibility-browser.cjs。截图与结果在系统临时目录labweb-materials-20261125和labweb-comparison-edge-20261126。仅文字路径和测试时钟，不代表真人录音重测。
 
-待GitHub/Netlify更新后，再用新test_ UID核对正式站。
+应用提交500e269已推送GitHub main，Netlify自动部署已在https://myexperiment.cn生效。
+
+正式站桌面与手机完整验证通过：四帖逐张检查可见文字严格等于正文，无头像昵称；两道比较题的5/4条选项、动态排除、改选清空冲突、真实刷新恢复及手动继续均正常。Supabase完成状态与比较JSON保存通过。
+
+- fertility：test_materials_live_fertility_1795691074927，新测试会话完整保存并回读通过。
+- ai：test_materials_live_ai_1795691126435，新测试会话完整保存并回读通过。
+
+正式站证据位于系统临时目录labweb-two-question-live-20261126；仅操作这些新test_ UID，无历史数据修改。无需SQL。48条人工QA：/?uid=test_textonly_fertility_48_01&n=48&topic=fertility；/?uid=test_textonly_ai_48_01&n=48&topic=ai。
