@@ -938,18 +938,21 @@ body {
 .blind-screen .study-header p { margin-top: 6px; }
 .blind-body { padding-block: 12px; }
 .blind-post { padding: 12px; }
-.blind-post > p { margin-top: 10px; line-height: 1.6; }
+.blind-post > p { margin-top: 0; line-height: 1.6; }
 .blind-scales { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; margin-top: 16px; }
 .blind-scales legend { line-height: 1.5; font-weight: 600; }
 .blind-scales .questionnaire-options { margin-top: 10px; gap: 6px; }
 .blind-scales .reason-choice { min-height: 44px; padding: 7px 10px; gap: 10px; line-height: 1.45; align-items: center; }
 .blind-scales input { margin-top: 0; }
-.comparison-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-content: start; align-items: start; padding-block: 16px; }
-.comparison-card { padding: 14px; border: 1px solid #e5e5e5; border-radius: 12px; min-width: 0; }
-.comparison-card > p { margin-top: 8px; line-height: 1.65; }
-.comparison-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
-.comparison-choices button { min-height: 44px; padding: 8px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; line-height: 1.5; }
-.comparison-choices .is-chosen { border-color: #0084ff; background: #eff6ff; color: #0875ca; }
+.comparison-body { padding-block: 16px; }
+.comparison-question + .comparison-question { margin-top: 28px; }
+.comparison-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-content: start; align-items: start; margin-top: 12px; }
+.comparison-card { display: block; padding: 14px; border: 1px solid #e5e5e5; border-radius: 12px; min-width: 0; cursor: pointer; }
+.comparison-option-heading { display: flex; align-items: center; gap: 10px; min-height: 24px; }
+.comparison-option-heading input { width: 20px; height: 20px; flex: none; accent-color: #0084ff; }
+.comparison-option-content { display: block; margin-top: 8px; line-height: 1.65; }
+.comparison-card.is-chosen { border-color: #0084ff; background: #eff6ff; }
+.comparison-question:disabled .comparison-card { cursor: default; }
 @media (min-width: 768px) { .comparison-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 768px) {
   .blind-scales { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 14px; }

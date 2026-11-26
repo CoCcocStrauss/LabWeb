@@ -18,8 +18,8 @@ const out=path.join(require('node:os').tmpdir(),'labweb-comparison-edge-20261126
   for(let i=0;i<2;i++){await page.getByRole('radio').nth(2).check();await page.getByRole('button',{name:'下一步',exact:true}).click();}
   if(k){await page.getByText('记不清了',{exact:true}).click();await page.getByRole('button',{name:'下一步',exact:true}).click();}
   for(let i=0;i<4;i++){await page.getByRole('heading',{name:'内容评价（'+(i+1)+' / 4）',exact:true}).waitFor();await page.locator('input[name="endorsementScore"]').nth(2).check();await page.locator('input[name="argumentQualityScore"]').nth(2).check();await page.getByRole('button',{name:i===3?'继续':'下一条',exact:true}).click();}
-  await page.getByRole('heading',{name:'观点对比',exact:true}).waitFor();assert.equal(await page.locator('.comparison-card').count(),3);
-  await page.locator('.comparison-card').nth(0).getByRole('button',{name:'最符合我的想法',exact:true}).click();await page.locator('.comparison-card').nth(1).getByRole('button',{name:'最不符合我的想法',exact:true}).click();
+  await page.getByRole('heading',{name:'观点对比',exact:true}).waitFor();assert.equal(await page.locator('.comparison-question').first().getByRole('radio').count(),3);
+  await page.locator('input[name="mostAlignedPostId"]').nth(0).check();assert.equal(await page.locator('input[name="leastAlignedPostId"]').count(),2);await page.locator('input[name="leastAlignedPostId"]').nth(0).check();
   await page.getByRole('button',{name:'继续',exact:true}).click();await page.locator('#explanation-text').fill('这是比较题候选不足情况下的隔离验收，用于检查补充候选、来源标记和完整保存。');
   await page.getByRole('button',{name:'提交',exact:true}).click();await page.getByRole('radio').nth(1).check();await page.getByRole('button',{name:'提交',exact:true}).click();await page.getByRole('heading',{name:'本部分已完成',exact:true}).waitFor();
   const saved=await(await fetch('http://127.0.0.1:3211/_qa/state?uid='+uid)).json(),c=saved.session.posttest.bestWorstComparison;

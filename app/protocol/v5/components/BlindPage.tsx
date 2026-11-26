@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { PostAuthor } from "../../../components/CompactPostCard";
 import type { BlindResponse } from "../lib/blinded";
 export function BlindPage({
   response: r,
@@ -84,7 +83,6 @@ export function BlindPage({
       </header>
       <main className="study-scroll study-pad blind-body" key={a.postId}>
         <article className="blind-post rounded-xl border">
-          <PostAuthor post={item} compact hideCertification />
           <p className="study-copy whitespace-pre-wrap">{item.content}</p>
         </article>
         <div className="blind-scales">
