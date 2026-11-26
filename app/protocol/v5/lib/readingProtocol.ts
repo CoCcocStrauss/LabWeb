@@ -16,6 +16,7 @@ export const PANEL_READING_UI_VERSION = "responsive-masonry-preview-v1";
 export const SINGLE_INLINE_READING_UI_VERSION = "inline-masonry-preview-v1";
 export const READING_UI_VERSION = "spanning-inline-masonry-v1";
 export const DUAL_ZONE_PACKING_VERSION = "dual-zone-grid-v1";
+export const SINGLE_OPEN_COMPARISON_VERSION = "single-open-comparison-v1";
 export const PREVIEW_VERSION = "opening-before-punctuation-20-v1";
 export const COVERAGE_RULE = { minimumRatio: 0.5, continuousMs: 250 } as const;
 const cloneMetrics = (value: ReadingMetrics): ReadingMetrics =>
@@ -114,6 +115,7 @@ export type ReadingAlert = {
   completedAt: number | null;
 };
 export type ReadingMetrics = {
+  interactionVersion?: typeof SINGLE_OPEN_COMPARISON_VERSION;
   attentionVersion?: typeof ATTENTION_VERSION;
   hiddenCount?: number;
   totalHiddenMs?: number;
@@ -141,6 +143,7 @@ export function newReadingMetrics(
   posts: PostItemWithDisplay[],
 ): ReadingMetrics {
   return {
+    interactionVersion: SINGLE_OPEN_COMPARISON_VERSION,
     attentionVersion: ATTENTION_VERSION,
     hiddenCount: 0,
     totalHiddenMs: 0,
@@ -426,6 +429,8 @@ export class ReadingTracker {
   open(id: string, time: number, scrollY: number, inline = false) {
     const multiple = inline && this.metrics.version === READING_UI_VERSION;
     if (multiple && this.metrics.openDetailIds?.includes(id)) return;
+    if (multiple && this.metrics.interactionVersion === SINGLE_OPEN_COMPARISON_VERSION)
+      for (const previous of [...(this.metrics.openDetailIds ?? [])]) this.close(time, previous);
     if (inline) this.setVisible(id, false, time, scrollY);
     else this.suspend(time, scrollY);
     if (multiple)

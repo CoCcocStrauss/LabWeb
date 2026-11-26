@@ -18,9 +18,10 @@ test('全文可见区间分段，滚出／切屏停止，收起后短卡继续�
  }]){const g=structuredClone(f);mutate(g);assert.equal(v.validSubmission(g),false);}
 });
 
-test('展开可见快照不重复，刷新不累计间隙，多个展开卡独立收尾并忽略迟到回调',()=>{
+test('旧多开进度可见快照不重复，刷新不累计间隙，独立收尾并忽略迟到回调',()=>{
  const f=blindFixture(),all=Object.values(load('app/lib/materialsRegistry.ts').getMaterialsForTopic(f.topicKey).materials).flat(),posts=f.presentedPosts.map(p=>({...all.find(x=>x.id===p.postId),...p,id:p.postId}));
  const {ReadingTracker}=load('app/protocol/v5/lib/readingProtocol.ts'),t=new ReadingTracker(posts),[a,c]=f.postOrder,s=f.startTime;
+ delete t.metrics.interactionVersion;
  t.setVisible(a,true,s,0);t.open(a,s+300,0,true);t.setVisible(a,true,s+310,0);t.resumeDetail(s+320,a);
  t.open(c,s+400,0,true);t.resumeDetail(s+420,c);t.stopDetail(s+500,c);t.resumeDetail(s+600,c);
  const first=t.snapshot(s+800,0,[]),again=t.snapshot(s+900,0,[]);

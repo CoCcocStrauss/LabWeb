@@ -16,6 +16,7 @@ export type Answer = {
   answeredAt: number;
 };
 export type QuestionnaireResponse = {
+  bestWorstComparison?: import("../protocol/v5/lib/bestWorstComparison").BestWorstComparison;
   stage: QuestionnaireStage;
   startedAt: number;
   completedAt: number | null;

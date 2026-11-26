@@ -45,8 +45,8 @@ export function TutorialPreview({ stepIndex, selections }: {
   const toggleExpanded = (id: string) => {
     const card = root.current?.querySelector(`[data-post-id="${id}"]`);
     if (card) anchor.current = { id, top: card.getBoundingClientRect().top };
-    if (expanded.includes(id)) setRead((ids) => ids.includes(id) ? ids : [...ids, id]);
-    setExpanded((ids) => ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]);
+    setRead((ids) => [...new Set([...ids, ...expanded])]);
+    setExpanded((ids) => ids.includes(id) ? [] : [id]);
   };
   const toggle = (ids: string[], id: string) => ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id];
 
@@ -138,7 +138,7 @@ export function TutorialPreview({ stepIndex, selections }: {
             }}
             items={POSTS.map((original) => {
               const id = String(original.id), post = { ...original, ...selections?.[id] };
-              return { id, pinned: anchor.current?.id === id, expandedOrder: expanded.indexOf(id), expanded: expanded.includes(id), node:
+              return { id, pinned: anchor.current?.id === id, expanded: expanded.includes(id), node:
                 <CompactPostCard post={post} expanded={expanded.includes(id)} read={read.includes(id)}
                   liked={liked.includes(id)} shared={shared.includes(id)} shareDisabled={false}
                   onOpen={() => toggleExpanded(id)} onCollapse={() => toggleExpanded(id)}

@@ -15,6 +15,7 @@ import {
   TUTORIAL_VERSION,
   TUTORIAL_STEPS,
   ATTENTION_VERSION,
+  SINGLE_OPEN_COMPARISON_VERSION,
   previewText,
   type ReadingMetrics,
   type RulesResponse,
@@ -45,6 +46,7 @@ export function validReadingProtocol(
   const b = raw as SubmitExperimentDataInput,
     r = b.rules as RulesResponse,
     m = b.readingMetrics as ReadingMetrics;
+  if (m?.interactionVersion !== undefined && m.interactionVersion !== SINGLE_OPEN_COMPARISON_VERSION) return false;
   if (
     !obj(r) ||
     !ts(r.startedAt) ||
@@ -273,7 +275,7 @@ export function validReadingProtocol(
     if (e.type === "open") {
       if (
         active.has(e.postId) ||
-        (m.version !== READING_UI_VERSION && active.size)
+        ((m.version !== READING_UI_VERSION || m.interactionVersion === SINGLE_OPEN_COMPARISON_VERSION) && active.size)
       )
         return false;
       visits.set(e.postId, (visits.get(e.postId) ?? 0) + 1);

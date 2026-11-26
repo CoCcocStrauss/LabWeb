@@ -1,4 +1,6 @@
 import { activeShares, validBlind } from "./blinded";
+import { validComparison } from "./bestWorstComparison";
+import { SINGLE_OPEN_COMPARISON_VERSION } from "./readingProtocol";
 import {
   LABEL_SELECTION_VERSION,
   validDisplayedLabel,
@@ -214,6 +216,10 @@ export function validPostTasks(
     e.inputMethod !== (hasAudio ? (e.text.trim() ? "both" : "audio") : "text")
   )
     return false;
+  const comparison = b.posttest.bestWorstComparison;
+  if (b.readingMetrics.interactionVersion === SINGLE_OPEN_COMPARISON_VERSION && !comparison) return false;
+  if (comparison && !validComparison(comparison, b, posts,
+    b.blindedPostEvaluations?.completedAt ?? Infinity, e.startedAt)) return false;
   return (
     validBlind(
       b.blindedPostEvaluations,
@@ -223,7 +229,7 @@ export function validPostTasks(
       e.startedAt,
     ) &&
     b.posttest.answers[2].startedAt >= e.completedAt &&
-    validInterruptions(b, ["blinded"])
+    validInterruptions(b, ["blinded", "comparison"])
   );
 }
 

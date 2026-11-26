@@ -59,7 +59,12 @@ export function ExperimentPage({
   const alertFlashTarget = inline ? 5 : 2;
   const materials = useMemo(() => getMaterialsForTopic(topic), [topic]);
   const tracker = useMemo(
-    () => new ReadingTracker(posts, initial),
+    () => {
+      const next = new ReadingTracker(posts, initial);
+      const ids = next.metrics.openDetailIds ?? [];
+      for (const id of ids.slice(0, -1)) next.close(Math.min(Date.now(), initial.deadline), id);
+      return next;
+    },
     [posts, initial],
   );
   const [actions, setActions] = useState(initial.actions),
@@ -70,9 +75,9 @@ export function ExperimentPage({
     ),
     openedRef = useRef(tracker.metrics.openDetailId);
   const [expanded, setExpanded] = useState(
-      initial.metrics?.openDetailIds ?? [],
+      tracker.metrics.openDetailIds ?? [],
     ),
-    expandedRef = useRef(initial.metrics?.openDetailIds ?? []);
+    expandedRef = useRef(tracker.metrics.openDetailIds ?? []);
   const [sharePending, setSharePending] = useState<{
     id: string;
     surface: "preview" | "detail";
@@ -522,10 +527,12 @@ export function ExperimentPage({
         top: el.getBoundingClientRect().top,
       };
     if (!spanning && openedRef.current) tracker.close(now());
-    tracker.open(id, now(), scrollY(), inline);
+    const time = now();
+    if (spanning) for (const previous of expandedRef.current) if (previous !== id) tracker.close(time, previous);
+    tracker.open(id, time, scrollY(), inline);
     if (!inline) observer.current?.disconnect();
     if (spanning) {
-      expandedRef.current = [...expandedRef.current, id];
+      expandedRef.current = [id];
       setExpanded(expandedRef.current);
     } else {
       openedRef.current = id;
@@ -661,7 +668,6 @@ export function ExperimentPage({
                 const item = {
                   id: post.id,
                   pinned: anchor.current?.id === post.id,
-                  expandedOrder: expanded.indexOf(post.id),
                   expanded: spanning ? expanded.includes(post.id) : false,
                   node: (
                     <CompactPostCard

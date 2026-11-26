@@ -10,7 +10,10 @@ import {
   type RulesResponse,
   type MicrophonePermission,
   type ReadingMetrics,
+  SINGLE_OPEN_COMPARISON_VERSION,
 } from "./readingProtocol";
+import { validComparison } from "./bestWorstComparison";
+import { getMaterialsForTopic } from "../../../lib/materialsRegistry";
 import {
   QUESTIONNAIRE_VERSION,
   emptyResponse,
@@ -83,6 +86,7 @@ export type Phase =
   | "posttest"
   | "explanation"
   | "blinded"
+  | "comparison"
   | "post_museum"
   | "submitting"
   | "complete";
@@ -244,6 +248,7 @@ export function loadSession(uid: string): ExperimentSession | null {
       "posttest",
       "explanation",
       "blinded",
+      "comparison",
       "post_museum",
       "submitting",
       "complete",
@@ -275,6 +280,7 @@ export function loadSession(uid: string): ExperimentSession | null {
       "posttest",
       "explanation",
       "blinded",
+      "comparison",
       "post_museum",
       "submitting",
       "complete",
@@ -330,6 +336,7 @@ export function loadSession(uid: string): ExperimentSession | null {
       "posttest",
       "explanation",
       "blinded",
+      "comparison",
       "post_museum",
       "submitting",
       "complete",
@@ -347,6 +354,7 @@ export function loadSession(uid: string): ExperimentSession | null {
     [
       "recognition",
       "blinded",
+      "comparison",
       "explanation",
       "post_museum",
       "submitting",
@@ -365,6 +373,7 @@ export function loadSession(uid: string): ExperimentSession | null {
   if (
     [
       "blinded",
+      "comparison",
       "explanation",
       "post_museum",
       "submitting",
@@ -375,6 +384,14 @@ export function loadSession(uid: string): ExperimentSession | null {
     throw invalid();
   if (!s.rules || !Array.isArray(s.rules.items) || !s.microphonePermission)
     throw invalid();
+  const comparison = s.posttest?.bestWorstComparison;
+  if (s.phase === "comparison" && !comparison) throw invalid();
+  if (comparison && (!s.endData || !s.blindedPostEvaluations?.completedAt ||
+    !validComparison(comparison, { ...s.endData, pretest: s.pretest },
+      new Map(Object.values(getMaterialsForTopic(s.topicKey).materials).flat().map((p) => [p.id, p])),
+      s.blindedPostEvaluations.completedAt, s.posttest?.completedAt ?? Date.now(), true))) throw invalid();
+  if (["explanation", "post_museum", "submitting", "complete"].includes(s.phase) &&
+    s.endData?.readingMetrics.interactionVersion === SINGLE_OPEN_COMPARISON_VERSION && !comparison?.answeredAt) throw invalid();
   return s;
 }
 
@@ -429,7 +446,9 @@ export function finalPayload(
     !session.pretest.completedAt ||
     !session.recognition ||
     !session.explanation?.completedAt ||
-    !session.blindedPostEvaluations?.completedAt
+    !session.blindedPostEvaluations?.completedAt ||
+    ((session.endData.readingMetrics.interactionVersion === SINGLE_OPEN_COMPARISON_VERSION || session.posttest.bestWorstComparison) &&
+      !session.posttest.bestWorstComparison?.answeredAt)
   )
     throw new Error("问卷尚未完成");
   return {

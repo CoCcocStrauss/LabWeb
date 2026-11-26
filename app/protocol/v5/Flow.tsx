@@ -1,6 +1,8 @@
 "use client";
 import { newBlind } from "./lib/blinded";
 import { BlindPage } from "./components/BlindPage";
+import { BestWorstPage } from "./components/BestWorstPage";
+import { newComparison } from "./lib/bestWorstComparison";
 
 import dynamic from "next/dynamic";
 import { PageLoading as LoadingScreen } from "../../components/PageLoading";
@@ -576,12 +578,22 @@ function SessionFlow({
             update((s) => ({
               ...s,
               blindedPostEvaluations,
-              explanation: newExplanation(),
-              phase: "explanation",
+              posttest: { ...s.posttest!, bestWorstComparison: s.posttest?.bestWorstComparison ?? newComparison(
+                { ...s.endData!, pretest: s.pretest },
+                new Map(Object.values(getMaterialsForTopic(s.topicKey).materials).flat().map((p) => [p.id, p])),
+              ) },
+              phase: "comparison",
             }))
           }
         />
       );
+      break;
+    case "comparison":
+      content = <BestWorstPage response={session.posttest!.bestWorstComparison!}
+        posts={new Map(Object.values(getMaterialsForTopic(session.topicKey).materials).flat().map((p) => [p.id, p]))}
+        onChange={(bestWorstComparison) => update((s) => ({ ...s, posttest: { ...s.posttest!, bestWorstComparison } }))}
+        onContinue={(bestWorstComparison) => update((s) => ({ ...s,
+          posttest: { ...s.posttest!, bestWorstComparison }, explanation: newExplanation(), phase: "explanation" }))} />;
       break;
     case "post_museum":
       content = (

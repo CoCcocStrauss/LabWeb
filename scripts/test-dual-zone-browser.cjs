@@ -34,8 +34,7 @@ const out=path.join(require('node:os').tmpdir(),'labweb-dual-zone-20261126');fs.
    for(const [i,id]of ids.entries()){
     const item=grid.locator('[data-post-key="'+id+'"]');
     assert.equal(Number(await item.getAttribute('data-zone')),Math.floor(i/2)%2);
-    const members=await item.locator('..').locator(':scope > .dual-zone-item').evaluateAll(nodes=>nodes.map(el=>el.dataset.postKey));
-    assert.deepEqual(members,ids.slice(Math.floor(i/2)*2,Math.floor(i/2)*2+2),'fixed pair members cannot backfill another pair');
+
    }
    const geometry=zone=>grid.locator('.dual-zone-half[data-zone-index="'+zone+'"] .feed-card').evaluateAll(nodes=>{
     const root=nodes[0].closest('.dual-zone-feed').getBoundingClientRect();
@@ -56,14 +55,24 @@ const out=path.join(require('node:os').tmpdir(),'labweb-dual-zone-20261126');fs.
     assert.deepEqual(await geometry(1-zone),opposite,'opposite half stays still after collapse');
     assert.ok((await card.getAttribute('class')).includes('is-read'));
    }
-   // Independent simultaneous expansion in both halves; a reload preserves both.
-   for(const id of [ids[0],ids[2]]){await grid.locator('.feed-card[data-post-id="'+id+'"] .feed-content-button').click();await page.waitForTimeout(350);}
-   assert.equal(await grid.locator('.is-expanded').count(),2);
-   await page.reload();await grid.locator('.is-expanded').nth(1).waitFor();await page.waitForTimeout(400);
-   assert.equal((await read()).reading.metrics.openDetailIds.length,2);
+   // Switching a middle/lower card globally closes the prior expansion.
+   for(const id of [ids[Math.floor(n/8)*4],ids[Math.floor(n/8)*4+1],ids[Math.floor(n/8)*4+2],ids[Math.floor(n/8)*4+3]]){
+    const previous=(await read()).reading.metrics.openDetailIds[0];
+    await grid.locator('.feed-card[data-post-id="'+id+'"] .feed-content-button').click();await page.waitForTimeout(350);
+    assert.equal(await grid.locator('.is-expanded').count(),1);
+    if(previous){const events=(await read()).reading.metrics.detailEvents;assert.equal(events.filter(e=>e.postId===previous&&e.type==='close').at(-1).timestamp,events.filter(e=>e.postId===id&&e.type==='open').at(-1).timestamp);}
+    if(n===48){const pin=await page.evaluate(id=>window.__pairPins.filter(x=>x.id===id).at(-1),id);assert.ok(pin.frames.every(y=>Math.abs(y-pin.top)<=4),'continuous middle/lower switching must stay pinned: '+JSON.stringify(pin));}
+   }
+   assert.equal(await grid.locator('.is-expanded').count(),1);
+   await page.reload();await grid.locator('.is-expanded').first().waitFor();await page.waitForTimeout(400);
+   assert.equal((await read()).reading.metrics.openDetailIds.length,1);
    for(const size of [{width:1280,height:720},{width:1440,height:800}]){
     await page.setViewportSize(size);await page.waitForTimeout(400);
     assert.equal(await grid.getAttribute('data-columns'),'4');
+   }
+   assert.equal(await grid.locator('.is-expanded').count(),1);
+   for(const half of await grid.locator('.dual-zone-half').all()){
+    assert.ok(await half.evaluate(el=>{const rows=new Map();for(const node of el.children){rows.set(node.offsetTop,(rows.get(node.offsetTop)||0)+Number(node.dataset.columnSpan));}const ordered=[...rows.entries()].sort((a,b)=>a[0]-b[0]);return ordered.slice(0,-1).every(([,slots])=>slots===2)}),'only bottom row may have an empty cell');
    }
    await page.screenshot({path:path.join(out,'desktop-'+n+'.png')});
    await page.setViewportSize({width:768,height:1024});await page.waitForTimeout(400);
@@ -71,8 +80,8 @@ const out=path.join(require('node:os').tmpdir(),'labweb-dual-zone-20261126');fs.
    assert.equal(await grid.locator('.dual-zone-half').count(),1);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
    assert.deepEqual(errors,[]);
-   fs.writeFileSync(path.join(out,'result-'+n+'.json'),JSON.stringify({uid,n,passed:true,cardsTested:ids.length,oppositeHalfDisplacement:0,pairIsolation:true,firstFramePinTolerance:4,errors},null,2));
-   console.log('PASS n='+n+': every card locks its half, isolated pairs, clicked card <=4px from first frame, opposite half 0px, read state, multi-open/reload, 4/2-column resize');
+   fs.writeFileSync(path.join(out,'result-'+n+'.json'),JSON.stringify({uid,n,passed:true,cardsTested:ids.length,oppositeHalfDisplacement:0,singleOpen:true,firstFramePinTolerance:4,errors},null,2));
+   console.log('PASS n='+n+': every card locks its half, compact single-open, clicked card <=4px from first frame, opposite half 0px, read state, single-open/reload, 4/2-column resize');
    await context.close();
   }
  }catch(e){if(page){await page.screenshot({path:path.join(out,'failure.png')}).catch(()=>{});fs.writeFileSync(path.join(out,'failure.txt'),await page.locator('body').innerText().catch(()=>''));}throw e;}
