@@ -14,10 +14,20 @@
 
 - `npm test`：54 / 54；生产构建、TypeScript 与 lint 通过。
 - 本地隔离数据库：桌面 1280×720 育儿补贴、手机 390×844 AI 医疗，各 48 条完整流程；最终回读 rules 时间戳、行为、全文可见时长、四帖盲评和比较题均成功保存。
+- 桌面 1280×720、小屏 375×667、触屏平板 1024×768 的教程专项检查通过。
 - 本地浏览器：0/1 条转发超时均可提交、fallback 来源保持正确；保存失败重试、刷新与重播不重置规则时间、无实操直接继续、准备页不提前计时。
 - 浏览器使用 Chromium 的桌面／移动视口和触摸模拟；本轮解释使用文字路径，未重新验证实体麦克风与实体 iOS Safari。
 - 自动验收在测试浏览器内加速正式阅读时钟，不代表真实等待了 150 秒。所有测试使用独立 `test_` UID。
 
 ## 发布
 
-通过 GitHub main 触发 Netlify 自动构建。线上发布与正式库回读结果待部署后补录。
+- 应用提交：`f658a03`，已推送 GitHub main，Netlify 自动部署后正式域名已更新。
+- 正式域名： https://myexperiment.cn ，已核对新 CSS `5de9ba8f77d50824.css` 与新版流程页、三步教程。
+- 正式站 Chromium 验收：桌面 1280×720 育儿补贴和手机视口 390×844 AI 医疗，各 48 条从入口完整完成，服务端成功保存，回读 `rules.presentationVersion=three-step-overview-v2`、流程说明页进入／完成时间戳、4 条完整盲评、比较题、4 条动作与正时长全文可见区间。
+- 正式保存验收 UID：`test_materials_live_fertility_1795702307442`、`test_materials_live_ai_1795702367904`；只读回这两条新测试记录，未改写或删除其他参与者数据。
+- 线上截图与结果：`/var/folders/wy/cg_zytzs733bg_b2yvrcdpsr0000gn/T/labweb-overview-live-20261126`。
+- QA 链接：
+  - 育儿补贴：https://myexperiment.cn/?uid=test_overview_20261126_fertility_48_01&n=48&topic=fertility
+  - AI 医疗：https://myexperiment.cn/?uid=test_overview_20261126_ai_48_01&n=48&topic=ai
+
+同浏览器相同 UID 继续已有进度；独立重测换新 UID。分析时排除所有 `test_` 测试记录。
