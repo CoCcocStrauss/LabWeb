@@ -1,4 +1,4 @@
-# 全局单开与盲态观点对比（2026-11-26，待发布）
+# 全局单开与盲态观点对比（2026-11-26，已发布）
 
 依据labweb_2026_11_26.md。用户已确认边界：互动候选不足时从其余本次展示帖子补足到3条，单独记录fallback来源。
 
@@ -23,7 +23,7 @@
 
 questionnaireVersion沿用2026-11-25-v5。新阅读记录额外带reading_metrics.interactionVersion=single-open-comparison-v1，API要求此类记录必须完成比较题，并校验展开事件不并发。旧记录无此标记时仍兼容；已进入解释/提交的旧草稿不强行插入新题，未完成盲评的旧草稿自然进入新比较题。
 
-现有submit_experiment_v7通过submit_experiment_v2原样写入posttest JSONB，可完整保留新字段，无需改表、增加RPC或运行迁移SQL。隔离数据库已回读确认新JSON字段完整；待发布后回读正式站新测试记录。
+现有submit_experiment_v7通过submit_experiment_v2原样写入posttest JSONB，可完整保留新字段，无需改表、增加RPC或运行迁移SQL。隔离数据库已回读确认新JSON字段完整；正式站新测试记录也已回读通过。
 
 ## 验证记录
 
@@ -32,3 +32,14 @@ questionnaireVersion沿用2026-11-25-v5。新阅读记录额外带reading_metric
 - 两议题桌面与手机完整比较、互斥改选和真实刷新后恢复通过，最终隔离库保留5条候选及所有JSON字段；0/1条转发超时另验收通过，分别有2/1条fallback，均完成保存。
 - 阅读可见区间、切屏、真实刷新、自动收起及结束收尾专项通过，桌面手动结束与手机超时结束均与隔离库保存记录逐段一致。
 - Chromium测试包含模拟阅读时钟与文字解释，不代表真人录音或所有系统真机测试。证据目录：系统临时目录labweb-materials-20261125、labweb-dual-zone-20261126、labweb-comparison-edge-20261126、labweb-detail-visibility-qa。
+
+## 正式站发布与核验
+
+应用提交b823a8a已推送GitHub main，Netlify自动部署在https://myexperiment.cn生效。正式浏览器8条逐卡单开、首帧位置、无中间网格空洞及刷新验证通过。两议题桌面/手机各完成一轮新比较流程，并只读回查对应新测试记录：
+
+- fertility：test_materials_live_fertility_1795688932348；5条候选（3转发、1仅点赞、1对照），8项要求字段完整；参考立场oppose（shared_majority），耗时1433ms，answeredAt=2026-11-26T10:31:10.962Z。
+- ai：test_materials_live_ai_1795688984246；5条候选（3转发、1仅点赞、1对照），8项要求字段完整；参考立场support（shared_majority），耗时1382ms，answeredAt=2026-11-26T10:32:03.503Z。
+
+核验reading_metrics.interactionVersion=single-open-comparison-v1、比较页刷新不重抽、互斥选择、完成状态、四帖盲评、左右全文阅读区间与4条互动动作。无新增SQL，现有posttest JSONB完整保留新字段。正式站证据在系统临时目录labweb-single-open-comparison-live-20261126和labweb-single-open-pin-live-20261126。仅操作新test_ UID，无历史数据修改。
+
+48条人工QA：/?uid=test_bestworst_fertility_48_01&n=48&topic=fertility；/?uid=test_bestworst_ai_48_01&n=48&topic=ai。
