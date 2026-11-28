@@ -16,6 +16,7 @@ export type BestWorstComparison = {
   seed: number;
   generatedAt: number;
   presentedAt: number | null;
+  activeQuestion?: "most" | "least";
   candidateIds: string[];
   candidateSources: Record<string, CandidateSource>;
   referenceStance: Stance;
@@ -73,7 +74,7 @@ export function sampleComparison(d: Data, posts: Map<string, PostItem>, seed: nu
       "candidateIds" | "candidateSources" | "referenceStance" | "referenceStanceRule" | "controlRule" | "fallbackReasons">;
 }
 export function newComparison(d: Data, posts: Map<string, PostItem>, now = Date.now(), seed = crypto.getRandomValues(new Uint32Array(1))[0]): BestWorstComparison {
-  return { version: COMPARISON_VERSION, seed, generatedAt: now, presentedAt: null, ...sampleComparison(d, posts, seed),
+  return { version: COMPARISON_VERSION, seed, generatedAt: now, presentedAt: null, activeQuestion: "most", ...sampleComparison(d, posts, seed),
     mostAlignedPostId: null, leastAlignedPostId: null, durationMs: 0, answeredAt: null };
 }
 export function chooseComparison(c: BestWorstComparison, field: "mostAlignedPostId" | "leastAlignedPostId", id: string): BestWorstComparison {
@@ -93,6 +94,7 @@ export function validComparison(raw: unknown, d: Data, posts: Map<string, PostIt
     !Number.isSafeInteger(c.generatedAt) || c.generatedAt < min || c.generatedAt > max ||
     !Array.isArray(c.candidateIds) || c.candidateIds.length < 3 || c.candidateIds.length > 6 ||
     new Set(c.candidateIds).size !== c.candidateIds.length) return false;
+  if (c.activeQuestion !== undefined && (!["most", "least"].includes(c.activeQuestion) || (c.activeQuestion === "least" && !c.mostAlignedPostId))) return false;
   const expected = sampleComparison(d, posts, c.seed);
   for (const key of Object.keys(expected) as (keyof typeof expected)[])
     if (canonicalJson(c[key]) !== canonicalJson(expected[key])) return false;

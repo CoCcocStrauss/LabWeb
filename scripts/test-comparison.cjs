@@ -51,9 +51,10 @@ test('对照优先从未展开且从未点赞转发，再同立场、任意未�
 test('比较选择互斥、耗时与ISO时间记录完整；服务端拒绝篡改候选、来源、立场、答案和跳题',()=>{
  for(const topic of ['ai','fertility']){
   const f=comparisonFixture(topic);assert.ok(v.validSubmission(f));
-  for(const mutate of [g=>g.posttest.bestWorstComparison.candidateIds.reverse(),g=>g.posttest.bestWorstComparison.referenceStance='bad',g=>g.posttest.bestWorstComparison.durationMs++,g=>g.posttest.bestWorstComparison.answeredAt='bad',g=>g.posttest.bestWorstComparison.leastAlignedPostId=g.posttest.bestWorstComparison.mostAlignedPostId,g=>g.posttest.bestWorstComparison.candidateSources[g.posttest.bestWorstComparison.candidateIds[0]]='bad',g=>delete g.posttest.bestWorstComparison]){
+  for(const mutate of [g=>g.posttest.bestWorstComparison.candidateIds.reverse(),g=>g.posttest.bestWorstComparison.referenceStance='bad',g=>g.posttest.bestWorstComparison.activeQuestion='bad',g=>g.posttest.bestWorstComparison.durationMs++,g=>g.posttest.bestWorstComparison.answeredAt='bad',g=>g.posttest.bestWorstComparison.leastAlignedPostId=g.posttest.bestWorstComparison.mostAlignedPostId,g=>g.posttest.bestWorstComparison.candidateSources[g.posttest.bestWorstComparison.candidateIds[0]]='bad',g=>delete g.posttest.bestWorstComparison]){
    const bad=structuredClone(f);mutate(bad);assert.equal(v.validSubmission(bad),false);
   }
+  const oldPresentation=structuredClone(f);delete oldPresentation.posttest.bestWorstComparison.activeQuestion;assert.ok(v.validSubmission(oldPresentation));
   const legacy=structuredClone(f);delete legacy.posttest.bestWorstComparison;delete legacy.readingMetrics.interactionVersion;assert.ok(v.validSubmission(legacy));
   let draft=c.newComparison(f,postsFor(topic),f.blindedPostEvaluations.completedAt+1,7);draft.presentedAt=draft.generatedAt;
   const id=draft.candidateIds[0];draft=c.chooseComparison(draft,'mostAlignedPostId',id);draft=c.chooseComparison(draft,'leastAlignedPostId',id);assert.equal(draft.mostAlignedPostId,null);assert.throws(()=>c.finishComparison(draft));
