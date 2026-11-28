@@ -46,3 +46,14 @@
 - 第二道继续排除第一道选中的内容；返回把第一道改成原第二道的答案时，清空第二道以避免重复选择。候选池与顺序保持不变。
 - 当前题页通过现有 posttest JSON 中的可选 `bestWorstComparison.activeQuestion` 保存，刷新后恢复；历史没有该字段的数据继续兼容。无需新 SQL，两个答案仍分别保存为 `mostAlignedPostId` 与 `leastAlignedPostId`。
 - 验证：54 项单元测试及生产构建通过；桌面育儿补贴、手机 AI 医疗各 48 条完整流程，以及 0/1 条转发 fallback 流程均完成隔离数据库保存。分页选择、上一题改选、排除首题答案、两页刷新恢复及翻页回到顶部均通过。
+
+### 本轮正式站验收
+
+- 红色返回提醒提交 `8b42434`、比较题分页提交 `cab0755` 均已通过 GitHub main 自动部署至 https://myexperiment.cn 。
+- 正式站 Chromium：1280px 桌面与 390px 手机视口，红色提示、每次两轮边框动画及重复可见事件去重通过。
+- 两议题各 48 条完整正式站流程通过；回读正式库确认当前题页、两个不同的所选帖子、完成时间、完整盲评、行为与阅读区间均保存。
+- 完整保存测试 UID：`test_materials_live_fertility_1795844855037`、`test_materials_live_ai_1795844910908`；仅回读这两条新测试记录，未改写其他参与者数据。
+- 证据位于临时目录 `labweb-return-alert-20261128` 与 `labweb-split-comparison-live-20261128`。无需新增 SQL。
+- QA：
+  - 育儿补贴：https://myexperiment.cn/?uid=test_split_20261128_fertility_48_01&n=48&topic=fertility
+  - AI 医疗：https://myexperiment.cn/?uid=test_split_20261128_ai_48_01&n=48&topic=ai
