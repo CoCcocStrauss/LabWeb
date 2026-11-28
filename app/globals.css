@@ -970,9 +970,9 @@ body {
 .reading-return-notice {
   flex: none;
   padding: 8px 12px;
-  color: #22547d;
-  background: #eef7ff;
-  border-bottom: 1px solid #cce3f5;
+  color: #b91c1c;
+  background: #fef2f2;
+  border-bottom: 1px solid #fecaca;
   font-size: 14px;
   line-height: 1.6;
 }

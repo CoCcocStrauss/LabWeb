@@ -53,7 +53,28 @@ fs.mkdirSync(out, { recursive: true });
    await page.getByRole('button',{name:'开始实验',exact:true}).click();
    await page.locator('main.reading-feed .feed-card').nth(47).waitFor();
    const state=await read();assert.equal(state.reading.deadline-state.reading.startTime,150000);
-   console.log(`PASS ${width}x${height}: retry, no hands-on gate, replay, reload, ready timer boundary`);
+   assert.equal(await page.locator('.reading-return-notice,.reading-return-alert').count(),0);
+   await page.evaluate(()=>{
+    window.__returnAnimations=[];
+    for(const kind of ['animationstart','animationiteration','animationend']) document.addEventListener(kind,event=>{
+     if(event.target.matches('.reading-return-alert'))window.__returnAnimations.push(kind);
+    });
+   });
+   const visibility=state=>page.evaluate(state=>{Object.defineProperty(document,'visibilityState',{configurable:true,get:()=>state});document.dispatchEvent(new Event('visibilitychange'));},state);
+   for(let attempt=0;attempt<2;attempt++) {
+    await visibility('hidden');await page.waitForTimeout(200);await visibility('visible');
+    await page.locator('.reading-return-notice').waitFor();await page.locator('.reading-return-alert').waitFor();
+    const styles=await page.locator('.reading-return-alert').evaluate(el=>{const s=getComputedStyle(el);return {count:s.animationIterationCount,color:s.borderTopColor,pointer:s.pointerEvents,position:s.position};});
+    assert.deepEqual(styles,{count:'2',color:'rgb(228, 48, 48)',pointer:'none',position:'fixed'});
+    assert.equal(await page.locator('.reading-return-notice').evaluate(el=>getComputedStyle(el).color),'rgb(185, 28, 28)');
+    await page.waitForTimeout(300);await page.screenshot({path:path.join(out,`${width}-return-${attempt+1}.png`)});
+    await page.locator('.reading-return-alert').waitFor({state:'detached'});
+    assert.deepEqual(await page.evaluate(()=>window.__returnAnimations),Array.from({length:attempt+1},()=>['animationstart','animationiteration','animationend']).flat(),'exactly two pulses per return');
+    await page.locator('.reading-return-notice').waitFor({state:'detached'});
+   }
+   await visibility('visible');await page.waitForTimeout(250);assert.equal(await page.locator('.reading-return-alert').count(),0,'duplicate visible event does not flash');
+   assert.equal((await read()).reading.deadline,state.reading.deadline);
+   console.log(`PASS ${width}x${height}: tutorial/retry/timer checks; red return notice, two pulses, repeat return and deduplication`);
    await context.close();
   }
  } finally { await browser.close(); }

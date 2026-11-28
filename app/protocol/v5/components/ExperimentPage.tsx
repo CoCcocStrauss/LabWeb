@@ -84,6 +84,7 @@ export function ExperimentPage({
   } | null>(null);
   const [borderAlert, setBorderAlert] = useState(false);
   const [returnNotice, setReturnNotice] = useState(false);
+  const [returnFlash, setReturnFlash] = useState(0);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ended = useRef(false),
     pageActive = useRef(true),
@@ -370,6 +371,7 @@ export function ExperimentPage({
       const didReturn = tracker.show(now());
       if (!didReturn || ended.current || Date.now() >= initial.deadline) return;
       setReturnNotice(true);
+      setReturnFlash((sequence) => sequence + 1);
       if (noticeTimer.current) clearTimeout(noticeTimer.current);
       noticeTimer.current = setTimeout(() => setReturnNotice(false), 3000);
     };
@@ -778,6 +780,15 @@ export function ExperimentPage({
             setBorderAlert(false);
             checkpoint();
           }}
+        />
+      ) : null}
+      {returnFlash > 0 ? (
+        <div
+          key={`return-${returnFlash}`}
+          className="reading-time-alert reading-return-alert"
+          aria-hidden
+          style={{ animationIterationCount: 2 }}
+          onAnimationEnd={() => setReturnFlash((sequence) => sequence === returnFlash ? 0 : sequence)}
         />
       ) : null}
       <ShareModal
