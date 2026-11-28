@@ -24,7 +24,8 @@ fs.mkdirSync(out, { recursive: true });
    fail=false;await page.getByRole('button',{name:'重试保存',exact:true}).click();
    await page.getByRole('button',{name:'开始操作教程',exact:true}).click();
    for(let i=0;i<3;i++) {
-    await page.getByText(`操作教程 · ${i+1} / 3`,{exact:true}).waitFor();
+    await page.getByRole('heading',{name:['点击卡片，展开查看完整帖子','点击「转发」按钮，至少转发 2 条','留意剩余时间，浏览期间请勿切屏'][i],exact:true}).waitFor();
+    assert.equal(await page.locator('.tutorial-screen > header').count(),0);
     if(i<2) {
      await page.waitForFunction(()=>document.querySelector('.tutorial-demo')?.dataset.manual==='true');
      assert.ok(await page.getByRole('button',{name:'下一步',exact:true}).isEnabled());

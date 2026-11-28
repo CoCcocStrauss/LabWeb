@@ -1006,5 +1006,4 @@ body {
 .overview-step { padding: 22px; border: 1px solid #e5e5e5; border-radius: 12px; }
 .overview-step-heading { display: flex; align-items: baseline; gap: 10px; }
 .overview-step-number { color: #0875ca; font-weight: 600; }
-.tutorial-banner { color: #555; font-weight: 600; }
 @media (min-width: 768px) { .overview-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

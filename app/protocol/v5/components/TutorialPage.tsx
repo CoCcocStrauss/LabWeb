@@ -39,7 +39,6 @@ export function TutorialPage({
   };
   return (
     <div className="study-shell study-screen tutorial-screen">
-      <header className="study-header study-pad border-b tutorial-banner" aria-label="步骤进度">操作教程 · {stepIndex + 1} / 3</header>
       <main className="study-scroll study-pad py-5" key={step.id}>
         <h1 className="study-title mt-1">{step.title}</h1>
         <p className="study-copy mt-3">{step.text}</p>

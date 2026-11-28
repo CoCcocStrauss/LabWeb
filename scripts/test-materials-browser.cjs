@@ -35,7 +35,7 @@ fs.mkdirSync(out, { recursive: true });
    for(const [i,heading] of ['点击卡片，展开查看完整帖子','点击「转发」按钮，至少转发 2 条','留意剩余时间，浏览期间请勿切屏'].entries()){
 
     await page.getByRole('heading',{name:heading,exact:true}).waitFor();
-    await page.getByText('操作教程 · '+(i+1)+' / 3',{exact:true}).waitFor();
+    assert.equal(await page.locator('.tutorial-screen > header').count(),0);
     const demo=page.locator('.tutorial-demo'), cards=demo.locator('.feed-card');
     assert.equal(await cards.count(),8);
     assert.equal(await demo.locator('.dual-zone-feed').getAttribute('data-columns'),width>=1024?'4':'2');
